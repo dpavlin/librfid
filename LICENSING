@@ -1,0 +1,11 @@
+librfid is licensed under GNU General Public License, Version 2 as published
+by the Free Software Foundation (see the file COPYING).
+
+This means that as soon as you wish to distribute a program that links to
+librfid, that other program has to be licensed under the GPL or a compatible
+license, too.
+
+However, an alternative (royalty-based) licensing is possible.  If you want to
+create a proprieatary program based on librfid, contact Harald Welte
+<hwelte@hmw-consulting.de> for licensing details.
+

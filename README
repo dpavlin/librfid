@@ -1,0 +1,52 @@
+librfid - low-level RFID access library
+(C) 2005 by Harald Welte <laforge@gnumonks.org>
+======================================================================
+
+This library intends to provide a reader- and (as much as possible)
+PICC / tag independent API for RFID applications.
+
+1. Supported Prodocols:
+
+At this early stage of implementaition, it offers only ISO 14443-2, ISO 14443-3
+A and B as well as ISO 14443-4 (T=CL) support.  Other protocols, both open
+(such as ISO 15693) and proprietary are to be added as soon as I find some more
+time.
+
+2. Supported Readers:
+
+At this time only the Omnikey Cardman 5121 reader is supported. 
+
+The cm5121 is a relatively stupid piece of hardware.  Basically a contact-based
+cm3121 that was enhanced by putting a Philips CL RC632 reader ASIC next to it.
+There is no RFID protocol implementation on the cm5121, everything is done on
+the host (PC) software.  Four primitives (read/write byte/fifo) are provided
+via simple PC_to_RDR_Escape CCID messages.
+
+This makes it the ideal device to learn and play with RFID, since you don't
+have any (proprietary) software interfere and puts you in full control of
+everything.
+
+Support for more devices shouldn't be too difficult to add, provided the
+devices are stupid enough.  More sophisticated readers like Integrated
+Engineering or Philips Pegoda do much of the protocol handling in firmware on a
+Microcontroller.  This makes them (at least till now) faster, but also of
+limited use, especially in education and research.
+
+So if you happen to run into any other dumb RFID readers, especially those
+based on Philips CL RC531 and RC632, adding support should be very
+straightforward.  If you want to contract me for implementing a driver backend,
+don't hesitate to contact me.
+
+3. Installation
+
+In order to run librfid, you need to provide a PC_to_RDR_Escape function to it.
+This is the low-level transport function for communicating.   Usually that function would point to a CCID device driver.
+
+My svn repository at
+https://svn.gnumonks.org/trunk/omnikey_cardman/new/userspace/ has an openct
+fork with a modified CCID driver.  It allows you to use the contact based part
+via PC/SC, CT-API, and the contactless part via librfid simultaneously.
+
+
+-- Harald Welte <laforge@gnumonks.org>
+

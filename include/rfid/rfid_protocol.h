@@ -1,0 +1,53 @@
+#ifndef _RFID_PROTOCOL_H
+#define _RFID_PROTOCOL_H
+
+#include <rfid/rfid_layer2.h>
+
+#include <rfid/rfid_protocol_tcl.h>
+
+struct rfid_protocol_handle;
+
+struct rfid_protocol {
+	struct rfid_protocol *next;
+	unsigned int id;
+	char *name;
+	struct {
+		struct rfid_protocol_handle *(*init)(struct rfid_layer2_handle *l2h);
+		int (*open)(struct rfid_protocol_handle *ph);
+		int (*close)(struct rfid_protocol_handle *ph);
+		int (*fini)(struct rfid_protocol_handle *ph);
+		int (*transcieve)(struct rfid_protocol_handle *ph,
+				  const unsigned char *tx_buf,
+				  unsigned int tx_len,
+				  unsigned char *rx_buf,
+				  unsigned int *rx_len,
+				  unsigned int timeout,
+				  unsigned int flags);
+	} fn;
+};
+
+struct rfid_protocol_handle {
+	struct rfid_layer2_handle *l2h;
+	union {
+		struct tcl_handle tcl;
+	} priv;
+	struct rfid_protocol *proto;
+};
+
+struct rfid_protocol_handle *
+rfid_protocol_init(struct rfid_layer2_handle *l2h, unsigned int id);
+int rfid_protocol_open(struct rfid_protocol_handle *ph);
+int rfid_protocol_transcieve(struct rfid_protocol_handle *ph,
+			     const unsigned char *tx_buf, unsigned int tx_len,
+			     unsigned char *rx_buf, unsigned int *rx_len,
+			     unsigned int timeout, unsigned int flags);
+int rfid_protocol_fini(struct rfid_protocol_handle *ph);
+int rfid_protocol_close(struct rfid_protocol_handle *ph);
+
+int rfid_protocol_register(struct rfid_protocol *p);
+
+enum rfid_protocol_id {
+	RFID_PROTOCOL_UNKNOWN,
+	RFID_PROTOCOL_TCL,
+};
+#endif
