@@ -1,0 +1,23 @@
+rc632:
+- fix handling of timeout (program timer of RC632)
+
+iso14443a:
+- test anticollision, resolve remaining bugs
+
+iso14443b:
+- implement 'option 2' frame markers
+- test anticollission (need multiple tags)
+
+tcl:
+- implement chaining
+- implement wait time extension
+
+openct:
+- add ifdhandler driver
+
+other:
+- implementation of various tags
+- documentation
+- homepage
+- mailinglist(s)
+- move to new 'librfid' svn repository
