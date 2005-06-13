@@ -28,10 +28,13 @@ struct rfid_protocol {
 
 struct rfid_protocol_handle {
 	struct rfid_layer2_handle *l2h;
+	struct rfid_protocol *proto;
 	union {
 		struct tcl_handle tcl;
-	} priv;
-	struct rfid_protocol *proto;
+	} priv;				/* priv has to be last, since
+					 * it could contain additional
+					 * private data over the end of
+					 * sizeof(priv). */
 };
 
 struct rfid_protocol_handle *
