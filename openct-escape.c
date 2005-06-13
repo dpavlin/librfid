@@ -90,8 +90,8 @@ static int init()
 	}
 
 	printf("opening layer2 handle\n");
-	//l2h = rfid_layer2_init(rh, RFID_LAYER2_ISO14443A);
-	l2h = rfid_layer2_init(rh, RFID_LAYER2_ISO14443B);
+	l2h = rfid_layer2_init(rh, RFID_LAYER2_ISO14443A);
+	//l2h = rfid_layer2_init(rh, RFID_LAYER2_ISO14443B);
 	if (!l2h) {
 		fprintf(stderr, "error during iso14443a_init\n");
 		return -1;
@@ -122,16 +122,58 @@ static int init()
 	return 0;
 }
 
+static int select_mf(void)
+{
+	unsigned char cmd[] = { 0x00, 0xa4, 0x00, 0x00, 0x02, 0x3f, 0x00, 0x00 };
+	unsigned char ret[256];
+	unsigned int rlen = sizeof(ret);
+
+	int rv;
+
+	rv = rfid_protocol_transcieve(ph, cmd, sizeof(cmd), ret, &rlen, 0, 0);
+	if (rv < 0)
+		return rv;
+
+	//printf("%s\n", rfid_hexdump(ret, rlen));
+
+	return 0;
+}
+
+
+static int get_challenge(unsigned char len)
+{
+	unsigned char cmd[] = { 0x00, 0x84, 0x00, 0x00, 0x08 };
+	unsigned char ret[256];
+	unsigned int rlen = sizeof(ret);
+
+	cmd[4] = len;
+
+	int rv;
+
+	rv = rfid_protocol_transcieve(ph, cmd, sizeof(cmd), ret, &rlen, 0, 0);
+	if (rv < 0)
+		return rv;
+
+	//printf("%s\n", rfid_hexdump(ret, rlen));
+
+	return 0;
+}
 
 int main(int argc, char **argv)
 {
 	int rc;
 	char buf[0x40];
+	int i;
 
 	if (init() < 0)
 		exit(1);
 
 	/* we've established T=CL at this point */
+
+	select_mf();
+
+	for (i = 0; i < 4; i++)
+		get_challenge(0x60);
  
 	rfid_reader_close(rh);
 	
