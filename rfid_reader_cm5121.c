@@ -57,12 +57,15 @@ int Write1ByteToReg(struct rfid_asic_transport_handle *rath,
 	sndbuf[6] = reg;
 	sndbuf[7] = value;
 
-	DEBUGP("reg=0x%02x, val=%02x\n", reg, value);
+	DEBUGP("reg=0x%02x, val=%02x: ", reg, value);
 
 	if (PC_to_RDR_Escape(rath->data, sndbuf, 8, rcvbuf, 
-			     &retlen) == 0)
+			     &retlen) == 0) {
+		DEBUGPC("OK\n");
 		return 0;
+	}
 
+	DEBUGPC("ERROR\n");
 	return -1;
 }
 
@@ -82,13 +85,15 @@ static int Read1ByteFromReg(struct rfid_asic_transport_handle *rath,
 	sndbuf[5] = 0x00;
 	sndbuf[6] = reg;
 
+	DEBUGP("reg=0x%02x, val=%02x: ", reg, *value);
 	if (PC_to_RDR_Escape(rath->data, sndbuf, 7, recvbuf, 
 			     &retlen) == 0) {
 		*value = recvbuf[1];
-		DEBUGP("reg=0x%02x, val=%02x\n", reg, *value);
+		DEBUGPC("OK\n");
 		return 0;
 	}
 
+	DEBUGPC("ERROR\n");
 	return -1;
 }
 
@@ -108,12 +113,15 @@ static int ReadNBytesFromFIFO(struct rfid_asic_transport_handle *rath,
 	sndbuf[5] = 0x00;
 	sndbuf[6] = 0x02;
 
+	DEBUGP("num_bytes=%u: ", num_bytes);
 	if (PC_to_RDR_Escape(rath->data, sndbuf, 7, recvbuf, &retlen) == 0) {
-		DEBUGP("%s\n", rfid_hexdump(recvbuf+1, num_bytes));
+		DEBUGPC("%u [%s]\n", retlen,
+			rfid_hexdump(recvbuf+1, num_bytes));
 		memcpy(buf, recvbuf+1, num_bytes); // len == 0x7f
 		return 0;
 	}
 
+	DEBUGPC("ERROR\n");
 	return -1;
 }
 
@@ -134,14 +142,16 @@ static int WriteNBytesToFIFO(struct rfid_asic_transport_handle *rath,
 	sndbuf[5] = flags;
 	sndbuf[6] = 0x02;
 
-	DEBUGP("%s\n", rfid_hexdump(bytes, len));
+	DEBUGP("%u [%s]: ", len, rfid_hexdump(bytes, len));
 
 	memcpy(sndbuf+7, bytes, len);
 
 	if (PC_to_RDR_Escape(rath->data, sndbuf, len+7, recvbuf, &retlen) == 0) {
+		DEBUGPC("OK (%u [%s])\n", retlen, rfid_hexdump(recvbuf, retlen));
 		return 0;
 	}
 
+	DEBUGPC("ERROR\n");
 	return -1;
 }
 

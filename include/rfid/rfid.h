@@ -5,6 +5,7 @@
 
 
 #define DEBUGP(x, args ...) fprintf(stderr, "%s(%d):%s: " x, __FILE__, __LINE__, __FUNCTION__, ## args)
+#define DEBUGPC(x, args ...) fprintf(stderr, x, ## args)
 extern const char *rfid_hexdump(const void *data, unsigned int len);
 
 int rfid_init();
