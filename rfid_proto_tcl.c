@@ -163,7 +163,7 @@ static int
 tcl_do_pss(struct rfid_protocol_handle *h)
 {
 	unsigned char ppss[3];
-	unsigned char pps_response[1];
+	//unsigned char pps_response[1];
 
 	if (h->priv.tcl.state != TCL_STATE_ATS_RCVD)
 		return -1;
@@ -191,6 +191,15 @@ tcl_build_prologue2(struct tcl_handle *th,
 	*prlg_len = 1;
 
 	*prlg = pcb;
+
+	if (th->toggle) {
+		/* we've sent a toggle bit last time */
+		th->toggle = 0;
+	} else {
+		/* we've not sent a toggle last time: send one */
+		th->toggle = 1;
+		*prlg |= 0x01;
+	}
 
 	if (th->flags & TCL_HANDLE_F_CID_USED) {
 		/* ISO 14443-4:2000(E) Section 7.1.1.2 */
@@ -240,7 +249,8 @@ tcl_build_prologue_s(struct tcl_handle *th,
 {
 	/* ISO 14443-4:2000(E) Section 7.1.1.1 */
 
-	/* the only S-block from PCD->PICC is DESELECT: */
+	/* the only S-block from PCD->PICC is DESELECT,
+	 * well, actually there is the S(WTX) response. */
 	return tcl_build_prologue2(th, prlg, prlg_len, 0xc2);
 }
 
@@ -355,6 +365,10 @@ tcl_deselect(struct rfid_protocol_handle *h)
 	return 0;
 }
 
+#define is_s_block(x) ((x & 0xc0) == 0xc0)
+#define is_r_block(x) ((x & 0xc0) == 0x80)
+#define is_i_block(x) ((x & 0xc0) == 0x00)
+
 static int
 tcl_transcieve(struct rfid_protocol_handle *h,
 		const unsigned char *tx_data, unsigned int tx_len,
@@ -365,6 +379,10 @@ tcl_transcieve(struct rfid_protocol_handle *h,
 	unsigned char *tx_buf, *rx_buf;
 	unsigned int prlg_len;
 	struct tcl_handle *th = &h->priv.tcl;
+
+	unsigned char *_tx;
+	unsigned int _tx_len, _timeout;
+	unsigned char wtx_resp[3];
 
 	if (tx_len > max_net_tx_framesize(th)) {
 		/* slow path: we need to use chaining */
@@ -388,13 +406,118 @@ tcl_transcieve(struct rfid_protocol_handle *h,
 	}
 	memcpy(tx_buf + prlg_len, tx_data, tx_len);
 
-	ret = h->l2h->l2->fn.transcieve(h->l2h, tx_buf, tx_len+prlg_len, 
-				     rx_buf, rx_len, th->fwt, 0);
+	/* intialize to data-to-be-transferred */
+	_tx = tx_buf;
+	_tx_len = tx_len+prlg_len;
+	_timeout = th->fwt;
+
+do_tx:
+	ret = h->l2h->l2->fn.transcieve(h->l2h, _tx, _tx_len,
+					rx_buf, rx_len, _timeout, 0);
 	if (ret < 0)
 		goto out_rxb;
 
+	if ((*rx_buf & 0x01) != h->priv.tcl.toggle) {
+		DEBUGP("response with wrong toggle bit\n");
+		goto out_rxb;
+	}
 
-	memcpy(rx_data, rx_buf, *rx_len);
+	//if (*rx_len )
+	//
+
+	if (is_r_block(*rx_buf)) {
+		unsigned int txed = _tx - tx_buf;
+		/* Handle ACK frame in case of chaining */
+		if (*rx_buf & TCL_PCB_CID_FOLLOWING) {
+			if (*(rx_buf+1) != h->priv.tcl.cid) {
+				DEBUGP("CID %u is not valid\n", *(rx_buf)+1);
+				goto out_rxb;
+			}
+		}
+		/* set up parameters for next frame in chain */
+		if (txed < tx_len) {
+			/* move tx pointer by the amount of bytes transferred
+			 * in last frame */
+			_tx += _tx_len;
+			_tx_len = (tx_len - txed);
+			if (_tx_len > max_net_tx_framesize(th)) {
+				/* not last frame in chain */
+				_tx_len = max_net_tx_framesize(th);
+			} else {
+				/* last frame in chain */
+			}
+			goto do_tx;
+		} else {
+			DEBUGP("Received ACK in response to last frame in "
+			       "chain?!? Expected I-frame.\n");
+			ret = -1;
+			goto out_rxb;
+		}
+	} else if (is_s_block(*rx_buf)) {
+		unsigned char inf;
+		unsigned int prlg_len;
+
+		/* Handle Wait Time Extension */
+		if (*rx_buf & TCL_PCB_CID_FOLLOWING) {
+			if (*rx_len < 3) {
+				DEBUGP("S-Block with CID but short len\n");
+				ret = -1;
+				goto out_rxb;
+			}
+			if (*(rx_buf+1) != h->priv.tcl.cid) {
+				DEBUGP("CID %u is not valid\n", *(rx_buf)+1);
+				goto out_rxb;
+			}
+			inf = *(rx_buf+2);
+		} else
+			inf = *(rx_buf+1);
+
+		if ((*rx_buf & 0x30) != 0x30) {
+			DEBUGP("S-Block but not WTX?\n");
+			ret = -1;
+			goto out_rxb;
+		}
+		inf &= 0x3f;	/* only lower 6 bits code WTXM */
+		if (inf == 0 || (inf >= 60 && inf <= 63)) {
+			DEBUGP("WTXM %u is RFU!\n", inf);
+			ret = -1;
+			goto out_rxb;
+		}
+		
+		/* Acknowledge WTXM */
+		tcl_build_prologue_s(&h->priv.tcl, wtx_resp, &prlg_len);
+		/* set two bits that make this block a wtx */
+		wtx_resp[0] |= 0x30;
+		wtx_resp[prlg_len] = inf;
+		_tx = wtx_resp;
+		_tx_len = prlg_len+1;
+		_timeout = th->fwt * inf;
+
+		/* start over with next transcieve */
+		goto do_tx; /* FIXME: do transcieve locally since we use
+				totally different buffer */
+
+	} else if (is_i_block(*rx_buf)) {
+		unsigned char *inf = rx_buf+1;
+		/* we're actually receiving payload data */
+
+		if (*rx_buf & TCL_PCB_CID_FOLLOWING) {
+			if (*(rx_buf+1) != h->priv.tcl.cid) {
+				DEBUGP("CID %u is not valid\n", *(rx_buf)+1);
+				goto out_rxb;
+			}
+			inf++;
+		}
+		if (*rx_buf & TCL_PCB_NAD_FOLLOWING) {
+			inf++;
+		}
+		memcpy(rx_data, inf, *rx_len - (inf - rx_buf));
+
+		if (*rx_buf & 0x10) {
+			/* we're not the last frame in the chain, continue */
+			goto do_tx;
+		}
+	}
 
 out_rxb:
 	free(rx_buf);
@@ -435,6 +558,7 @@ tcl_init(struct rfid_layer2_handle *l2h)
 	/* maximum received ats length equals mru of asic/reader */
 	th->priv.tcl.state = TCL_STATE_INITIAL;
 	th->priv.tcl.ats_len = mru;
+	th->priv.tcl.toggle = 1;
 	th->l2h = l2h;
 	th->proto = &rfid_protocol_tcl;
 

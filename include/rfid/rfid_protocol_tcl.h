@@ -32,6 +32,8 @@ struct tcl_handle {
 	unsigned int flags;
 	unsigned int state;	/* protocol state */
 
+	unsigned int toggle;	/* send toggle with next frame */
+
 	unsigned int ats_len;
 	unsigned char ats[0];
 };
