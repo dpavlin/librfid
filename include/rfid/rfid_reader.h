@@ -24,9 +24,11 @@ struct rfid_reader {
 		int (*transcieve_acf)(struct rfid_reader_handle *h,
 				      struct iso14443a_anticol_cmd *cmd,
 				      unsigned int *bit_of_col);
+		unsigned int speed;
 	} iso14443a;
 	struct rfid_14443b_reader {
 		int (*init)(struct rfid_reader_handle *rh);
+		unsigned int speed;
 	} iso14443b;
 	struct rfid_15693_reader {
 
@@ -37,6 +39,13 @@ struct rfid_reader {
 enum rfid_reader_id {
 	RFID_READER_CM5121,
 	RFID_READER_PEGODA,
+};
+
+enum rfid_reader_14443a_speed {
+	RFID_READER_SPEED_106K,
+	RFID_READER_SPEED_212K,
+	RFID_READER_SPEED_424K,
+	RFID_READER_SPEED_848K,
 };
 
 struct rfid_reader_handle {
