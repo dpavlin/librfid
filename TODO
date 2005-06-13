@@ -1,6 +1,9 @@
 rc632:
 - fix handling of timeout (program timer of RC632)
 
+cm5121:
+- fix handling of TX or RX > 0x7f [buffer length in atmel chip?]
+
 iso14443a:
 - test anticollision, resolve remaining bugs
 
@@ -9,8 +12,8 @@ iso14443b:
 - test anticollission (need multiple tags)
 
 tcl:
-- implement chaining
-- implement wait time extension
+- test chaining
+- implement + test pps
 
 openct:
 - add ifdhandler driver
@@ -20,4 +23,3 @@ other:
 - documentation
 - homepage
 - mailinglist(s)
-- move to new 'librfid' svn repository
