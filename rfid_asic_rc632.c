@@ -352,6 +352,13 @@ rc632_init(struct rfid_asic_handle *ah)
 {
 	int ret;
 
+	/* switch off rf (make sure PICCs are reset at init time) */
+	ret = rc632_power_down(ah);
+	if (ret < 0)
+		return ret;
+
+	usleep(10000);
+
 	/* switch on rf */
 	ret = rc632_power_up(ah);
 	if (ret < 0)
