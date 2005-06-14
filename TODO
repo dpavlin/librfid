@@ -11,6 +11,10 @@ iso14443b:
 - implement 'option 2' frame markers
 - test anticollission (need multiple tags)
 
+iso15693:
+- implement anticollision
+- implement all the rest
+
 tcl:
 - test chaining
 - implement + test pps

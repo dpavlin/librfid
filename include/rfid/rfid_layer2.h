@@ -6,6 +6,7 @@ struct rfid_reader_handle;
 
 #include <rfid/rfid_layer2_iso14443a.h>
 #include <rfid/rfid_layer2_iso14443b.h>
+#include <rfid/rfid_layer2_iso15693.h>
 
 
 struct rfid_layer2 {
@@ -31,7 +32,7 @@ struct rfid_layer2_handle {
 	union {
 		struct iso14443a_handle iso14443a;
 		struct iso14443b_handle iso14443b;
-		//struct iso15693_handle iso15693;
+		struct iso15693_handle iso15693;
 	} priv;
 	struct rfid_layer2 *l2;
 };

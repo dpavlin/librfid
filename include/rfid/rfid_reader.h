@@ -31,7 +31,7 @@ struct rfid_reader {
 		unsigned int speed;
 	} iso14443b;
 	struct rfid_15693_reader {
-
+		int (*init)(struct rfid_reader_handle *rh);
 	} iso15693;
 	struct rfid_reader *next;
 };

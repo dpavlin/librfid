@@ -51,6 +51,9 @@ struct rfid_asic_rc632 {
 		struct {
 			int (*init)(struct rfid_asic_handle *h);
 		} iso14443b;
+		struct {
+			int (*init)(struct rfid_asic_handle *h);
+		} iso15693;
 	} fn;
 };
 
