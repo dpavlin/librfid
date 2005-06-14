@@ -210,6 +210,12 @@ cm5121_14443b_init(struct rfid_reader_handle *rh)
 	return rh->ah->asic->priv.rc632.fn.iso14443b.init(rh->ah);
 }
 
+static int
+cm5121_15693_init(struct rfid_reader_handle *rh)
+{
+	return rh->ah->asic->priv.rc632.fn.iso15693.init(rh->ah);
+}
+
 
 struct rfid_asic_transport cm5121_ccid = {
 	.name = "CM5121 OpenCT",
