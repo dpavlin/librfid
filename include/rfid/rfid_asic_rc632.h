@@ -23,7 +23,7 @@ struct rfid_asic_rc632_transport {
 
 struct rfid_asic_handle;
 
-struct iso14443a_atqua;
+struct iso14443a_atqa;
 struct iso14443a_anticol_cmd;
 
 struct rfid_asic_rc632 {
@@ -137,7 +137,7 @@ int
 rc632_register_dump(struct rfid_asic_handle *handle, unsigned char *buf);
 
 
-//struct rfid_asic_handle * rc632_open(struct rc632_transport *transport, void *data);
+struct rfid_asic_handle * rc632_open(struct rfid_asic_transport_handle *th);
 
 
 extern struct rfid_asic rc632;

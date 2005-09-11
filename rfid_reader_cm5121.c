@@ -186,13 +186,14 @@ static int cm5121_transcieve_sf(struct rfid_reader_handle *rh,
 			       unsigned char cmd, struct iso14443a_atqa *atqa)
 {
 	return rh->ah->asic->priv.rc632.fn.iso14443a.transcieve_sf(rh->ah,
-									cmd,
-						(unsigned char *) atqa);
+								   cmd,
+								   atqa);
 }
 
 static int
-cm5121_transcieve_acf(struct rfid_reader_handle *rh, struct iso14443a_anticol_cmd *cmd,
-					      unsigned int *bit_of_col)
+cm5121_transcieve_acf(struct rfid_reader_handle *rh,
+		      struct iso14443a_anticol_cmd *cmd,
+		      unsigned int *bit_of_col)
 {
 	return rh->ah->asic->priv.rc632.fn.iso14443a.transcieve_acf(rh->ah,
 							 cmd, bit_of_col);
@@ -236,7 +237,7 @@ static int cm5121_enable_rc632(struct rfid_asic_transport_handle *rath)
 	unsigned int rx_len = sizeof(rx_buf);
 
 	PC_to_RDR_Escape(rath->data, tx_buf, 1, rx_buf, &rx_len);
-	printf("received %d bytes from 01 command\n", rx_len);
+	printf("received %u bytes from 01 command\n", rx_len);
 
 	return 0;
 }
