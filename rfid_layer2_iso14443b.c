@@ -112,7 +112,7 @@ send_reqb(struct rfid_layer2_handle *h, unsigned char afi,
 	     num_slot_idx++) {
 		reqb[2] = num_slot_idx & 0x07;
 		if (is_wup)
-			reqb[2] |= 0x80;
+			reqb[2] |= 0x08;
 
 		ret = h->rh->reader->transcieve(h->rh, reqb, sizeof(reqb),
 						 (unsigned char *)&atqb, 
