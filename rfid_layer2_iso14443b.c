@@ -36,7 +36,7 @@
 static inline int
 fwi_to_fwt(struct rfid_layer2_handle *h, unsigned int *fwt, unsigned int fwi)
 {
-	unsigned int multiplier;
+	unsigned int multiplier, tmp;
 
 	/* 15 is RFU */
 	if (fwi > 14)
@@ -52,7 +52,9 @@ fwi_to_fwt(struct rfid_layer2_handle *h, unsigned int *fwt, unsigned int fwi)
 
 	multiplier = 1 << fwi;		/* 2 to the power of fwi */
 
-	return (1000000 * 256 * 16 / h->rh->ah->asic->fc) * multiplier
+	tmp = (unsigned int) 1000000 * 256 * 16;
+
+	return (tmp / h->rh->ah->asic->fc) * multiplier;
 }
 
 static int
@@ -124,7 +126,7 @@ send_reqb(struct rfid_layer2_handle *h, unsigned char afi,
 		/* FIXME: send N-1 slot marker frames */
 	
 		if (atqb_len != sizeof(atqb)) {
-			DEBUGP("error: atqb_len = %u instead of %u\n",
+			DEBUGP("error: atqb_len = %u instead of %Zu\n",
 				atqb_len, sizeof(atqb));
 			continue;
 		}
@@ -263,7 +265,7 @@ iso14443b_anticol(struct rfid_layer2_handle *handle)
 {
 	unsigned char afi = 0; /* FIXME */
 	int ret;
-	char buf[255];
+	unsigned char buf[255];
 	unsigned int buf_len = sizeof(buf);
 
 	ret = send_reqb(handle, afi, 0, 0);
@@ -317,7 +319,7 @@ static int
 iso14443b_transcieve(struct rfid_layer2_handle *handle,
 		     const unsigned char *tx_buf, unsigned int tx_len,
 		     unsigned char *rx_buf, unsigned int *rx_len,
-		     unsigned int timeout, unsigned int flags)
+		     u_int64_t timeout, unsigned int flags)
 {
 	return handle->rh->reader->transcieve(handle->rh, tx_buf, tx_len,
 					      rx_buf, rx_len, timeout, flags);

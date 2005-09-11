@@ -19,7 +19,7 @@ struct rfid_layer2 {
 		int (*transcieve)(struct rfid_layer2_handle *h,
 				  const unsigned char *tx_buf, 
 				  unsigned int tx_len, unsigned char *rx_buf, 
-				  unsigned int *rx_len, unsigned int timeout, 
+				  unsigned int *rx_len, u_int64_t timeout,
 				  unsigned int flags);
 		int (*close)(struct rfid_layer2_handle *h);
 		int (*fini)(struct rfid_layer2_handle *h);
@@ -50,7 +50,7 @@ int rfid_layer2_open(struct rfid_layer2_handle *l2h);
 int rfid_layer2_transcieve(struct rfid_layer2_handle *l2h,
 			   const unsigned char *tx_buf, unsigned int tx_len,
 			   unsigned char *rx_buf, unsigned int *rx_len,
-			   unsigned int timeout, unsigned int flags);
+			   u_int64_t timeout, unsigned int flags);
 int rfid_layer2_close(struct rfid_layer2_handle *l2h);
 int rfid_layer2_fini(struct rfid_layer2_handle *l2h);
 

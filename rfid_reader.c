@@ -42,7 +42,7 @@ int
 rfid_reader_transcieve(struct rfid_reader_handle *rh,
 			 const unsigned char *tx_buf, unsigned int len,
 			 unsigned char *rx_buf, unsigned int *rx_len,
-			 unsigned int timeout, unsigned int flags)
+			 u_int64_t timeout, unsigned int flags)
 {
 	return rh->reader->transcieve(rh, tx_buf, len, rx_buf, rx_len,
 					timeout, flags);

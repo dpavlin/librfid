@@ -12,9 +12,9 @@ struct rfid_reader {
 	int (*transcieve)(struct rfid_reader_handle *h,
 			  const unsigned char *tx_buf, unsigned int tx_len,
 			  unsigned char *rx_buf, unsigned int *rx_len,
-			  unsigned int timeout, unsigned int flags);
+			  u_int64_t timeout, unsigned int flags);
 	struct rfid_reader_handle * (*open)(void *data);
-	int (*close)(void *data);
+	void (*close)(struct rfid_reader_handle *h);
 
 	struct rfid_14443a_reader {
 		int (*init)(struct rfid_reader_handle *h);

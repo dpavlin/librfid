@@ -48,7 +48,7 @@ int
 rfid_layer2_transcieve(struct rfid_layer2_handle *ph,
 			 const unsigned char *tx_buf, unsigned int len,
 			 unsigned char *rx_buf, unsigned int *rx_len,
-			 unsigned int timeout, unsigned int flags)
+			 u_int64_t timeout, unsigned int flags)
 {
 	return ph->l2->fn.transcieve(ph, tx_buf, len, rx_buf, rx_len,
 					timeout, flags);
