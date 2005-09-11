@@ -56,7 +56,7 @@ static int
 iso14443a_transcieve(struct rfid_layer2_handle *handle,
 			const unsigned char *tx_buf, unsigned int tx_len,
 			unsigned char *rx_buf, unsigned int *rx_len,
-			unsigned int timeout, unsigned int flags)
+			u_int64_t, unsigned int flags)
 {
 	return handle->rh->reader->transcieve(handle->rh, tx_buf, tx_len, 
 						rx_buf, rx_len, timeout, flags);

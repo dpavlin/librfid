@@ -37,7 +37,7 @@ struct rfid_asic_rc632 {
 				  unsigned int tx_len,
 				  unsigned char *rx_buf,
 				  unsigned int *rx_len,
-				  unsigned int timeout,
+				  u_int64_t timeout,
 				  unsigned int flags);
 		struct {
 			int (*init)(struct rfid_asic_handle *h);
@@ -109,13 +109,13 @@ rc632_power_down(struct rfid_asic_handle *handle);
 
 
 int
-rc632_wait_idle(struct rfid_asic_handle *handle, unsigned int time);
+rc632_wait_idle(struct rfid_asic_handle *handle, u_int64_t time);
 
 int
 rc632_transmit(struct rfid_asic_handle *handle,
 		const unsigned char *buf,
 		unsigned char len,
-		unsigned int timeout);
+		u_int64_t timeout);
 
 int
 rc632_transcieve(struct rfid_asic_handle *handle,

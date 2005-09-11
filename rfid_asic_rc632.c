@@ -148,7 +148,7 @@ rc632_power_down(struct rfid_asic_handle *handle)
 /* Stupid RC623 implementations don't evaluate interrupts but poll the
  * command register for "status idle" */
 int
-rc632_wait_idle(struct rfid_asic_handle *handle, unsigned int time)
+rc632_wait_idle(struct rfid_asic_handle *handle, u_int64_t timeout)
 {
 	unsigned char cmd = 0xff;
 	int ret;
@@ -182,7 +182,7 @@ int
 rc632_transmit(struct rfid_asic_handle *handle,
 		const unsigned char *buf,
 		unsigned char len,
-		unsigned int timeout)
+		u_int64_t timeout)
 {
 	int ret;
 
@@ -617,7 +617,7 @@ static int
 rc632_iso14443a_transcieve(struct rfid_asic_handle *handle,
 			   const unsigned char *tx_buf, unsigned int tx_len,
 			   unsigned char *rx_buf, unsigned int *rx_len,
-			   unsigned int timeout, unsigned int flags)
+			   u_int64_t timeout, unsigned int flags)
 {
 	int ret;
 	unsigned char rxl = *rx_len & 0xff;

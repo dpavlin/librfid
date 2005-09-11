@@ -41,6 +41,7 @@ static unsigned int sfgi_to_sfgt(struct rfid_protocol_handle *h,
 				 unsigned char sfgi)
 {
 	unsigned int multiplier;
+	unsigned int tmp;
 
 	if (sfgi > 14)
 		sfgi = 14;
@@ -49,14 +50,15 @@ static unsigned int sfgi_to_sfgt(struct rfid_protocol_handle *h,
 
 	/* ISO 14443-4:2000(E) Section 5.2.5:
 	 * (256 * 16 / h->l2h->rh->ah->fc) * (2 ^ sfgi) */
+	tmp = (unsigned int) 1000000 * 256 * 16;
 
-	return (1000000 * 256*16 / h->l2h->rh->ah->fc) * multiplier;
+	return (tmp / h->l2h->rh->ah->fc) * multiplier;
 }
 
 static unsigned int fwi_to_fwt(struct rfid_protocol_handle *h, 
 				unsigned char fwi)
 {
-	unsigned int multiplier;
+	unsigned int multiplier, tmp;
 
 	if (fwi > 14)
 		fwi = 14;
@@ -66,10 +68,13 @@ static unsigned int fwi_to_fwt(struct rfid_protocol_handle *h,
 	/* ISO 14443-4:2000(E) Section 7.2.:
 	 * (256*16 / h->l2h->rh->ah->fc) * (2 ^ fwi) */
 
-	return (1000000 * 256*16 / h->l2h->rh->ah->fc) * multiplier;
+	tmp = (unsigned int) 1000000 * 256 * 16;
+
+	return (tmp / h->l2h->rh->ah->fc) * multiplier;
 }
 
-#define activation_fwt(x) (65536 / x->l2h->rh->ah->fc)
+/* 4.9seconds as microseconds (4.9 billion seconds) exceeds 2^32 */
+#define activation_fwt(x) (((u_int64_t)1000000 * 65536 / x->l2h->rh->ah->fc))
 #define deactivation_fwt(x) activation_fwt(x)
 
 static int

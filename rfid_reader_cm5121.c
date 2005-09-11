@@ -174,7 +174,7 @@ static int TestFIFO(struct rc632_handle *handle)
 static int cm5121_transcieve(struct rfid_reader_handle *rh,
 			     const unsigned char *tx_data, unsigned int tx_len,
 			     unsigned char *rx_data, unsigned int *rx_len,
-			     unsigned int timeout, unsigned int flags)
+			     u_int64_t timeout, unsigned int flags)
 {
 	return rh->ah->asic->priv.rc632.fn.transcieve(rh->ah, tx_data,
 							   tx_len, rx_data,
@@ -299,6 +299,8 @@ struct rfid_reader rfid_reader_cm5121 = {
 		.init = &cm5121_14443a_init,
 		.transcieve_sf = &cm5121_transcieve_sf,
 		.transcieve_acf = &cm5121_transcieve_acf,
+		.speed = RFID_READER_SPEED_106K | RFID_READER_SPEED_212K |
+			 RFID_READER_SPEED_424K | RFID_READER_SPEED_848K,
 	},
 	.iso14443b = {
 		.init = &cm5121_14443b_init,
