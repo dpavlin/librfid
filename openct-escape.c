@@ -59,7 +59,6 @@ static int init()
 {
 	unsigned char buf[0x3f];
 	unsigned char atr[64];
-	unsigned 
 	int rc;
 
 	h = ct_reader_connect(0);

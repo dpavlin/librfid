@@ -610,7 +610,7 @@ rc632_iso14443a_transcieve_sf(struct rfid_asic_handle *handle,
 	return 0;
 }
 
-/* trasncieve regular frame */
+/* transcieve regular frame */
 static int
 rc632_iso14443a_transcieve(struct rfid_asic_handle *handle,
 			   const unsigned char *tx_buf, unsigned int tx_len,
