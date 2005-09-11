@@ -518,7 +518,8 @@ rc632_iso14443a_init(struct rfid_asic_handle *handle)
 	if (ret < 0)
 		return ret;
 
-	ret = rc632_reg_write(handle, RC632_REG_RX_WAIT, 0x03);
+	/* Omnikey proprietary driver has 0x03, but 0x06 is the default reset value ?!? */
+	ret = rc632_reg_write(handle, RC632_REG_RX_WAIT, 0x06);
 	if (ret < 0)
 		return ret;
 
