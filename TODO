@@ -17,13 +17,14 @@ iso15693:
 
 tcl:
 - test chaining
-- implement + test pps
+- implement pps for asymmetric (rx/tx) speeds
+- test pps
 
 openct:
 - add ifdhandler driver
 
 other:
-- implementation of various tags
+- implementation of code for various passive tags
 - documentation
 - homepage
 - mailinglist(s)
