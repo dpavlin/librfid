@@ -49,7 +49,7 @@ struct iso14443b_handle {
 	unsigned int fsc;	/* max. frame size card */
 	unsigned int fsd;	/* max. frame size reader */
 
-	unsigned int fwt;	/* frame waiting time */
+	unsigned int fwt;	/* frame waiting time (in usec) */
 
 	unsigned int mbl;	/* maximum buffer length */
 

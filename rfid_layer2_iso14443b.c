@@ -36,10 +36,23 @@
 static inline int
 fwi_to_fwt(struct rfid_layer2_handle *h, unsigned int *fwt, unsigned int fwi)
 {
+	unsigned int multiplier;
+
+	/* 15 is RFU */
 	if (fwi > 14)
 		return -1;
 
-	return (256 * 16 / h->rh->ah->asic->fc) * 2 ^ fwi;
+	/* According to ISO 14443-3:200(E), Chapter 7.9.4.3, the forumala is
+	 * (256 * 16 / fC) * 2^fwi We avoid floating point computations by
+	 * shifting everything into the microsecond range.  In integer
+	 * calculations 1000000*256*16/13560000 evaluates to 302 (instead of
+	 * 302.064897), which provides sufficient precision, IMHO.  The max
+	 * result is 302 * 16384 (4947968), which fits well within the 31/32
+	 * bit range of an integer */
+
+	multiplier = 1 << fwi;		/* 2 to the power of fwi */
+
+	return (1000000 * 256 * 16 / h->rh->ah->asic->fc) * multiplier
 }
 
 static int

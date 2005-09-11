@@ -40,15 +40,33 @@
 static unsigned int sfgi_to_sfgt(struct rfid_protocol_handle *h, 
 				 unsigned char sfgi)
 {
-	/* ISO 14443-4:2000(E) Section 5.2.5. */
-	return (256 * 16 / h->l2h->rh->ah->fc) * (2 ^ sfgi);
+	unsigned int multiplier;
+
+	if (sfgi > 14)
+		sfgi = 14;
+
+	multiplier = 1 << sfgi; /* 2 to the power of sfgi */
+
+	/* ISO 14443-4:2000(E) Section 5.2.5:
+	 * (256 * 16 / h->l2h->rh->ah->fc) * (2 ^ sfgi) */
+
+	return (1000000 * 256*16 / h->l2h->rh->ah->fc) * multiplier;
 }
 
 static unsigned int fwi_to_fwt(struct rfid_protocol_handle *h, 
 				unsigned char fwi)
 {
-	/* ISO 14443-4:2000(E) Section 7.2. */
-	return (256*16 / h->l2h->rh->ah->fc) * (2 ^ fwi);
+	unsigned int multiplier;
+
+	if (fwi > 14)
+		fwi = 14;
+
+	multiplier  = 1 << fwi; /* 2 to the power of fwi */
+
+	/* ISO 14443-4:2000(E) Section 7.2.:
+	 * (256*16 / h->l2h->rh->ah->fc) * (2 ^ fwi) */
+
+	return (1000000 * 256*16 / h->l2h->rh->ah->fc) * multiplier;
 }
 
 #define activation_fwt(x) (65536 / x->l2h->rh->ah->fc)
