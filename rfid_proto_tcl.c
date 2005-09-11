@@ -91,10 +91,12 @@ tcl_parse_ats(struct rfid_protocol_handle *h,
 	if (size < len)
 		len = size;
 
+	h->priv.tcl.ta = 0;
+
 	if (len == 1) {
 		/* FIXME: assume some default values */
 		h->priv.tcl.fsc = 32;
-		h->priv.tcl.ta = 0;
+		h->priv.tcl.ta = 0x80;	/* 0x80 (same d for both dirs) */
 		h->priv.tcl.sfgt = sfgi_to_sfgt(h, 0);
 		if (h->l2h->l2->id == RFID_LAYER2_ISO14443A) {
 			/* Section 7.2: fwi default for type A is 4 */
@@ -182,28 +184,80 @@ tcl_request_ats(struct rfid_protocol_handle *h)
 
 	return 0;
 }
+
+#define ATS_TA_DIV_2	1
+#define ATS_TA_DIV_4	2
+#define ATS_TA_DIV_8	4
+
+#define PPS_DIV_8	3
+#define PPS_DIV_4	2
+#define PPS_DIV_2	1
+#define PPS_DIV_1	0
+static unsigned char d_to_di(struct rfid_protocol_handle *h, unsigned char D)
+{
+	static char DI;
+	unsigned int speed = h->l2h->rh->reader->iso14443a.speed;
+	
+	if ((D & ATS_TA_DIV_8) && (speed & RFID_READER_SPEED_848K))
+		DI = PPS_DIV_8;
+	else if ((D & ATS_TA_DIV_4) && (speed & RFID_READER_SPEED_424K))
+		DI = PPS_DIV_4;
+	else if ((D & ATS_TA_DIV_2) && (speed & RFID_READER_SPEED_212K))
+		DI = PPS_DIV_2;
+	else
+		DI = PPS_DIV_1;
+
+	return DI;
+}
+
+
 /* start a PSS run (autimatically configure highest possible speed */
 static int 
-tcl_do_pss(struct rfid_protocol_handle *h)
+tcl_do_pps(struct rfid_protocol_handle *h)
 {
+	int ret;
 	unsigned char ppss[3];
-	//unsigned char pps_response[1];
+	unsigned char pps_response[1];
+	unsigned int rx_len = 1;
+	unsigned char Dr, Ds, DrI, DsI;
 
 	if (h->priv.tcl.state != TCL_STATE_ATS_RCVD)
 		return -1;
+
+	Dr = h->priv.tcl.ta & 0x07;
+	Ds = h->priv.tcl.ta & 0x70 >> 4;
+
+	if (Dr != Ds && !(h->priv.tcl.ta & 0x80)) {
+		/* device supports different divisors for rx and tx, but not ?!? */
+		DEBUGP("PICC has contradictory TA, aborting PPS\n");
+		return -1;
+	};
 
 	/* ISO 14443-4:2000(E) Section 5.3. */
 
 	ppss[0] = 0xd0 & (h->priv.tcl.cid & 0x0f);
 	ppss[1] = 0x11;
 
-	//ppss[2] = 0x00 & foo;
+	/* FIXME: deal with different speed for each direction */
+	DrI = d_to_di(h, Dr);
+	DsI = d_to_di(h, Ds);
 
-	// FIXME: finish
-	
-	return -1;
+	ppss[2] = (ppss[2] & 0xf0) | (DrI | DsI << 2);
+
+	ret = h->l2h->l2->fn.transcieve(h->l2h, ppss, 3, pps_response,
+					&rx_len, h->priv.tcl.fwt,
+					TCL_TRANSP_F_TX_CRC);
+	if (ret < 0)
+		return ret;
+
+	if (pps_response[0] != ppss[0]) {
+		DEBUGP("PPS Response != PPSS\n");
+		return -1;
+	}
 	
 	h->priv.tcl.state = TCL_STATE_ESTABLISHED;
+
+	return 0;
 }
 
 
@@ -311,10 +365,11 @@ tcl_connect(struct rfid_protocol_handle *h)
 		if (ret < 0)
 			return ret;
 
-		if (0 /* FIXME */) {
-			ret = tcl_do_pss(h);
+		/* Only do PPS if any non-default divisors supported */
+		if (h->priv.tcl.ta & 0x77) {
+			ret = tcl_do_pps(h);
 			if (ret < 0)
-				return -1;
+				return ret;
 		}
 		break;
 	case RFID_LAYER2_ISO14443B:
