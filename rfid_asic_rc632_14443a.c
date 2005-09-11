@@ -51,6 +51,7 @@ rc632_iso14443a_init(struct rfid_asic_handle *handle)
 	if (ret < 0)
 		return ret;
 
+	/* Since FORCE_100_ASK is set (cf mc073930.pdf), this line may be left out? */
 	ret = rc632_reg_write(handle, RC632_REG_MOD_CONDUCTANCE,
 				CM5121_MOD_CONDUCTANCE);
 	if (ret < 0)
