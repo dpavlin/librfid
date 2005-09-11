@@ -21,9 +21,9 @@ struct tcl_handle {
 
 	unsigned int fsc;	/* max frame size accepted by card */
 	unsigned int fsd;	/* max frame size accepted by reader */
-	unsigned int fwt;	/* frame waiting time */
+	unsigned int fwt;	/* frame waiting time (in usec)*/
 	unsigned char ta;	/* divisor information */
-	unsigned char sfgt;	/* start-up frame guard time */
+	unsigned char sfgt;	/* start-up frame guard time (in usec) */
 
 	/* otherwise determined */
 	unsigned int cid;	/* Card ID */
