@@ -96,12 +96,13 @@ tcl_parse_ats(struct rfid_protocol_handle *h,
 		h->priv.tcl.fsc = 32;
 		h->priv.tcl.ta = 0;
 		h->priv.tcl.sfgt = sfgi_to_sfgt(h, 0);
-		if (1 /* FIXME: is_iso14443a */) {
+		if (h->l2h->l2->id == RFID_LAYER2_ISO14443A) {
 			/* Section 7.2: fwi default for type A is 4 */
 			h->priv.tcl.fwt = fwi_to_fwt(h, 4);
 		} else {
 			/* Section 7.2: fwi for type B is always in ATQB */
-			/* FIXME */
+			/* Value is assigned in tcl_connect() */
+			/* This function is never called for Type B, since it has no (R)ATS */
 		}
 		return 0;
 	}
