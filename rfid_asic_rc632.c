@@ -586,7 +586,7 @@ rc632_iso14443a_transcieve_sf(struct rfid_asic_handle *handle,
 				 RC632_CR_PARITY_ODD));
 #else
 	ret = rc632_clear_bits(handle, RC632_REG_CHANNEL_REDUNDANCY,
-				RC632_CR_TX_CRC_ENABLE|RC632_CR_TX_CRC_ENABLE);
+				RC632_CR_RX_CRC_ENABLE|RC632_CR_TX_CRC_ENABLE);
 				
 #endif
 	if (ret < 0)
