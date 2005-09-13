@@ -48,10 +48,10 @@ rfid_reader_transcieve(struct rfid_reader_handle *rh,
 					timeout, flags);
 }
 
-int
+void
 rfid_reader_close(struct rfid_reader_handle *rh)
 {
-	return rh->reader->close(rh);
+	rh->reader->close(rh);
 }
 
 int
