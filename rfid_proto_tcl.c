@@ -215,6 +215,7 @@ static unsigned char d_to_di(struct rfid_protocol_handle *h, unsigned char D)
 static int 
 tcl_do_pps(struct rfid_protocol_handle *h)
 {
+#if 0
 	int ret;
 	unsigned char ppss[3];
 	unsigned char pps_response[1];
@@ -256,7 +257,7 @@ tcl_do_pps(struct rfid_protocol_handle *h)
 	}
 	
 	h->priv.tcl.state = TCL_STATE_ESTABLISHED;
-
+#endif
 	return 0;
 }
 
@@ -462,6 +463,8 @@ tcl_transcieve(struct rfid_protocol_handle *h,
 	unsigned char *_tx;
 	unsigned int _tx_len, _timeout;
 	unsigned char wtx_resp[3];
+	unsigned char ack[10];
+	unsigned int ack_len;
 
 	if (tx_len > max_net_tx_framesize(th)) {
 		/* slow path: we need to use chaining */
@@ -493,6 +496,7 @@ tcl_transcieve(struct rfid_protocol_handle *h,
 do_tx:
 	ret = h->l2h->l2->fn.transcieve(h->l2h, _tx, _tx_len,
 					rx_buf, rx_len, _timeout, 0);
+	DEBUGP("l2 transcieve finished\n");
 	if (ret < 0)
 		goto out_rxb;
 
@@ -501,11 +505,9 @@ do_tx:
 		goto out_rxb;
 	}
 
-	//if (*rx_len )
-	//
-
 	if (is_r_block(*rx_buf)) {
 		unsigned int txed = _tx - tx_buf;
+		DEBUGP("R-Block\n");
 		/* Handle ACK frame in case of chaining */
 		if (*rx_buf & TCL_PCB_CID_FOLLOWING) {
 			if (*(rx_buf+1) != h->priv.tcl.cid) {
@@ -536,6 +538,7 @@ do_tx:
 		unsigned char inf;
 		unsigned int prlg_len;
 
+		DEBUGP("S-Block\n");
 		/* Handle Wait Time Extension */
 		if (*rx_buf & TCL_PCB_CID_FOLLOWING) {
 			if (*rx_len < 3) {
@@ -580,6 +583,7 @@ do_tx:
 		unsigned char *inf = rx_buf+1;
 		/* we're actually receiving payload data */
 
+		DEBUGP("I-Block\n");
 		if (*rx_buf & TCL_PCB_CID_FOLLOWING) {
 			if (*(rx_buf+1) != h->priv.tcl.cid) {
 				DEBUGP("CID %u is not valid\n", *(rx_buf)+1);
@@ -593,7 +597,12 @@ do_tx:
 		memcpy(rx_data, inf, *rx_len - (inf - rx_buf));
 
 		if (*rx_buf & 0x10) {
-			/* we're not the last frame in the chain, continue */
+			/* we're not the last frame in the chain, continue rx */
+			DEBUGP("we're not the last frame in the chain, continue\n");
+			ack_len = sizeof(ack);
+			tcl_build_prologue_r(&h->priv.tcl, ack, &ack_len, 0);
+			_tx = ack;
+			_tx_len = ack_len;
 			goto do_tx;
 		}
 	}
