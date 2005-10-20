@@ -622,6 +622,7 @@ rc632_iso14443a_transcieve(struct rfid_asic_handle *handle,
 	int ret;
 	unsigned char rxl = *rx_len & 0xff;
 
+	DEBUGP("entered\n");
 	memset(rx_buf, 0, *rx_len);
 
 #if 0

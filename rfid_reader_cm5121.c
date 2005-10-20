@@ -40,6 +40,14 @@
 #define SENDBUF_LEN	40
 #define RECVBUF_LEN	40
 
+#if 0
+#ifdef DEBUGP
+#undef DEBUGP
+#define DEBUGP(x, ...)
+#define DEBUGPC(x, ...)
+#endif
+#endif
+
 static
 int Write1ByteToReg(struct rfid_asic_transport_handle *rath,
 		    unsigned char reg, unsigned char value)

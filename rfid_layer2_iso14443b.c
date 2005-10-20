@@ -321,6 +321,7 @@ iso14443b_transcieve(struct rfid_layer2_handle *handle,
 		     unsigned char *rx_buf, unsigned int *rx_len,
 		     u_int64_t timeout, unsigned int flags)
 {
+	DEBUGP("transcieving %u bytes, expecting max %u\n", tx_len, *rx_len);
 	return handle->rh->reader->transcieve(handle->rh, tx_buf, tx_len,
 					      rx_buf, rx_len, timeout, flags);
 }
