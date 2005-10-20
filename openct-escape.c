@@ -88,6 +88,8 @@ static int init()
 		return -1;
 	}
 
+	sleep(2);
+
 	printf("opening layer2 handle\n");
 	l2h = rfid_layer2_init(rh, RFID_LAYER2_ISO14443A);
 	//l2h = rfid_layer2_init(rh, RFID_LAYER2_ISO14443B);
@@ -133,7 +135,7 @@ static int select_mf(void)
 	if (rv < 0)
 		return rv;
 
-	//printf("%s\n", rfid_hexdump(ret, rlen));
+	printf("%s\n", rfid_hexdump(ret, rlen));
 
 	return 0;
 }
@@ -158,6 +160,95 @@ static int get_challenge(unsigned char len)
 	return 0;
 }
 
+int
+iso7816_select_application(void)
+{
+	char cmd[] = { 0x00, 0xa4, 0x04, 0x0c, 0x07,
+		       0x0a, 0x00, 0x00, 0x02, 0x47, 0x10, 0x01 };
+	char resp[7];
+	unsigned int rlen = sizeof(resp);
+
+	int rv;
+
+	rv = rfid_protocol_transcieve(ph, cmd, sizeof(cmd), resp, &rlen, 0, 0);
+	if (rv < 0)
+		return rv;
+
+	/* FIXME: parse response */
+	return 0;
+}
+
+int
+iso7816_select_ef(u_int16_t fid)
+{
+	unsigned char cmd[7] = { 0x00, 0xa4, 0x02, 0x0c, 0x02, 0x00, 0x00 };
+	unsigned char resp[7];
+	unsigned int rlen = sizeof(resp);
+
+	int rv;
+
+	cmd[5] = (fid >> 8) & 0xff;
+	cmd[6] = fid & 0xff;
+
+	rv = rfid_protocol_transcieve(ph, cmd, sizeof(cmd), resp, &rlen, 0, 0);
+	if (rv < 0)
+		return rv;
+
+	/* FIXME: parse response */
+
+	return 0;
+}
+
+int
+iso7816_read_binary(unsigned char *buf, unsigned int *len)
+{
+	unsigned char cmd[] = { 0x00, 0xb0, 0x00, 0x00, 0x00 };
+	unsigned char resp[256];
+	unsigned int rlen = sizeof(resp);
+	
+	int rv;
+
+	rv = rfid_protocol_transcieve(ph, cmd, sizeof(cmd), resp, &rlen, 0, 0);
+	if (rv < 0)
+		return rv;
+
+	/* FIXME: parse response, determine whether we need additional reads */
+
+	/* FIXME: copy 'len' number of response bytes to 'buf' */
+	return 0;
+}
+
+/* wrapper function around SELECT EF and READ BINARY */
+int
+iso7816_read_ef(u_int16_t fid, unsigned char *buf, unsigned int *len)
+{
+	int rv;
+
+	rv = iso7816_select_ef(fid);
+	if (rv < 0)
+		return rv;
+
+	return iso7816_read_binary(buf, len);
+}
+
+int
+mifare_ulight_read(struct rfid_protocol_handle *ph)
+{
+	unsigned char buf[16];
+	unsigned int len = sizeof(buf);
+	int ret;
+	int i;
+
+	for (i = 0; i < 7; i++) {
+		ret = rfid_protocol_read(ph, i, buf, &len);
+		if (ret < 0)
+			return ret;
+
+		rfid_hexdump(buf, 4);
+	}
+	return 0;
+}
+
 int main(int argc, char **argv)
 {
 	int rc;
@@ -170,10 +261,21 @@ int main(int argc, char **argv)
 	/* we've established T=CL at this point */
 
 	select_mf();
+#if 1
+	select_mf();
 
+	iso7816_select_application();
+	iso7816_select_ef(0x011e);
+	iso7816_select_ef(0x0101);
+#endif
+
+#if 1
 	for (i = 0; i < 4; i++)
 		get_challenge(0x60);
- 
+#endif
+
+//	mifare_ulight_read(ph);
+
 	rfid_reader_close(rh);
 	
 	exit(0);

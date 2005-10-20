@@ -19,6 +19,7 @@
 
 #include <stdlib.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include <rfid/rfid_layer2.h>
 #include <rfid/rfid_protocol.h>
@@ -40,7 +41,9 @@ rfid_protocol_init(struct rfid_layer2_handle *l2h, unsigned int id)
 int
 rfid_protocol_open(struct rfid_protocol_handle *ph)
 {
-	return ph->proto->fn.open(ph);
+	if (ph->proto->fn.open)
+		return ph->proto->fn.open(ph);
+	return 0;
 }
 
 int
@@ -53,6 +56,30 @@ rfid_protocol_transcieve(struct rfid_protocol_handle *ph,
 					timeout, flags);
 }
 
+int
+rfid_protocol_read(struct rfid_protocol_handle *ph,
+	 	   unsigned int page,
+		   unsigned char *rx_data,
+		   unsigned int rx_len)
+{
+	if (ph->proto->fn.read)
+		return ph->proto->fn.read(ph, page, rx_data, rx_len);
+	else
+		return -EINVAL;
+}
+
+int
+rfid_protocol_write(struct rfid_protocol_handle *ph,
+	 	   unsigned int page,
+		   unsigned char *tx_data,
+		   unsigned int tx_len)
+{
+	if (ph->proto->fn.write)
+		return ph->proto->fn.write(ph, page, tx_data, tx_len);
+	else
+		return -EINVAL;
+}
+
 int rfid_protocol_fini(struct rfid_protocol_handle *ph)
 {
 	return ph->proto->fn.fini(ph);
@@ -61,7 +88,9 @@ int rfid_protocol_fini(struct rfid_protocol_handle *ph)
 int
 rfid_protocol_close(struct rfid_protocol_handle *ph)
 {
-	return ph->proto->fn.close(ph);
+	if (ph->proto->fn.close)
+		return ph->proto->fn.close(ph);
+	return 0;
 }
 
 int

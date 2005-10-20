@@ -16,6 +16,7 @@ struct rfid_protocol {
 		int (*open)(struct rfid_protocol_handle *ph);
 		int (*close)(struct rfid_protocol_handle *ph);
 		int (*fini)(struct rfid_protocol_handle *ph);
+		/* transcieve for session based transport protocols */
 		int (*transcieve)(struct rfid_protocol_handle *ph,
 				  const unsigned char *tx_buf,
 				  unsigned int tx_len,
@@ -23,6 +24,15 @@ struct rfid_protocol {
 				  unsigned int *rx_len,
 				  unsigned int timeout,
 				  unsigned int flags);
+		/* read/write for synchronous memory cards */
+		int (*read)(struct rfid_protocol_handle *ph,
+			    unsigned int page,
+			    unsigned char *rx_data,
+			    unsigned int *rx_len);
+		int (*write)(struct rfid_protocol_handle *ph,
+			     unsigned int page,
+			     unsigned char *tx_data,
+			     unsigned int tx_len);
 	} fn;
 };
 
@@ -44,6 +54,18 @@ int rfid_protocol_transcieve(struct rfid_protocol_handle *ph,
 			     const unsigned char *tx_buf, unsigned int tx_len,
 			     unsigned char *rx_buf, unsigned int *rx_len,
 			     unsigned int timeout, unsigned int flags);
+int
+rfid_protocol_read(struct rfid_protocol_handle *ph,
+	 	   unsigned int page,
+		   unsigned char *rx_data,
+		   unsigned int rx_len);
+
+int
+rfid_protocol_write(struct rfid_protocol_handle *ph,
+	 	   unsigned int page,
+		   unsigned char *tx_data,
+		   unsigned int tx_len);
+
 int rfid_protocol_fini(struct rfid_protocol_handle *ph);
 int rfid_protocol_close(struct rfid_protocol_handle *ph);
 
@@ -52,5 +74,6 @@ int rfid_protocol_register(struct rfid_protocol *p);
 enum rfid_protocol_id {
 	RFID_PROTOCOL_UNKNOWN,
 	RFID_PROTOCOL_TCL,
+	RFID_PROTOCOL_MIFARE_UL,
 };
 #endif

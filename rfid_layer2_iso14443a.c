@@ -96,31 +96,31 @@ iso14443a_anticol(struct rfid_layer2_handle *handle)
 {
 	int ret;
 	unsigned int uid_size;
+	struct iso14443a_handle *h = &handle->priv.iso14443a;
 	struct iso14443a_atqa atqa;
 	struct iso14443a_anticol_cmd acf;
 	unsigned int bit_of_col;
 	unsigned char sak[3];
-	unsigned char uid[10];	// triple size equals 10 bytes;
 	unsigned int rx_len = sizeof(sak);
 	char *aqptr = (char *) &atqa;
 
-	memset(uid, 0, sizeof(uid));
+	memset(h->uid, 0, sizeof(h->uid));
 	memset(sak, 0, sizeof(sak));
 	memset(&atqa, 0, sizeof(atqa));
 	memset(&acf, 0, sizeof(acf));
 
 	ret = iso14443a_transcieve_sf(handle, ISO14443A_SF_CMD_REQA, &atqa);
 	if (ret < 0) {
-		handle->priv.iso14443a.state = ISO14443A_STATE_REQA_SENT;
+		h->state = ISO14443A_STATE_REQA_SENT;
 		DEBUGP("error during transcieve_sf: %d\n", ret);
 		return ret;
 	}
-	handle->priv.iso14443a.state = ISO14443A_STATE_ATQA_RCVD;
+	h->state = ISO14443A_STATE_ATQA_RCVD;
 
 	DEBUGP("ATQA: 0x%02x 0x%02x\n", *aqptr, *(aqptr+1));
 
 	if (!atqa.bf_anticol) {
-		handle->priv.iso14443a.state =ISO14443A_STATE_NO_BITFRAME_ANTICOL;
+		h->state = ISO14443A_STATE_NO_BITFRAME_ANTICOL;
 		DEBUGP("no bitframe anticollission bits set, aborting\n");
 		return -1;
 	}
@@ -134,8 +134,8 @@ iso14443a_anticol(struct rfid_layer2_handle *handle)
 	
 	acf.sel_code = ISO14443A_AC_SEL_CODE_CL1;
 
-	handle->priv.iso14443a.state = ISO14443A_STATE_ANTICOL_RUNNING;
-	handle->priv.iso14443a.level = ISO14443A_LEVEL_CL1;
+	h->state = ISO14443A_STATE_ANTICOL_RUNNING;
+	h->level = ISO14443A_LEVEL_CL1;
 
 cascade:
 	iso14443a_code_nvb_bits(&acf.nvb, 16);
@@ -170,19 +170,19 @@ cascade:
 				DEBUGP("Cascade bit set, but UID0 != 0x88\n");
 				return -1;
 			}
-			memcpy(&uid[0], &acf.uid_bits[1], 3);
+			memcpy(&h->uid[0], &acf.uid_bits[1], 3);
 			acf.sel_code = ISO14443A_AC_SEL_CODE_CL2;
-			handle->priv.iso14443a.level = ISO14443A_LEVEL_CL2;
+			h->level = ISO14443A_LEVEL_CL2;
 			break;
 		case ISO14443A_AC_SEL_CODE_CL2:
 			/* cascading from CL2 to CL3 */
-			memcpy(&uid[3], &acf.uid_bits[1], 3);
+			memcpy(&h->uid[3], &acf.uid_bits[1], 3);
 			acf.sel_code = ISO14443A_AC_SEL_CODE_CL3;
-			handle->priv.iso14443a.level = ISO14443A_LEVEL_CL3;
+			h->level = ISO14443A_LEVEL_CL3;
 			break;
 		default:
 			DEBUGP("cannot cascade any further than CL3\n");
-			handle->priv.iso14443a.state = ISO14443A_STATE_ERROR;
+			h->state = ISO14443A_STATE_ERROR;
 			return -1;
 			break;
 		}
@@ -192,40 +192,39 @@ cascade:
 		switch (acf.sel_code) {
 		case ISO14443A_AC_SEL_CODE_CL1:
 			/* single size UID (4 bytes) */
-			memcpy(&uid[0], &acf.uid_bits[0], 4);
+			memcpy(&h->uid[0], &acf.uid_bits[0], 4);
 			break;
 		case ISO14443A_AC_SEL_CODE_CL2:
 			/* double size UID (7 bytes) */
-			memcpy(&uid[3], &acf.uid_bits[0], 4);
+			memcpy(&h->uid[3], &acf.uid_bits[0], 4);
 			break;
 		case ISO14443A_AC_SEL_CODE_CL3:
 			/* triple size UID (10 bytes) */
-			memcpy(&uid[6], &acf.uid_bits[0], 4);
+			memcpy(&h->uid[6], &acf.uid_bits[0], 4);
 			break;
 		}
 	}
 
-	handle->priv.iso14443a.level = ISO14443A_LEVEL_NONE;
-	handle->priv.iso14443a.state = ISO14443A_STATE_SELECTED;
+	h->level = ISO14443A_LEVEL_NONE;
+	h->state = ISO14443A_STATE_SELECTED;
 
 	{
-		int uid_len;
 		if (uid_size == 1)
-			uid_len = 4;
+			h->uid_len = 4;
 		else if (uid_size == 2)
-			uid_len = 7;
+			h->uid_len = 7;
 		else 
-			uid_len = 10;
+			h->uid_len = 10;
 
-		DEBUGP("UID %s\n", rfid_hexdump(uid, uid_len));
+		DEBUGP("UID %s\n", rfid_hexdump(h->uid, h->uid_len));
 	}
 
 	if (sak[0] & 0x20) {
 		DEBUGP("we have a T=CL compliant PICC\n");
-		handle->priv.iso14443a.tcl_capable = 1;
+		h->tcl_capable = 1;
 	} else {
 		DEBUGP("we have a T!=CL PICC\n");
-		handle->priv.iso14443a.tcl_capable = 0;
+		h->tcl_capable = 0;
 	}
 
 	return 0;
