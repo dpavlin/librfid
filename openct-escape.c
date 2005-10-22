@@ -237,6 +237,28 @@ iso7816_read_ef(u_int16_t fid, unsigned char *buf, unsigned int *len)
 }
 
 int
+mifare_ulight_write(struct rfid_protocol_handle *ph)
+{
+	unsigned char buf[4] = { 0xa1, 0xa2, 0xa3, 0xa4 };
+
+	return rfid_protocol_write(ph, 20, buf, 4);
+}
+
+int
+mifare_ulight_blank(struct rfid_protocol_handle *ph)
+{
+	unsigned char buf[4] = { 0x00, 0x00, 0x00, 0x00 };
+	int i, ret;
+
+	for (i = 4; i <= MIFARE_UL_PAGE_MAX; i++) {
+		ret = rfid_protocol_write(ph, i, buf, 4);
+		if (ret < 0)
+			return ret;
+	}
+	return 0;
+}
+
+int
 mifare_ulight_read(struct rfid_protocol_handle *ph)
 {
 	unsigned char buf[20];
@@ -244,7 +266,7 @@ mifare_ulight_read(struct rfid_protocol_handle *ph)
 	int ret;
 	int i;
 
-	for (i = 0; i < 7; i++) {
+	for (i = 0; i <= MIFARE_UL_PAGE_MAX; i++) {
 		ret = rfid_protocol_read(ph, i, buf, &len);
 		if (ret < 0)
 			return ret;
@@ -264,7 +286,7 @@ int main(int argc, char **argv)
 		exit(1);
 
 	protocol = RFID_PROTOCOL_MIFARE_UL;
-	protocol = RFID_PROTOCOL_TCL;
+//	protocol = RFID_PROTOCOL_TCL;
 
 	if (l3(protocol) < 0)
 		exit(1);
@@ -286,6 +308,9 @@ int main(int argc, char **argv)
 #endif
 		break;
 	case RFID_PROTOCOL_MIFARE_UL:
+		mifare_ulight_read(ph);
+		//mifare_ulight_blank(ph);
+		mifare_ulight_write(ph);
 		mifare_ulight_read(ph);
 		break;
 	}
