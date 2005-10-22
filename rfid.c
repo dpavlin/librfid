@@ -42,6 +42,7 @@ int rfid_init()
 	rfid_layer2_register(&rfid_layer2_iso14443a);
 	rfid_layer2_register(&rfid_layer2_iso14443b);
 	rfid_protocol_register(&rfid_protocol_tcl);
+	rfid_protocol_register(&rfid_protocol_mful);
 
 	return 0;
 }
