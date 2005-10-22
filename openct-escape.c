@@ -107,8 +107,13 @@ static int init()
 		return rc;
 	}
 
+	return 0;
+}
+
+static int l3(int protocol)
+{
 	printf("running layer3 (ats)\n");
-	ph = rfid_protocol_init(l2h, RFID_PROTOCOL_TCL);
+	ph = rfid_protocol_init(l2h, protocol);
 	if (!ph) {
 		fprintf(stderr, "error during protocol_init\n");
 		return -1;
@@ -118,7 +123,7 @@ static int init()
 		return -1;
 	}
 
-	printf("we now have T=CL up and running\n");
+	printf("we now have layer3 up and running\n");
 
 	return 0;
 }
@@ -234,7 +239,7 @@ iso7816_read_ef(u_int16_t fid, unsigned char *buf, unsigned int *len)
 int
 mifare_ulight_read(struct rfid_protocol_handle *ph)
 {
-	unsigned char buf[16];
+	unsigned char buf[20];
 	unsigned int len = sizeof(buf);
 	int ret;
 	int i;
@@ -253,28 +258,38 @@ int main(int argc, char **argv)
 {
 	int rc;
 	char buf[0x40];
-	int i;
+	int i, protocol;
 
 	if (init() < 0)
 		exit(1);
 
-	/* we've established T=CL at this point */
+	protocol = RFID_PROTOCOL_MIFARE_UL;
+	protocol = RFID_PROTOCOL_TCL;
 
-	select_mf();
-#if 1
-	select_mf();
+	if (l3(protocol) < 0)
+		exit(1);
 
-	iso7816_select_application();
-	iso7816_select_ef(0x011e);
-	iso7816_select_ef(0x0101);
+	switch (protocol) {
+	case RFID_PROTOCOL_TCL:
+		/* we've established T=CL at this point */
+		select_mf();
+
+		rc632_register_dump(rh->ah, buf);
+		select_mf();
+
+		iso7816_select_application();
+		iso7816_select_ef(0x011e);
+		iso7816_select_ef(0x0101);
+#if 0
+		for (i = 0; i < 4; i++)
+			get_challenge(0x60);
 #endif
+		break;
+	case RFID_PROTOCOL_MIFARE_UL:
+		mifare_ulight_read(ph);
+		break;
+	}
 
-#if 1
-	for (i = 0; i < 4; i++)
-		get_challenge(0x60);
-#endif
-
-//	mifare_ulight_read(ph);
 
 	rfid_reader_close(rh);
 	
