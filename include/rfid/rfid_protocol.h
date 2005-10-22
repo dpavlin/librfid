@@ -4,6 +4,7 @@
 #include <rfid/rfid_layer2.h>
 
 #include <rfid/rfid_protocol_tcl.h>
+#include <rfid/rfid_protocol_mifare_ul.h>
 
 struct rfid_protocol_handle;
 
@@ -58,7 +59,7 @@ int
 rfid_protocol_read(struct rfid_protocol_handle *ph,
 	 	   unsigned int page,
 		   unsigned char *rx_data,
-		   unsigned int rx_len);
+		   unsigned int *rx_len);
 
 int
 rfid_protocol_write(struct rfid_protocol_handle *ph,
