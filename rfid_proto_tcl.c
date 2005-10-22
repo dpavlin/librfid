@@ -397,7 +397,7 @@ tcl_connect(struct rfid_protocol_handle *h)
 		}
 
 		/* PUPI will be presented as ATS/historical bytes */
-		memcpy(h->priv.tcl.ats, h->l2h->priv.iso14443b.pupi, 4);
+		memcpy(h->priv.tcl.ats, h->l2h->uid, 4);
 		h->priv.tcl.ats_len = 4;
 		h->priv.tcl.historical_bytes = h->priv.tcl.ats;
 

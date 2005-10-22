@@ -68,8 +68,6 @@ struct iso14443a_handle {
 	unsigned int state;
 	unsigned int level;
 	unsigned int tcl_capable;
-	unsigned int uid_len;
-	unsigned char uid[10];		/* Triple size UID is 10 bytes */
 };
 
 enum iso14443a_level {

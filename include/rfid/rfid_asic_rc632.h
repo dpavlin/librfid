@@ -6,18 +6,18 @@ struct rfid_asic_transport_handle;
 struct rfid_asic_rc632_transport {
 	struct {
 		int (*reg_write)(struct rfid_asic_transport_handle *rath,
-				 unsigned char reg,
-				 unsigned char value);
+				 u_int8_t reg,
+				 u_int8_t value);
 		int (*reg_read)(struct rfid_asic_transport_handle *rath,
-				unsigned char reg,
-				unsigned char *value);
+				u_int8_t reg,
+				u_int8_t *value);
 		int (*fifo_write)(struct rfid_asic_transport_handle *rath,
-				  unsigned char len,
-				  const unsigned char *buf,
-				  unsigned char flags);
+				  u_int8_t len,
+				  const u_int8_t *buf,
+				  u_int8_t flags);
 		int (*fifo_read)(struct rfid_asic_transport_handle *rath,
-				 unsigned char len,
-				 unsigned char *buf);
+				 u_int8_t len,
+				 u_int8_t *buf);
 	} fn;
 };
 
@@ -33,16 +33,16 @@ struct rfid_asic_rc632 {
 		int (*turn_on_rf)(struct rfid_asic_handle *h);
 		int (*turn_off_rf)(struct rfid_asic_handle *h);
 		int (*transcieve)(struct rfid_asic_handle *h,
-				  const unsigned char *tx_buf,
+				  const u_int32_t *tx_buf,
 				  unsigned int tx_len,
-				  unsigned char *rx_buf,
+				  u_int32_t *rx_buf,
 				  unsigned int *rx_len,
 				  u_int64_t timeout,
 				  unsigned int flags);
 		struct {
 			int (*init)(struct rfid_asic_handle *h);
 			int (*transcieve_sf)(struct rfid_asic_handle *h,
-					     unsigned char cmd,
+					     u_int32_t cmd,
 					     struct iso14443a_atqa *atqa);
 			int (*transcieve_acf)(struct rfid_asic_handle *h,
 					      struct iso14443a_anticol_cmd *cmd,
@@ -54,6 +54,11 @@ struct rfid_asic_rc632 {
 		struct {
 			int (*init)(struct rfid_asic_handle *h);
 		} iso15693;
+		struct {
+			int (*setkey)(struct rfid_asic_handle *h, unsigned char *key);
+			int (*auth)(struct rfid_asic_handle *h, u_int8_t cmd, 
+				    u_int32_t serno, u_int8_t block);
+		} mifare_classic;
 	} fn;
 };
 
@@ -65,33 +70,34 @@ struct rfid_asic_rc632_handle {
 	struct rc632_transport_handle th;
 };
 
+#if 0
 int 
 rc632_reg_write(struct rfid_asic_handle *handle,
-		unsigned char reg,
-		unsigned char val);
+		u_int8_t reg,
+		u_int8_t val);
 
 int 
 rc632_reg_read(struct rfid_asic_handle *handle,
-	       unsigned char reg,
-	       unsigned char *val);
+	       u_int8_t reg,
+	       u_int8_t *val);
 int 
 rc632_fifo_write(struct rfid_asic_handle *handle,
-		 unsigned char len,
-		 const unsigned char *buf,
-		 unsigned char flags);
+		 u_int8_t len,
+		 const u_int32_t *buf,
+		 u_int8_t flags);
 
 int 
 rc632_fifo_read(struct rfid_asic_handle *handle,
-		unsigned char len,
-		unsigned char *buf);
+		u_int8_t len,
+		u_int8_t *buf);
 
 int
-rc632_set_bits(struct rfid_asic_handle *handle, unsigned char reg,
-		unsigned char val);
+rc632_set_bits(struct rfid_asic_handle *handle, u_int8_t reg,
+		u_int82_t val);
 
 int 
-rc632_clear_bits(struct rfid_asic_handle *handle, unsigned char reg,
-		 unsigned char val);
+rc632_clear_bits(struct rfid_asic_handle *handle, u_int32_t reg,
+		 u_int32_t val);
 
 
 int 
@@ -113,16 +119,16 @@ rc632_wait_idle(struct rfid_asic_handle *handle, u_int64_t time);
 
 int
 rc632_transmit(struct rfid_asic_handle *handle,
-		const unsigned char *buf,
-		unsigned char len,
+		const u_int32_t *buf,
+		u_int32_t len,
 		u_int64_t timeout);
 
 int
 rc632_transcieve(struct rfid_asic_handle *handle,
-		 const unsigned char *tx_buf,
-		 unsigned char tx_len,
-		 unsigned char *rx_buf,
-		 unsigned char *rx_len,
+		 const u_int32_t *tx_buf,
+		 u_int32_t tx_len,
+		 u_int32_t *rx_buf,
+		 u_int32_t *rx_len,
 		 unsigned int timer,
 		 unsigned int toggle);
 
@@ -134,11 +140,13 @@ int
 rc632_calc_crc16_from(struct rfid_asic_handle *handle);
 
 int
-rc632_register_dump(struct rfid_asic_handle *handle, unsigned char *buf);
+rc632_register_dump(struct rfid_asic_handle *handle, u_int32_t *buf);
 
 
 struct rfid_asic_handle * rc632_open(struct rfid_asic_transport_handle *th);
 
 
 extern struct rfid_asic rc632;
+#endif
+
 #endif

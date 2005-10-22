@@ -225,6 +225,13 @@ cm5121_15693_init(struct rfid_reader_handle *rh)
 	return rh->ah->asic->priv.rc632.fn.iso15693.init(rh->ah);
 }
 
+static int
+cm5121_mifare_auth(struct rfid_reader_handle *rh, u_int8_t cmd, 
+		   u_int32_t serno, u_int8_t block)
+{
+	return rh->ah->asic->priv.rc632.fn.mifare_classic.auth(rh->ah, 
+							cmd, serno, block);
+}
 
 struct rfid_asic_transport cm5121_ccid = {
 	.name = "CM5121 OpenCT",
@@ -312,6 +319,9 @@ struct rfid_reader rfid_reader_cm5121 = {
 	},
 	.iso14443b = {
 		.init = &cm5121_14443b_init,
+	},
+	.mifare_classic = {
+		.auth = &cm5121_mifare_auth,
 	},
 };
 

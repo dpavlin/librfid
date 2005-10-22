@@ -89,8 +89,8 @@ parse_atqb(struct rfid_layer2_handle *h, struct iso14443b_atqb *atqb)
 
 	/* FIXME: speed capability */
 
-	memcpy(h->priv.iso14443b.pupi, atqb->pupi,
-		sizeof(h->priv.iso14443b.pupi));
+	memcpy(h->uid, atqb->pupi, sizeof(atqb->pupi));
+	h->uid_len = sizeof(atqb->pupi);
 
 	return 0;
 }
@@ -181,7 +181,7 @@ transcieve_attrib(struct rfid_layer2_handle *h, const unsigned char *inf,
 		memcpy((unsigned char *)attrib+sizeof(*attrib), inf, inf_len);
 
 	attrib->one_d = 0x1d;
-	memcpy(attrib->identifier, h->priv.iso14443b.pupi, 4);
+	memcpy(attrib->identifier, h->uid, 4);
 
 	/* FIXME: do we want to change TR0/TR1 from its default ? */
 	/* FIXME: do we want to change SOF/EOF from its default ? */
@@ -240,7 +240,7 @@ iso14443b_hltb(struct rfid_layer2_handle *h)
 	unsigned int hltb_len = 1;
 
 	hltb[0] = 0x50;
-	memcpy(hltb+1, h->priv.iso14443b.pupi, 4);
+	memcpy(hltb+1, h->uid, 4);
 
 	ret = h->rh->reader->transcieve(h->rh, hltb, 5,
 					hltb_resp, &hltb_len,

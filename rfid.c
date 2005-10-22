@@ -18,6 +18,8 @@
 #include <rfid/rfid_reader_cm5121.h>
 #include <rfid/rfid_protocol.h>
 #include <rfid/rfid_protocol_tcl.h>
+#include <rfid/rfid_protocol_mifare_ul.h>
+#include <rfid/rfid_protocol_mifare_classic.h>
 
 const char *
 rfid_hexdump(const void *data, unsigned int len)
@@ -43,6 +45,7 @@ int rfid_init()
 	rfid_layer2_register(&rfid_layer2_iso14443b);
 	rfid_protocol_register(&rfid_protocol_tcl);
 	rfid_protocol_register(&rfid_protocol_mful);
+	rfid_protocol_register(&rfid_protocol_mfcl);
 
 	return 0;
 }
