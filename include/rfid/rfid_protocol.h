@@ -3,10 +3,10 @@
 
 #include <rfid/rfid_layer2.h>
 
+struct rfid_protocol_handle;
+
 #include <rfid/rfid_protocol_tcl.h>
 #include <rfid/rfid_protocol_mifare_ul.h>
-
-struct rfid_protocol_handle;
 
 struct rfid_protocol {
 	struct rfid_protocol *next;

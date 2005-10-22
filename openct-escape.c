@@ -271,7 +271,7 @@ mifare_ulight_read(struct rfid_protocol_handle *ph)
 		if (ret < 0)
 			return ret;
 
-		rfid_hexdump(buf, 4);
+		printf("Page 0x%x: %s\n", i, rfid_hexdump(buf, 4));
 	}
 	return 0;
 }
@@ -309,9 +309,11 @@ int main(int argc, char **argv)
 		break;
 	case RFID_PROTOCOL_MIFARE_UL:
 		mifare_ulight_read(ph);
+#if 0
 		//mifare_ulight_blank(ph);
 		mifare_ulight_write(ph);
 		mifare_ulight_read(ph);
+#endif
 		break;
 	}
 

@@ -1,6 +1,7 @@
 #ifndef _RFID_PROTOCOL_MFUL_H
 #define _RFID_PROTOCOL_MFUL_H
 
+#include <rfid/rfid_protocol.h>
 
 #define MIFARE_UL_CMD_WRITE	0xA2
 #define MIFARE_UL_CMD_READ	0x30
@@ -15,7 +16,7 @@
 struct rfid_protocol rfid_protocol_mful;
 
 
-extern int rfid_mful_lock_page(struct rfid_protocol_handle *ph, unsigned int page);
-extern int rfid_mful_lock_otp(struct rfid_protocol_handle *ph);
+int rfid_mful_lock_page(struct rfid_protocol_handle *ph, unsigned int page);
+int rfid_mful_lock_otp(struct rfid_protocol_handle *ph);
 
 #endif
