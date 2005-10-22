@@ -104,7 +104,7 @@ iso14443a_anticol(struct rfid_layer2_handle *handle)
 	unsigned int rx_len = sizeof(sak);
 	char *aqptr = (char *) &atqa;
 
-	memset(h->uid, 0, sizeof(h->uid));
+	memset(handle->uid, 0, sizeof(handle->uid));
 	memset(sak, 0, sizeof(sak));
 	memset(&atqa, 0, sizeof(atqa));
 	memset(&acf, 0, sizeof(acf));
@@ -170,13 +170,13 @@ cascade:
 				DEBUGP("Cascade bit set, but UID0 != 0x88\n");
 				return -1;
 			}
-			memcpy(&h->uid[0], &acf.uid_bits[1], 3);
+			memcpy(&handle->uid[0], &acf.uid_bits[1], 3);
 			acf.sel_code = ISO14443A_AC_SEL_CODE_CL2;
 			h->level = ISO14443A_LEVEL_CL2;
 			break;
 		case ISO14443A_AC_SEL_CODE_CL2:
 			/* cascading from CL2 to CL3 */
-			memcpy(&h->uid[3], &acf.uid_bits[1], 3);
+			memcpy(&handle->uid[3], &acf.uid_bits[1], 3);
 			acf.sel_code = ISO14443A_AC_SEL_CODE_CL3;
 			h->level = ISO14443A_LEVEL_CL3;
 			break;
@@ -192,15 +192,15 @@ cascade:
 		switch (acf.sel_code) {
 		case ISO14443A_AC_SEL_CODE_CL1:
 			/* single size UID (4 bytes) */
-			memcpy(&h->uid[0], &acf.uid_bits[0], 4);
+			memcpy(&handle->uid[0], &acf.uid_bits[0], 4);
 			break;
 		case ISO14443A_AC_SEL_CODE_CL2:
 			/* double size UID (7 bytes) */
-			memcpy(&h->uid[3], &acf.uid_bits[0], 4);
+			memcpy(&handle->uid[3], &acf.uid_bits[0], 4);
 			break;
 		case ISO14443A_AC_SEL_CODE_CL3:
 			/* triple size UID (10 bytes) */
-			memcpy(&h->uid[6], &acf.uid_bits[0], 4);
+			memcpy(&handle->uid[6], &acf.uid_bits[0], 4);
 			break;
 		}
 	}
@@ -210,13 +210,13 @@ cascade:
 
 	{
 		if (uid_size == 1)
-			h->uid_len = 4;
+			handle->uid_len = 4;
 		else if (uid_size == 2)
-			h->uid_len = 7;
+			handle->uid_len = 7;
 		else 
-			h->uid_len = 10;
+			handle->uid_len = 10;
 
-		DEBUGP("UID %s\n", rfid_hexdump(h->uid, h->uid_len));
+		DEBUGP("UID %s\n", rfid_hexdump(handle->uid, handle->uid_len));
 	}
 
 	if (sak[0] & 0x20) {

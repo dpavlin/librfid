@@ -13,7 +13,7 @@
 #define MIFARE_UL_PAGE_LOCK	2
 #define MIFARE_UL_PAGE_OTP	3
 
-struct rfid_protocol rfid_protocol_mful;
+extern struct rfid_protocol rfid_protocol_mful;
 
 
 int rfid_mful_lock_page(struct rfid_protocol_handle *ph, unsigned int page);

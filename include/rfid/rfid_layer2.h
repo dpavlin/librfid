@@ -29,6 +29,8 @@ struct rfid_layer2 {
 
 struct rfid_layer2_handle {
 	struct rfid_reader_handle *rh;
+	unsigned char uid[10];	/* triple size 14443a id is 10 bytes */
+	unsigned int uid_len;
 	union {
 		struct iso14443a_handle iso14443a;
 		struct iso14443b_handle iso14443b;

@@ -33,6 +33,11 @@ struct rfid_reader {
 	struct rfid_15693_reader {
 		int (*init)(struct rfid_reader_handle *rh);
 	} iso15693;
+	struct rfid_mifare_classic_reader {
+		int (*setkey)(struct rfid_reader_handle *h, unsigned char *key);
+		int (*auth)(struct rfid_reader_handle *h, u_int8_t cmd,
+			    u_int32_t serno, u_int8_t block);
+	} mifare_classic;
 	struct rfid_reader *next;
 };
 

@@ -43,7 +43,6 @@ struct iso14443b_attrib_hdr {
 struct iso14443b_handle {
 	unsigned int tcl_capable; /* do we support T=CL */
 
-	unsigned char pupi[4];	/* Pseudo-Unique PICC Identifier */
 	unsigned int cid;	/* Card ID */
 
 	unsigned int fsc;	/* max. frame size card */

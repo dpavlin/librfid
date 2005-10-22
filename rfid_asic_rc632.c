@@ -22,6 +22,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 #include <sys/types.h>
 
 #include <rfid/rfid.h>
@@ -29,11 +30,14 @@
 #include <rfid/rfid_asic_rc632.h>
 #include <rfid/rfid_reader_cm5121.h>
 #include <rfid/rfid_layer2_iso14443a.h>
+#include <rfid/rfid_protocol_mifare_classic.h>
 
 #include "rfid_iso14443_common.h"
 #include "rc632.h"
 //#include "rc632_14443a.h"
 
+
+#define RC632_TMO_AUTH1	14000
 
 #define ENTER()		DEBUGP("entering\n")
 struct rfid_asic rc632;
@@ -41,25 +45,25 @@ struct rfid_asic rc632;
 /* Register and FIFO Access functions */
 int 
 rc632_reg_write(struct rfid_asic_handle *handle,
-		unsigned char reg,
-		unsigned char val)
+		u_int8_t reg,
+		u_int8_t val)
 {
 	return handle->rath->rat->priv.rc632.fn.reg_write(handle->rath, reg, val);
 }
 
 int 
 rc632_reg_read(struct rfid_asic_handle *handle,
-	       unsigned char reg,
-	       unsigned char *val)
+	       u_int8_t reg,
+	       u_int8_t *val)
 {
 	return handle->rath->rat->priv.rc632.fn.reg_read(handle->rath, reg, val);
 }
 
 int 
 rc632_fifo_write(struct rfid_asic_handle *handle,
-		 unsigned char len,
-		 const unsigned char *buf,
-		 unsigned char flags)
+		 u_int8_t len,
+		 const u_int8_t *buf,
+		 u_int8_t flags)
 {
 	return handle->rath->rat->priv.rc632.fn.fifo_write(handle->rath, 
 							   len, buf, flags);
@@ -67,8 +71,8 @@ rc632_fifo_write(struct rfid_asic_handle *handle,
 
 int 
 rc632_fifo_read(struct rfid_asic_handle *handle,
-		unsigned char len,
-		unsigned char *buf)
+		u_int8_t len,
+		u_int8_t *buf)
 {
 	return handle->rath->rat->priv.rc632.fn.fifo_read(handle->rath, len, buf);
 }
@@ -76,11 +80,11 @@ rc632_fifo_read(struct rfid_asic_handle *handle,
 
 int
 rc632_set_bits(struct rfid_asic_handle *handle, 
-		unsigned char reg,
-		unsigned char val)
+		u_int8_t reg,
+		u_int8_t val)
 {
 	int ret;
-	unsigned char tmp;
+	u_int8_t tmp;
 
 	ret = rc632_reg_read(handle, reg, &tmp);
 	if (ret < 0)
@@ -95,11 +99,11 @@ rc632_set_bits(struct rfid_asic_handle *handle,
 
 int 
 rc632_clear_bits(struct rfid_asic_handle *handle, 
-		 unsigned char reg,
-		 unsigned char val)
+		 u_int8_t reg,
+		 u_int8_t val)
 {
 	int ret;
-	unsigned char tmp;
+	u_int8_t tmp;
 
 	ret = rc632_reg_read(handle, reg, &tmp);
 	if (ret < 0) {
@@ -150,7 +154,7 @@ rc632_power_down(struct rfid_asic_handle *handle)
 int
 rc632_wait_idle(struct rfid_asic_handle *handle, u_int64_t timeout)
 {
-	unsigned char cmd = 0xff;
+	u_int8_t cmd = 0xff;
 	int ret;
 
 	while (cmd != 0) {
@@ -164,7 +168,7 @@ rc632_wait_idle(struct rfid_asic_handle *handle, u_int64_t timeout)
 		}
 
 		{
-			unsigned char foo;
+			u_int8_t foo;
 			rc632_reg_read(handle, RC632_REG_PRIMARY_STATUS, &foo);
 			if (foo & 0x04)
 				rc632_reg_read(handle, RC632_REG_ERROR_FLAG, &foo);
@@ -180,8 +184,8 @@ rc632_wait_idle(struct rfid_asic_handle *handle, u_int64_t timeout)
 
 int
 rc632_transmit(struct rfid_asic_handle *handle,
-		const unsigned char *buf,
-		unsigned char len,
+		const u_int8_t *buf,
+		u_int8_t len,
 		u_int64_t timeout)
 {
 	int ret;
@@ -206,10 +210,10 @@ tcl_toggle_pcb(struct rfid_asic_handle *handle)
 
 int
 rc632_transcieve(struct rfid_asic_handle *handle,
-		 const unsigned char *tx_buf,
-		 unsigned char tx_len,
-		 unsigned char *rx_buf,
-		 unsigned char *rx_len,
+		 const u_int8_t *tx_buf,
+		 u_int8_t tx_len,
+		 u_int8_t *rx_buf,
+		 u_int8_t *rx_len,
 		 unsigned int timer,
 		 unsigned int toggle)
 {
@@ -235,7 +239,7 @@ rc632_transcieve(struct rfid_asic_handle *handle,
 		return ret;
 
 	if (*rx_len == 0) {
-		unsigned char tmp;
+		u_int8_t tmp;
 
 		DEBUGP("rx_len == 0\n");
 
@@ -251,8 +255,8 @@ rc632_transcieve(struct rfid_asic_handle *handle,
 int
 rc632_read_eeprom(struct rfid_asic_handle *handle)
 {
-	unsigned char recvbuf[60];
-	unsigned char sndbuf[3];
+	u_int8_t recvbuf[60];
+	u_int8_t sndbuf[3];
 	int ret;
 
 	sndbuf[0] = 0x00;
@@ -280,8 +284,8 @@ rc632_read_eeprom(struct rfid_asic_handle *handle)
 int
 rc632_calc_crc16_from(struct rfid_asic_handle *handle)
 {
-	unsigned char sndbuf[2] = { 0x01, 0x02 };
-	unsigned char crc_lsb = 0x00 , crc_msb = 0x00;
+	u_int8_t sndbuf[2] = { 0x01, 0x02 };
+	u_int8_t crc_lsb = 0x00 , crc_msb = 0x00;
 	int ret;
 
 	ret = rc632_reg_write(handle, RC632_REG_CRC_PRESET_LSB, 0x12);
@@ -316,10 +320,10 @@ rc632_calc_crc16_from(struct rfid_asic_handle *handle)
 
 
 int
-rc632_register_dump(struct rfid_asic_handle *handle, unsigned char *buf)
+rc632_register_dump(struct rfid_asic_handle *handle, u_int8_t *buf)
 {
 	int ret;
-	unsigned char i;
+	u_int8_t i;
 
 	for (i = 0; i <= 0x3f; i++) {
 		ret = rc632_reg_read(handle, i, &buf[i]);
@@ -558,12 +562,12 @@ rc632_iso14443a_fini(struct iso14443a_handle *handle_14443)
 /* issue a 14443-3 A PCD -> PICC command in a short frame, such as REQA, WUPA */
 static int
 rc632_iso14443a_transcieve_sf(struct rfid_asic_handle *handle,
-				unsigned char cmd,
+				u_int8_t cmd,
 		    		struct iso14443a_atqa *atqa)
 {
 	int ret;
-	unsigned char tx_buf[1];
-	unsigned char rx_len = 2;
+	u_int8_t tx_buf[1];
+	u_int8_t rx_len = 2;
 
 	memset(atqa, 0, sizeof(atqa));
 
@@ -593,7 +597,7 @@ rc632_iso14443a_transcieve_sf(struct rfid_asic_handle *handle,
 		return ret;
 
 	ret = rc632_transcieve(handle, tx_buf, sizeof(tx_buf),
-				(unsigned char *)atqa, &rx_len, 0x32, 0);
+				(u_int8_t *)atqa, &rx_len, 0x32, 0);
 	if (ret < 0) {
 		DEBUGP("error during rc632_transcieve()\n");
 		return ret;
@@ -615,12 +619,12 @@ rc632_iso14443a_transcieve_sf(struct rfid_asic_handle *handle,
 /* transcieve regular frame */
 static int
 rc632_iso14443a_transcieve(struct rfid_asic_handle *handle,
-			   const unsigned char *tx_buf, unsigned int tx_len,
-			   unsigned char *rx_buf, unsigned int *rx_len,
+			   const u_int8_t *tx_buf, unsigned int tx_len,
+			   u_int8_t *rx_buf, unsigned int *rx_len,
 			   u_int64_t timeout, unsigned int flags)
 {
 	int ret;
-	unsigned char rxl = *rx_len & 0xff;
+	u_int8_t rxl = *rx_len & 0xff;
 
 	DEBUGP("entered\n");
 	memset(rx_buf, 0, *rx_len);
@@ -653,11 +657,11 @@ rc632_iso14443a_transcieve_acf(struct rfid_asic_handle *handle,
 				unsigned int *bit_of_col)
 {
 	int ret;
-	unsigned char rx_buf[64];
-	unsigned char rx_len = sizeof(rx_buf);
-	unsigned char rx_align = 0, tx_last_bits, tx_bytes;
-	unsigned char boc;
-	unsigned char error_flag;
+	u_int8_t rx_buf[64];
+	u_int8_t rx_len = sizeof(rx_buf);
+	u_int8_t rx_align = 0, tx_last_bits, tx_bytes;
+	u_int8_t boc;
+	u_int8_t error_flag;
 	*bit_of_col = ISO14443A_BITOFCOL_NONE;
 	memset(rx_buf, 0, sizeof(rx_buf));
 
@@ -694,7 +698,7 @@ rc632_iso14443a_transcieve_acf(struct rfid_asic_handle *handle,
 	if (ret < 0)
 		return ret;
 
-	ret = rc632_transcieve(handle, (unsigned char *)acf, tx_bytes,
+	ret = rc632_transcieve(handle, (u_int8_t *)acf, tx_bytes,
 				rx_buf, &rx_len, 0x32, 0);
 	if (ret < 0)
 		return ret;
@@ -1082,6 +1086,115 @@ rc632_iso15693_icl_init(struct rfid_asic_handle *h)
 	return 0;
 }
 
+struct mifare_authcmd {
+	u_int8_t auth_cmd;
+	u_int8_t block_address;
+	u_int32_t serno;	/* lsb 1 2 msb */
+} __attribute__ ((packed));
+
+
+#define RFID_MIFARE_KEY_LEN 6
+#define RFID_MIFARE_KEY_CODED_LEN 12
+
+/* Transform crypto1 key from generic 6byte into rc632 specific 12byte */
+static int
+rc632_mifare_transform_key(const u_int8_t *key6, u_int8_t *key12)
+{
+	int i;
+	u_int8_t ln;
+	u_int8_t hn;
+
+	for (i = 0; i < RFID_MIFARE_KEY_LEN; i++) {
+		ln = key6[i] & 0x0f;
+		hn = key6[i] >> 4;
+		key12[i * 2 + 1] = (~ln << 4) | ln;
+		key12[i * 2] = (~hn << 4) | hn;
+	}
+	return 0;
+}
+
+static int
+rc632_mifare_set_key(struct rfid_asic_handle *h, const u_int8_t *key)
+{
+	u_int8_t coded_key[RFID_MIFARE_KEY_CODED_LEN];
+	int ret;
+
+	ret = rc632_mifare_transform_key(key, coded_key);
+	if (ret < 0)
+		return ret;
+
+	ret = rc632_fifo_write(h, RFID_MIFARE_KEY_CODED_LEN, coded_key, 0x03);
+	if (ret < 0)
+		return ret;
+
+	ret = rc632_reg_write(h, RC632_REG_COMMAND, RC632_CMD_LOAD_KEY);
+	if (ret < 0)
+		return ret;
+
+	ret = rc632_wait_idle(h, RC632_TMO_AUTH1);
+	if (ret < 0)
+		return ret;
+
+	return 0;
+}
+
+static int
+rc632_mifare_auth(struct rfid_asic_handle *h, u_int8_t cmd, u_int32_t serno,
+		  u_int8_t block)
+{
+	int ret;
+	struct mifare_authcmd acmd;
+	u_int8_t reg;
+
+	if (cmd != RFID_CMD_MIFARE_AUTH1A && cmd != RFID_CMD_MIFARE_AUTH1B)
+		return -EINVAL;
+
+	/* Initialize acmd */
+	acmd.block_address = block & 0xff;
+	acmd.auth_cmd = cmd;
+	acmd.serno = serno;
+
+	/* Send Authent1 Command */
+	ret = rc632_fifo_write(h, sizeof(acmd), &acmd, 0x03);
+	if (ret < 0)
+		return ret;
+
+	ret = rc632_reg_write(h, RC632_REG_COMMAND, RC632_CMD_AUTHENT1);
+	if (ret < 0)
+		return ret;
+
+	/* Wait until transmitter is idle */
+	ret = rc632_wait_idle(h, RC632_TMO_AUTH1);
+	if (ret < 0)
+		return ret;
+
+	/* Clear Rx/Tx CRC */
+	ret = rc632_clear_bits(h, RC632_REG_CHANNEL_REDUNDANCY,
+				RC632_CR_RX_CRC_ENABLE|RC632_CR_TX_CRC_ENABLE);
+	if (ret < 0)
+		return ret;
+
+	/* Send Authent2 Command */
+	ret = rc632_reg_write(h, RC632_REG_COMMAND, RC632_CMD_AUTHENT2);
+	if (ret < 0)
+		return ret;
+
+	/* Wait until transmitter is idle */
+	ret = rc632_wait_idle(h, RC632_TMO_AUTH1);
+	if (ret < 0)
+		return ret;
+
+	/* Check whether authentication was successful */
+	ret = rc632_reg_read(h, RC632_REG_CONTROL, &reg);
+	if (ret < 0)
+		return ret;
+
+	if (!(reg & RC632_CONTROL_CRYPTO1_ON))
+		return -EACCES;
+
+	return 0;
+
+}
 
 struct rfid_asic rc632 = {
 	.name 	= "Philips CL RC632",
@@ -1102,6 +1215,10 @@ struct rfid_asic rc632 = {
 		},
 		.fn.iso15693 = {
 			.init = &rc632_iso15693_init,
+		},
+		.fn.mifare_classic = {
+			.setkey = &rc632_mifare_set_key,
+			.auth = &rc632_mifare_auth,
 		},
 	},
 };

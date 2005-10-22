@@ -25,6 +25,7 @@
 #include <rfid/rfid_layer2.h>
 #include <rfid/rfid_protocol.h>
 #include <rfid/rfid_reader_cm5121.h>
+#include <rfid/rfid_protocol_mifare_classic.h>
 
 static int slot = 1;
 static ct_handle *h;
@@ -286,6 +287,7 @@ int main(int argc, char **argv)
 		exit(1);
 
 	protocol = RFID_PROTOCOL_MIFARE_UL;
+	protocol = RFID_PROTOCOL_MIFARE_CLASSIC;
 //	protocol = RFID_PROTOCOL_TCL;
 
 	if (l3(protocol) < 0)
@@ -315,8 +317,16 @@ int main(int argc, char **argv)
 		mifare_ulight_read(ph);
 #endif
 		break;
+	case RFID_PROTOCOL_MIFARE_CLASSIC:
+		mfcl_set_key(ph, MIFARE_CLASSIC_KEY_DEFAULT);
+		rc = mfcl_auth(ph, RFID_CMD_MIFARE_AUTH1A, 0);
+		if (rc < 0) {
+			printf("mifare auth error\n");
+			exit(1);
+		} else 
+			printf("mifare authe succeeded!\n");
+		break;
 	}
-
 
 	rfid_reader_close(rh);
 	
