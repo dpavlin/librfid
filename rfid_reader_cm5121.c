@@ -93,10 +93,10 @@ static int Read1ByteFromReg(struct rfid_asic_transport_handle *rath,
 	sndbuf[5] = 0x00;
 	sndbuf[6] = reg;
 
-	DEBUGP("reg=0x%02x, val=%02x: ", reg, *value);
 	if (PC_to_RDR_Escape(rath->data, sndbuf, 7, recvbuf, 
 			     &retlen) == 0) {
 		*value = recvbuf[1];
+		DEBUGP("reg=0x%02x, val=%02x: ", reg, *value);
 		DEBUGPC("OK\n");
 		return 0;
 	}
