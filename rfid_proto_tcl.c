@@ -647,8 +647,6 @@ tcl_init(struct rfid_layer2_handle *l2h)
 	th->priv.tcl.state = TCL_STATE_INITIAL;
 	th->priv.tcl.ats_len = mru;
 	th->priv.tcl.toggle = 1;
-	th->l2h = l2h;
-	th->proto = &rfid_protocol_tcl;
 
 	th->priv.tcl.fsd = iso14443_fsd_approx(mru);
 

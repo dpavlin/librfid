@@ -30,12 +30,22 @@ struct rfid_protocol_handle *
 rfid_protocol_init(struct rfid_layer2_handle *l2h, unsigned int id)
 {
 	struct rfid_protocol *p;
+	struct rfid_protocol_handle *ph = NULL;
 
-	for (p = rfid_protocol_list; p; p = p->next)
-		if (p->id == id)
-			return p->fn.init(l2h);
+	for (p = rfid_protocol_list; p; p = p->next) {
+		if (p->id == id) {
+			ph = p->fn.init(l2h);
+			break;
+		}
+	}
 
-	return NULL;
+	if (!ph)
+		return NULL;
+
+	ph->proto = p;
+	ph->l2h = l2h;
+
+	return ph;
 }
 
 int
@@ -60,7 +70,7 @@ int
 rfid_protocol_read(struct rfid_protocol_handle *ph,
 	 	   unsigned int page,
 		   unsigned char *rx_data,
-		   unsigned int rx_len)
+		   unsigned int *rx_len)
 {
 	if (ph->proto->fn.read)
 		return ph->proto->fn.read(ph, page, rx_data, rx_len);
