@@ -136,3 +136,31 @@ struct rfid_protocol rfid_protocol_mful = {
 		.fini		= &mful_fini,
 	},
 };
+
+/* Functions below are not (yet? covered in the generic librfid api */
+
+
+/* lock a certain page */
+int rfid_mful_lock_page(struct rfid_protocol_handle *ph, unsigned int page)
+{
+	unsigned char buf[4] = { 0x00, 0x00, 0x00, 0x00 };
+
+	if (ph->proto != &rfid_protocol_mful)
+		return -EINVAL;
+
+	if (page < 3 || page > 15)
+		return -EINVAL;
+
+	if (page > 8)
+		buf[2] = (1 << page);
+	else
+		buf[3] = (1 << (page - 8));
+
+	return mful_write(ph, MIFARE_UL_PAGE_LOCK, buf, sizeof(buf));
+}
+
+/* convenience wrapper to lock the otp page */
+int rfid_mful_lock_otp(struct rfid_protocol_handle *ph)
+{
+	return rfid_mful_lock_page(ph, MIFARE_UL_PAGE_OTP);
+}
