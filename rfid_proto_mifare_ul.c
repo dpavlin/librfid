@@ -30,9 +30,6 @@
 #include <rfid/rfid_layer2.h>
 #include <rfid/rfid_protocol_mifare_ul.h>
 
-//#include <rfid/rfid_asic.h>
-//#include <rfid/rfid_reader.h>
-
 #include "rfid_iso14443_common.h"
 
 
@@ -130,7 +127,6 @@ struct rfid_protocol rfid_protocol_mful = {
 	.name	= "Mifare Ultralight",
 	.fn	= {
 		.init 		= &mful_init,
-		/* .transcieve	= &mful_transcieve,*/
 		.read		= &mful_read,
 		.write 		= &mful_write,
 		.fini		= &mful_fini,
