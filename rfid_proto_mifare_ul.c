@@ -28,16 +28,13 @@
 #include <rfid/rfid.h>
 #include <rfid/rfid_protocol.h>
 #include <rfid/rfid_layer2.h>
-//#include <rfid/rfid_layer2_iso14443b.h>
+#include <rfid/rfid_protocol_mifare_ul.h>
 
 //#include <rfid/rfid_asic.h>
 //#include <rfid/rfid_reader.h>
 
 #include "rfid_iso14443_common.h"
 
-
-#define MIFARE_UL_CMD_WRITE	0xA2
-#define MIFARE_UL_CMD_READ	0x30
 
 /* FIXME */
 #define MIFARE_UL_READ_FWT	100
@@ -52,7 +49,7 @@ mful_read(struct rfid_protocol_handle *ph, unsigned int page,
 	unsigned char tx[2];
 	int ret;
 
-	if (page > 7)
+	if (page > MIFARE_UL_PAGE_MAX)
 		return -EINVAL;
 
 	tx[0] = MIFARE_UL_CMD_READ;
@@ -78,12 +75,14 @@ mful_write(struct rfid_protocol_handle *ph, unsigned int page,
 {
 	unsigned int i;
 	unsigned char tx[6];
-	unsigned char rx[1];
-	unsigned int rx_len;
+	unsigned char rx[10];
+	unsigned int rx_len = sizeof(rx);
 	int ret;
 
-	if (tx_len != 4 || page > 7)
+#if 0
+	if (tx_len != 4 || page > MIFARE_UL_PAGE_MAX)
 		return -EINVAL;
+#endif
 
 	tx[0] = MIFARE_UL_CMD_WRITE;
 	tx[1] = page & 0xff;
@@ -94,7 +93,11 @@ mful_write(struct rfid_protocol_handle *ph, unsigned int page,
 	ret = ph->l2h->l2->fn.transcieve(ph->l2h, tx, sizeof(tx), rx,
 					 &rx_len, MIFARE_UL_WRITE_FWT, 0);
 					
-	/* FIXME:look at RX, check for ACK/NAK */
+	if (ret < 0)
+		return ret;
+
+	if (rx[0] != MIFARE_UL_RESP_ACK)
+		return -EIO;
 
 	return ret;
 }
