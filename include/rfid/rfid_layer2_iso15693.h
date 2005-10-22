@@ -3,6 +3,13 @@
 
 #include <sys/types.h>
 
+/*
+07h = TagIt
+04h = I.CODE
+05h = Infineon
+02h = ST
+*/
+
 /* protocol definitions */
 
 struct iso15693_handle;
