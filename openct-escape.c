@@ -237,12 +237,13 @@ iso7816_read_ef(u_int16_t fid, unsigned char *buf, unsigned int *len)
 	return iso7816_read_binary(buf, len);
 }
 
+/* mifare ultralight helpers */
 int
 mifare_ulight_write(struct rfid_protocol_handle *ph)
 {
 	unsigned char buf[4] = { 0xa1, 0xa2, 0xa3, 0xa4 };
 
-	return rfid_protocol_write(ph, 20, buf, 4);
+	return rfid_protocol_write(ph, 10, buf, 4);
 }
 
 int
@@ -259,7 +260,7 @@ mifare_ulight_blank(struct rfid_protocol_handle *ph)
 	return 0;
 }
 
-int
+static int
 mifare_ulight_read(struct rfid_protocol_handle *ph)
 {
 	unsigned char buf[20];
@@ -277,6 +278,26 @@ mifare_ulight_read(struct rfid_protocol_handle *ph)
 	return 0;
 }
 
+/* mifare classic helpers */
+static int
+mifare_classic_read(struct rfid_protocol_handle *ph)
+{
+	unsigned char buf[20];
+	unsigned int len = sizeof(buf);
+	int ret;
+	int i;
+
+	for (i = 0; i <= MIFARE_CL_PAGE_MAX; i++) {
+		ret = rfid_protocol_read(ph, i, buf, &len);
+		if (ret < 0)
+			return ret;
+
+		printf("Page 0x%x: %s\n", i, rfid_hexdump(buf, 4));
+	}
+	return 0;
+}
+
+
 int main(int argc, char **argv)
 {
 	int rc;
@@ -286,9 +307,9 @@ int main(int argc, char **argv)
 	if (init() < 0)
 		exit(1);
 
-	protocol = RFID_PROTOCOL_MIFARE_UL;
-	protocol = RFID_PROTOCOL_MIFARE_CLASSIC;
-//	protocol = RFID_PROTOCOL_TCL;
+	//protocol = RFID_PROTOCOL_MIFARE_UL;
+	//protocol = RFID_PROTOCOL_MIFARE_CLASSIC;
+	protocol = RFID_PROTOCOL_TCL;
 
 	if (l3(protocol) < 0)
 		exit(1);
@@ -298,8 +319,8 @@ int main(int argc, char **argv)
 		/* we've established T=CL at this point */
 		select_mf();
 
-		rc632_register_dump(rh->ah, buf);
-		select_mf();
+		//rc632_register_dump(rh->ah, buf);
+		//select_mf();
 
 		iso7816_select_application();
 		iso7816_select_ef(0x011e);
@@ -312,19 +333,25 @@ int main(int argc, char **argv)
 	case RFID_PROTOCOL_MIFARE_UL:
 		mifare_ulight_read(ph);
 #if 0
-		//mifare_ulight_blank(ph);
-		mifare_ulight_write(ph);
+		mifare_ulight_blank(ph);
+		//mifare_ulight_write(ph);
 		mifare_ulight_read(ph);
 #endif
 		break;
 	case RFID_PROTOCOL_MIFARE_CLASSIC:
-		mfcl_set_key(ph, MIFARE_CLASSIC_KEY_DEFAULT);
-		rc = mfcl_auth(ph, RFID_CMD_MIFARE_AUTH1A, 0);
+		rc = mfcl_set_key(ph, MIFARE_CLASSIC_KEYB_DEFAULT);
+		if (rc < 0) {
+			printf("key format error\n");
+			exit(1);
+		}
+		//mfcl_set_key(ph, "xasdfr");
+		rc = mfcl_auth(ph, RFID_CMD_MIFARE_AUTH1B, 10);
 		if (rc < 0) {
 			printf("mifare auth error\n");
 			exit(1);
 		} else 
 			printf("mifare authe succeeded!\n");
+		mifare_classic_read(ph);
 		break;
 	}
 

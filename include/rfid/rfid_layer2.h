@@ -4,6 +4,8 @@
 struct rfid_layer2_handle;
 struct rfid_reader_handle;
 
+#include <rfid/rfid.h>
+
 #include <rfid/rfid_layer2_iso14443a.h>
 #include <rfid/rfid_layer2_iso14443b.h>
 #include <rfid/rfid_layer2_iso15693.h>
@@ -17,6 +19,7 @@ struct rfid_layer2 {
 		struct rfid_layer2_handle *(*init)(struct rfid_reader_handle *h);
 		int (*open)(struct rfid_layer2_handle *h);
 		int (*transcieve)(struct rfid_layer2_handle *h,
+				  enum rfid_frametype frametype,
 				  const unsigned char *tx_buf, 
 				  unsigned int tx_len, unsigned char *rx_buf, 
 				  unsigned int *rx_len, u_int64_t timeout,
@@ -50,6 +53,7 @@ struct rfid_layer2_handle *rfid_layer2_init(struct rfid_reader_handle *rh,
 					    unsigned int id);
 int rfid_layer2_open(struct rfid_layer2_handle *l2h);
 int rfid_layer2_transcieve(struct rfid_layer2_handle *l2h,
+			   enum rfid_frametype frametype,
 			   const unsigned char *tx_buf, unsigned int tx_len,
 			   unsigned char *rx_buf, unsigned int *rx_len,
 			   u_int64_t timeout, unsigned int flags);

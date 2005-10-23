@@ -46,12 +46,13 @@ rfid_layer2_open(struct rfid_layer2_handle *ph)
 
 int
 rfid_layer2_transcieve(struct rfid_layer2_handle *ph,
+			enum rfid_frametype frametype,
 			 const unsigned char *tx_buf, unsigned int len,
 			 unsigned char *rx_buf, unsigned int *rx_len,
 			 u_int64_t timeout, unsigned int flags)
 {
-	return ph->l2->fn.transcieve(ph, tx_buf, len, rx_buf, rx_len,
-					timeout, flags);
+	return ph->l2->fn.transcieve(ph, frametype, tx_buf, len, rx_buf,
+				     rx_len, timeout, flags);
 }
 
 int rfid_layer2_fini(struct rfid_layer2_handle *ph)

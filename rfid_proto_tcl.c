@@ -165,7 +165,8 @@ tcl_request_ats(struct rfid_protocol_handle *h)
 	rats[1] = (h->priv.tcl.cid & 0x0f) | ((fsdi << 4) & 0xf0);
 
 	/* transcieve (with CRC) */
-	ret = h->l2h->l2->fn.transcieve(h->l2h, rats, 2, h->priv.tcl.ats,
+	ret = h->l2h->l2->fn.transcieve(h->l2h, RFID_14443A_FRAME_REGULAR,
+					rats, 2, h->priv.tcl.ats,
 				       &h->priv.tcl.ats_len, activation_fwt(h),
 				       TCL_TRANSP_F_TX_CRC);
 	if (ret < 0) {
@@ -432,7 +433,8 @@ tcl_deselect(struct rfid_protocol_handle *h)
 	if (ret < 0)
 		return ret;
 
-	ret = h->l2h->l2->fn.transcieve(h->l2h, frame, prlg_len, rx,
+	ret = h->l2h->l2->fn.transcieve(h->l2h, RFID_14443A_FRAME_REGULAR,
+					frame, prlg_len, rx,
 				     &rx_len, deactivation_fwt(h),
 				     TCL_TRANSP_F_TX_CRC);
 	if (ret < 0) {
@@ -494,7 +496,8 @@ tcl_transcieve(struct rfid_protocol_handle *h,
 	_timeout = th->fwt;
 
 do_tx:
-	ret = h->l2h->l2->fn.transcieve(h->l2h, _tx, _tx_len,
+	ret = h->l2h->l2->fn.transcieve(h->l2h, RFID_14443A_FRAME_REGULAR,
+					_tx, _tx_len,
 					rx_buf, rx_len, _timeout, 0);
 	DEBUGP("l2 transcieve finished\n");
 	if (ret < 0)

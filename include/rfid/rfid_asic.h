@@ -1,6 +1,8 @@
 #ifndef _RFID_ASIC_H
 #define _RFID_ASIC_H
 
+enum rfid_frametype;
+
 #include <rfid/rfid_asic_rc632.h>
 
 struct rfid_asic_transport {

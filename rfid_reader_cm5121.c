@@ -180,14 +180,14 @@ static int TestFIFO(struct rc632_handle *handle)
 #endif
 
 static int cm5121_transcieve(struct rfid_reader_handle *rh,
+			     enum rfid_frametype frametype,
 			     const unsigned char *tx_data, unsigned int tx_len,
 			     unsigned char *rx_data, unsigned int *rx_len,
 			     u_int64_t timeout, unsigned int flags)
 {
-	return rh->ah->asic->priv.rc632.fn.transcieve(rh->ah, tx_data,
-							   tx_len, rx_data,
-							   rx_len, timeout,
-							   flags);
+	return rh->ah->asic->priv.rc632.fn.transcieve(rh->ah, frametype,
+						tx_data, tx_len, rx_data,
+						rx_len, timeout, flags);
 }
 
 static int cm5121_transcieve_sf(struct rfid_reader_handle *rh,
@@ -223,6 +223,12 @@ static int
 cm5121_15693_init(struct rfid_reader_handle *rh)
 {
 	return rh->ah->asic->priv.rc632.fn.iso15693.init(rh->ah);
+}
+
+static int
+cm5121_mifare_setkey(struct rfid_reader_handle *rh, const u_int8_t *key)
+{
+	return rh->ah->asic->priv.rc632.fn.mifare_classic.setkey(rh->ah, key);
 }
 
 static int
@@ -321,6 +327,7 @@ struct rfid_reader rfid_reader_cm5121 = {
 		.init = &cm5121_14443b_init,
 	},
 	.mifare_classic = {
+		.setkey = &cm5121_mifare_setkey,
 		.auth = &cm5121_mifare_auth,
 	},
 };

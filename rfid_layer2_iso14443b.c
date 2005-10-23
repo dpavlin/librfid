@@ -114,7 +114,8 @@ send_reqb(struct rfid_layer2_handle *h, unsigned char afi,
 		if (is_wup)
 			reqb[2] |= 0x08;
 
-		ret = h->rh->reader->transcieve(h->rh, reqb, sizeof(reqb),
+		ret = h->rh->reader->transcieve(h->rh, RFID_14443B_FRAME_REGULAR,
+						reqb, sizeof(reqb),
 						 (unsigned char *)&atqb, 
 						 &atqb_len, ATQB_TIMEOUT, 0);
 		h->priv.iso14443b.state = ISO14443B_STATE_REQB_SENT;
@@ -199,7 +200,8 @@ transcieve_attrib(struct rfid_layer2_handle *h, const unsigned char *inf,
 		attrib->param3.protocol_type = 0x1;
 
 	*rx_len = *rx_len + 1;
-	ret = h->rh->reader->transcieve(h->rh, (unsigned char *) attrib,
+	ret = h->rh->reader->transcieve(h->rh, RFID_14443B_FRAME_REGULAR,
+					(unsigned char *) attrib,
 					sizeof(*attrib)+inf_len,
 					rx_buf, rx_len, h->priv.iso14443b.fwt,
 					0);
@@ -242,7 +244,8 @@ iso14443b_hltb(struct rfid_layer2_handle *h)
 	hltb[0] = 0x50;
 	memcpy(hltb+1, h->uid, 4);
 
-	ret = h->rh->reader->transcieve(h->rh, hltb, 5,
+	ret = h->rh->reader->transcieve(h->rh, RFID_14443B_FRAME_REGULAR,
+					hltb, 5,
 					hltb_resp, &hltb_len,
 					h->priv.iso14443b.fwt, 0);
 	h->priv.iso14443b.state = ISO14443B_STATE_HLTB_SENT;
@@ -317,12 +320,14 @@ iso14443b_fini(struct rfid_layer2_handle *handle)
 
 static int
 iso14443b_transcieve(struct rfid_layer2_handle *handle,
+		     enum rfid_frametype frametype,
 		     const unsigned char *tx_buf, unsigned int tx_len,
 		     unsigned char *rx_buf, unsigned int *rx_len,
 		     u_int64_t timeout, unsigned int flags)
 {
 	DEBUGP("transcieving %u bytes, expecting max %u\n", tx_len, *rx_len);
-	return handle->rh->reader->transcieve(handle->rh, tx_buf, tx_len,
+	return handle->rh->reader->transcieve(handle->rh, frametype,
+					      tx_buf, tx_len,
 					      rx_buf, rx_len, timeout, flags);
 }
 
@@ -337,4 +342,3 @@ struct rfid_layer2 rfid_layer2_iso14443b = {
 		.fini 		= &iso14443b_fini,
 	},
 };
-
