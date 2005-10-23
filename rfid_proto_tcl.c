@@ -459,6 +459,10 @@ tcl_transcieve(struct rfid_protocol_handle *h,
 {
 	int ret;
 	unsigned char *tx_buf, *rx_buf;
+	unsigned char *_rx_data = rx_data;
+	unsigned int _rx_len;
+	unsigned int max_rx_len = *rx_len; /* maximum number of payoload that
+					      caller has requested */
 	unsigned int prlg_len;
 	struct tcl_handle *th = &h->priv.tcl;
 
@@ -494,14 +498,19 @@ tcl_transcieve(struct rfid_protocol_handle *h,
 	_tx = tx_buf;
 	_tx_len = tx_len+prlg_len;
 	_timeout = th->fwt;
+	_rx_len = *rx_len;
+	*rx_len = 0;
 
 do_tx:
 	ret = h->l2h->l2->fn.transcieve(h->l2h, RFID_14443A_FRAME_REGULAR,
 					_tx, _tx_len,
-					rx_buf, rx_len, _timeout, 0);
+					rx_buf, &_rx_len, _timeout, 0);
 	DEBUGP("l2 transcieve finished\n");
 	if (ret < 0)
 		goto out_rxb;
+
+	if (_rx_len >= 2)
+		_rx_len -= 2;		/* CRC is not removed by ASIC ?!? */
 
 	if ((*rx_buf & 0x01) != h->priv.tcl.toggle) {
 		DEBUGP("response with wrong toggle bit\n");
@@ -544,7 +553,7 @@ do_tx:
 		DEBUGP("S-Block\n");
 		/* Handle Wait Time Extension */
 		if (*rx_buf & TCL_PCB_CID_FOLLOWING) {
-			if (*rx_len < 3) {
+			if (_rx_len < 3) {
 				DEBUGP("S-Block with CID but short len\n");
 				ret = -1;
 				goto out_rxb;
@@ -584,6 +593,7 @@ do_tx:
 
 	} else if (is_i_block(*rx_buf)) {
 		unsigned char *inf = rx_buf+1;
+		unsigned int net_payload_len;
 		/* we're actually receiving payload data */
 
 		DEBUGP("I-Block\n");
@@ -597,7 +607,11 @@ do_tx:
 		if (*rx_buf & TCL_PCB_NAD_FOLLOWING) {
 			inf++;
 		}
-		memcpy(rx_data, inf, *rx_len - (inf - rx_buf));
+		net_payload_len = _rx_len - (inf - rx_buf);
+		memcpy(_rx_data, inf, net_payload_len);
+		/* increment the number of payload bytes that we actually received */
+		*rx_len += net_payload_len;
+		_rx_data += net_payload_len;
 
 		if (*rx_buf & 0x10) {
 			/* we're not the last frame in the chain, continue rx */
