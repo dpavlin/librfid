@@ -92,8 +92,8 @@ static int init()
 	sleep(2);
 
 	printf("opening layer2 handle\n");
-	l2h = rfid_layer2_init(rh, RFID_LAYER2_ISO14443A);
-	//l2h = rfid_layer2_init(rh, RFID_LAYER2_ISO14443B);
+	//l2h = rfid_layer2_init(rh, RFID_LAYER2_ISO14443A);
+	l2h = rfid_layer2_init(rh, RFID_LAYER2_ISO14443B);
 	if (!l2h) {
 		fprintf(stderr, "error during iso14443a_init\n");
 		return -1;
@@ -170,7 +170,7 @@ int
 iso7816_select_application(void)
 {
 	char cmd[] = { 0x00, 0xa4, 0x04, 0x0c, 0x07,
-		       0x0a, 0x00, 0x00, 0x02, 0x47, 0x10, 0x01 };
+		       0xa0, 0x00, 0x00, 0x02, 0x47, 0x10, 0x01 };
 	char resp[7];
 	unsigned int rlen = sizeof(resp);
 
