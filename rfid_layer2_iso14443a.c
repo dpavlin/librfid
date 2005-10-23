@@ -55,12 +55,13 @@ iso14443a_transcieve_acf(struct rfid_layer2_handle *handle,
 /* Transmit a regular frame */
 static int 
 iso14443a_transcieve(struct rfid_layer2_handle *handle,
+		     enum rfid_frametype frametype, 
 			const unsigned char *tx_buf, unsigned int tx_len,
 			unsigned char *rx_buf, unsigned int *rx_len,
 			u_int64_t timeout, unsigned int flags)
 {
-	return handle->rh->reader->transcieve(handle->rh, tx_buf, tx_len, 
-						rx_buf, rx_len, timeout, flags);
+	return handle->rh->reader->transcieve(handle->rh, frametype, tx_buf,
+					tx_len, rx_buf, rx_len, timeout, flags);
 }
 
 static int 
@@ -155,7 +156,8 @@ cascade:
 	}
 
 	iso14443a_code_nvb_bits(&acf.nvb, 7*8);
-	ret = iso14443a_transcieve(handle, (unsigned char *)&acf, 7, 
+	ret = iso14443a_transcieve(handle, RFID_14443A_FRAME_REGULAR,
+				   (unsigned char *)&acf, 7, 
 				   (unsigned char *) &sak, &rx_len,
 				   TIMEOUT, 0);
 	if (ret < 0)
@@ -238,7 +240,8 @@ iso14443a_hlta(struct rfid_layer2_handle *handle)
 	unsigned char rx_buf[10];
 	unsigned int rx_len = sizeof(rx_buf);
 
-	ret = iso14443a_transcieve(handle, tx_buf, sizeof(tx_buf),
+	ret = iso14443a_transcieve(handle, RFID_14443A_FRAME_REGULAR,
+				   tx_buf, sizeof(tx_buf),
 				   rx_buf, &rx_len, 1000 /* 1ms */, 0);
 	if (ret < 0) {
 		/* "error" case: we don't get somethng back from the card */

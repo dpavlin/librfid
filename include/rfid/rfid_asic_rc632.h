@@ -3,6 +3,8 @@
 
 struct rfid_asic_transport_handle;
 
+#include <rfid/rfid_asic.h>
+
 struct rfid_asic_rc632_transport {
 	struct {
 		int (*reg_write)(struct rfid_asic_transport_handle *rath,
@@ -33,6 +35,7 @@ struct rfid_asic_rc632 {
 		int (*turn_on_rf)(struct rfid_asic_handle *h);
 		int (*turn_off_rf)(struct rfid_asic_handle *h);
 		int (*transcieve)(struct rfid_asic_handle *h,
+				  enum rfid_frametype,
 				  const u_int32_t *tx_buf,
 				  unsigned int tx_len,
 				  u_int32_t *rx_buf,
@@ -55,7 +58,8 @@ struct rfid_asic_rc632 {
 			int (*init)(struct rfid_asic_handle *h);
 		} iso15693;
 		struct {
-			int (*setkey)(struct rfid_asic_handle *h, unsigned char *key);
+			int (*setkey)(struct rfid_asic_handle *h,
+				      const unsigned char *key);
 			int (*auth)(struct rfid_asic_handle *h, u_int8_t cmd, 
 				    u_int32_t serno, u_int8_t block);
 		} mifare_classic;

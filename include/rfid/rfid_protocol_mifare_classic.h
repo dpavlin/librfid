@@ -5,7 +5,16 @@ extern struct rfid_protocol rfid_protocol_mfcl;
 #define RFID_CMD_MIFARE_AUTH1A	0x60
 #define RFID_CMD_MIFARE_AUTH1B	0x61
 
-#define MIFARE_CLASSIC_KEY_DEFAULT	"\xa0\xa1\xa2\xa3\xa4\xa5"
+#define MIFARE_CL_CMD_WRITE16	0xA0
+#define MIFARE_CL_CMD_READ	0x30
+
+#define MIFARE_CL_RESP_ACK	0x0a
+#define MIFARE_CL_RESP_NAK	0x00
+
+#define MIFARE_CL_PAGE_MAX	0xff
+
+#define MIFARE_CLASSIC_KEYA_DEFAULT	"\xa0\xa1\xa2\xa3\xa4\xa5"
+#define MIFARE_CLASSIC_KEYB_DEFAULT	"\xb0\xb1\xb2\xb3\xb4\xb5"
 
 
 #endif

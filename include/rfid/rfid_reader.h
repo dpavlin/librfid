@@ -10,6 +10,7 @@ struct rfid_reader {
 	char *name;
 	unsigned int id;
 	int (*transcieve)(struct rfid_reader_handle *h,
+			  enum rfid_frametype frametype,
 			  const unsigned char *tx_buf, unsigned int tx_len,
 			  unsigned char *rx_buf, unsigned int *rx_len,
 			  u_int64_t timeout, unsigned int flags);
@@ -61,4 +62,10 @@ struct rfid_reader_handle {
 	} priv;
 	struct rfid_reader *reader;
 };
+
+
+extern struct rfid_reader_handle *
+rfid_reader_open(void *data, unsigned int id);
+
+extern void rfid_reader_close(struct rfid_reader_handle *rh);
 #endif

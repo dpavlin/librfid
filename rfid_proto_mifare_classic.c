@@ -28,9 +28,8 @@
 #include <rfid/rfid.h>
 #include <rfid/rfid_protocol.h>
 #include <rfid/rfid_layer2.h>
-//#include <rfid/rfid_layer2_iso14443b.h>
+#include <rfid/rfid_protocol_mifare_classic.h>
 
-//#include <rfid/rfid_asic.h>
 #include <rfid/rfid_reader.h>
 
 #include "rfid_iso14443_common.h"
@@ -40,8 +39,8 @@
 #define MIFARE_UL_CMD_READ	0x30
 
 /* FIXME */
-#define MIFARE_UL_READ_FWT	100
-#define MIFARE_UL_WRITE_FWT	100
+#define MIFARE_CL_READ_FWT	100
+#define MIFARE_CL_WRITE_FWT	100
 
 static int
 mfcl_read(struct rfid_protocol_handle *ph, unsigned int page,
@@ -52,14 +51,15 @@ mfcl_read(struct rfid_protocol_handle *ph, unsigned int page,
 	unsigned char tx[2];
 	int ret;
 
-	if (page > 7)
+	if (page > MIFARE_CL_PAGE_MAX)
 		return -EINVAL;
 
-	tx[0] = MIFARE_UL_CMD_READ;
+	tx[0] = MIFARE_CL_CMD_READ;
 	tx[1] = page & 0xff;
 
-	ret = ph->l2h->l2->fn.transcieve(ph->l2h, tx, sizeof(tx), rx_buf,
-					 &real_rx_len, MIFARE_UL_READ_FWT, 0);
+	ret = ph->l2h->l2->fn.transcieve(ph->l2h, RFID_MIFARE_FRAME, tx,
+					 sizeof(tx), rx_buf, &real_rx_len,
+					 MIFARE_CL_READ_FWT, 0);
 
 	if (ret < 0)
 		return ret;
@@ -77,24 +77,28 @@ mfcl_write(struct rfid_protocol_handle *ph, unsigned int page,
 	   unsigned char *tx_data, unsigned int tx_len)
 {
 	unsigned int i;
-	unsigned char tx[6];
+	unsigned char tx[18];
 	unsigned char rx[1];
 	unsigned int rx_len;
 	int ret;
 
-	if (tx_len != 4 || page > 7)
+	if (tx_len != 16 || page > MIFARE_CL_PAGE_MAX)
 		return -EINVAL;
 
-	tx[0] = MIFARE_UL_CMD_WRITE;
+	tx[0] = MIFARE_CL_CMD_WRITE16;
 	tx[1] = page & 0xff;
 
-	for (i = 0; i < 4; i++)
-		tx[2+i] = tx_data[i];
+	memcpy(tx+2, tx_data, 16);
 
-	ret = ph->l2h->l2->fn.transcieve(ph->l2h, tx, sizeof(tx), rx,
-					 &rx_len, MIFARE_UL_WRITE_FWT, 0);
+	ret = ph->l2h->l2->fn.transcieve(ph->l2h, RFID_MIFARE_FRAME, tx,
+					 sizeof(tx), rx, &rx_len, 
+					 MIFARE_CL_WRITE_FWT, 0);
 					
-	/* FIXME:look at RX, check for ACK/NAK */
+	if (ret < 0)
+		return ret;
+
+	if (rx[0] != MIFARE_UL_RESP_ACK)
+		return -EIO;
 
 	return ret;
 }
