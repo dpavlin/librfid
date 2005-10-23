@@ -36,6 +36,18 @@
 
 #include "rfid_iso14443_common.h"
 
+static enum rfid_frametype l2_to_frame(unsigned int layer2)
+{
+	switch (layer2) {
+		case RFID_LAYER2_ISO14443A:
+			return RFID_14443A_FRAME_REGULAR;
+			break;
+		case RFID_LAYER2_ISO14443B:
+			return RFID_14443B_FRAME_REGULAR;
+			break;
+	}
+	return 0;
+}
 
 static unsigned int sfgi_to_sfgt(struct rfid_protocol_handle *h, 
 				 unsigned char sfgi)
@@ -502,15 +514,12 @@ tcl_transcieve(struct rfid_protocol_handle *h,
 	*rx_len = 0;
 
 do_tx:
-	ret = h->l2h->l2->fn.transcieve(h->l2h, RFID_14443A_FRAME_REGULAR,
+	ret = h->l2h->l2->fn.transcieve(h->l2h, l2_to_frame(h->l2h->l2->id),
 					_tx, _tx_len,
 					rx_buf, &_rx_len, _timeout, 0);
 	DEBUGP("l2 transcieve finished\n");
 	if (ret < 0)
 		goto out_rxb;
-
-	if (_rx_len >= 2)
-		_rx_len -= 2;		/* CRC is not removed by ASIC ?!? */
 
 	if ((*rx_buf & 0x01) != h->priv.tcl.toggle) {
 		DEBUGP("response with wrong toggle bit\n");
