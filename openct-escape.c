@@ -147,7 +147,7 @@ static int select_mf(void)
 }
 
 
-static int get_challenge(unsigned char len)
+static int iso7816_get_challenge(unsigned char len)
 {
 	unsigned char cmd[] = { 0x00, 0x84, 0x00, 0x00, 0x08 };
 	unsigned char ret[256];
@@ -161,7 +161,7 @@ static int get_challenge(unsigned char len)
 	if (rv < 0)
 		return rv;
 
-	//printf("%s\n", rfid_hexdump(ret, rlen));
+	printf("%d: [%s]\n", rlen, rfid_hexdump(ret, rlen));
 
 	return 0;
 }
@@ -181,6 +181,8 @@ iso7816_select_application(void)
 		return rv;
 
 	/* FIXME: parse response */
+	printf("%s\n", rfid_hexdump(resp, rlen));
+
 	return 0;
 }
 
@@ -201,6 +203,7 @@ iso7816_select_ef(u_int16_t fid)
 		return rv;
 
 	/* FIXME: parse response */
+	printf("%s\n", rfid_hexdump(resp, rlen));
 
 	return 0;
 }
@@ -325,9 +328,9 @@ int main(int argc, char **argv)
 		iso7816_select_application();
 		iso7816_select_ef(0x011e);
 		iso7816_select_ef(0x0101);
-#if 0
+#if 1
 		for (i = 0; i < 4; i++)
-			get_challenge(0x60);
+			iso7816_get_challenge(0x60);
 #endif
 		break;
 	case RFID_PROTOCOL_MIFARE_UL:
