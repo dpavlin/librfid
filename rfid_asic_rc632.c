@@ -576,7 +576,6 @@ rc632_iso14443a_transcieve_sf(struct rfid_asic_handle *handle,
 	if (ret < 0)
 		return ret;
 
-	
 	ret = rc632_clear_bits(handle, RC632_REG_CONTROL,
 				RC632_CONTROL_CRYPTO1_ON);
 	if (ret < 0)
@@ -631,9 +630,12 @@ rc632_iso14443ab_transcieve(struct rfid_asic_handle *handle,
 
 	switch (frametype) {
 	case RFID_14443A_FRAME_REGULAR:
-	case RFID_14443B_FRAME_REGULAR:
-		channel_red = RC632_CR_TX_CRC_ENABLE|RC632_CR_TX_CRC_ENABLE
+		channel_red = RC632_CR_RX_CRC_ENABLE|RC632_CR_TX_CRC_ENABLE
 				|RC632_CR_PARITY_ENABLE|RC632_CR_PARITY_ODD;
+		break;
+	case RFID_14443B_FRAME_REGULAR:
+		channel_red = RC632_CR_RX_CRC_ENABLE|RC632_CR_TX_CRC_ENABLE
+				|RC632_CR_CRC3309;
 		break;
 	case RFID_MIFARE_FRAME:
 		channel_red = RC632_CR_PARITY_ENABLE|RC632_CR_PARITY_ODD;
@@ -1255,7 +1257,7 @@ rc632_mifare_transcieve(struct rfid_asic_handle *handle,
 				 RC632_CR_RX_CRC_ENABLE));
 #endif
 	ret = rc632_clear_bits(handle, RC632_REG_CHANNEL_REDUNDANCY,
-				RC632_CR_TX_CRC_ENABLE|RC632_CR_TX_CRC_ENABLE);
+				RC632_CR_RX_CRC_ENABLE|RC632_CR_TX_CRC_ENABLE);
 	if (ret < 0)
 		return ret;
 
