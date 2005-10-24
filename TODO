@@ -5,7 +5,7 @@ cm5121:
 - fix handling of TX or RX > 0x7f [buffer length in atmel chip?]
 
 iso14443a:
-- test anticollision, resolve remaining bugs
+[none]
 
 iso14443b:
 - implement 'option 2' frame markers
@@ -15,8 +15,10 @@ iso15693:
 - implement anticollision
 - implement all the rest
 
+mifare_clasic:
+- figure out why authentication doensn't work, even though it is exactly like in other drivers
+
 tcl:
-- test chaining
 - implement pps for asymmetric (rx/tx) speeds
 - test pps
 
