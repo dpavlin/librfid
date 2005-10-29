@@ -280,9 +280,10 @@ cm5121_open(void *data)
 	memset(rath, 0, sizeof(*rath));
 
 	rath->rat = &cm5121_ccid;
-	rath->data = data;
-
 	rh->reader = &rfid_reader_cm5121;
+
+	if (cm5121_source_init(rath) < 0)
+		goto out_rath;
 
 	if (cm5121_enable_rc632(rath) < 0)
 		goto out_rath;

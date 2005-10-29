@@ -3,6 +3,7 @@
 
 struct rfid_asic_transport_handle;
 
+#include <sys/types.h>
 #include <rfid/rfid_asic.h>
 
 struct rfid_asic_rc632_transport {
