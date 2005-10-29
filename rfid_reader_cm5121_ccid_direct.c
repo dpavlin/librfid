@@ -7,9 +7,6 @@
 
 #include "ccid/ccid-driver.h"
 
-/* FIXME: remove ugly global variables */
-static ccid_driver_t h;
-
 /* this is the sole function required by rfid_reader_cm5121.c */
 int 
 PC_to_RDR_Escape(void *handle, 
@@ -30,11 +27,10 @@ int cm5121_source_init(struct rfid_asic_transport_handle *rath)
 {
 	int rc;
 
-        rc = ccid_open_reader (&h, NULL);
+        rc = ccid_open_reader(&rath->data, NULL);
         if (rc) {
                 fprintf (stderr, "failed to open CCID reader: %#x\n", rc);
                 return -1;
         }
-	rath->data = &h;
 	return 0;
 }
