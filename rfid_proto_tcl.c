@@ -641,20 +641,6 @@ out:
 	return ret;
 }
 
-#if 0
-int
-tcl_send(struct tcl_handle *th)
-{
-	return -1;
-}
-
-int
-tcl_recv()
-{
-	return -1;
-}
-#endif
-
 static struct rfid_protocol_handle *
 tcl_init(struct rfid_layer2_handle *l2h)
 {
