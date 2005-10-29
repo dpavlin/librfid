@@ -1,5 +1,4 @@
-
-/*
+/*                                                 -*- linux-c -*-
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2 
  *  as published by the Free Software Foundation
@@ -18,7 +17,6 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
-#include <openct/openct.h>
 
 #include <rfid/rfid.h>
 #include <rfid/rfid_reader.h>
@@ -27,63 +25,20 @@
 #include <rfid/rfid_reader_cm5121.h>
 #include <rfid/rfid_protocol_mifare_classic.h>
 
-static int slot = 1;
-static ct_handle *h;
-static ct_lock_handle lock;
-
 static struct rfid_reader_handle *rh;
 static struct rfid_layer2_handle *l2h;
 static struct rfid_protocol_handle *ph;
 
-
-/* this is the sole function required by rfid_reader_cm5121.c */
-int 
-PC_to_RDR_Escape(void *handle, 
-		 const unsigned char *tx_buf, unsigned int tx_len,
-		 unsigned char *rx_buf, unsigned int *rx_len)
-{
-	ct_handle *h = (ct_handle *) handle;
-	int rc;
-
-	rc = ct_card_transact(h, 1, tx_buf, tx_len, rx_buf, *rx_len);
-	if (rc >= 0) {
-		*rx_len = rc;
-		return 0;
-	}
-
-	return rc;
-}
-
-
-
 static int init()
 {
 	unsigned char buf[0x3f];
-	unsigned char atr[64];
 	int rc;
-
-	h = ct_reader_connect(0);
-	if (!h)
-		return -1;
-
-	printf("acquiring card lock\n");
-	rc = ct_card_lock(h, slot, IFD_LOCK_EXCLUSIVE, &lock);
-	if (rc < 0) {
-		fprintf(stderr, "error, no card lock\n");
-		return -1;
-	}
-
-	rc = ct_card_reset(h, slot, atr, sizeof(atr));
-	if (rc < 0) {
-		fprintf(stderr, "error, can't reset virtual card\n");
-		return -1;
-	}
 
 	printf("initializing librfid\n");
 	rfid_init();
 
 	printf("opening reader handle\n");
-	rh = rfid_reader_open(h, RFID_READER_CM5121);
+	rh = rfid_reader_open(NULL, RFID_READER_CM5121);
 	if (!rh) {
 		fprintf(stderr, "error, no cm5121 handle\n");
 		return -1;
@@ -92,8 +47,8 @@ static int init()
 	sleep(2);
 
 	printf("opening layer2 handle\n");
-	//l2h = rfid_layer2_init(rh, RFID_LAYER2_ISO14443A);
-	l2h = rfid_layer2_init(rh, RFID_LAYER2_ISO14443B);
+	l2h = rfid_layer2_init(rh, RFID_LAYER2_ISO14443A);
+	//l2h = rfid_layer2_init(rh, RFID_LAYER2_ISO14443B);
 	if (!l2h) {
 		fprintf(stderr, "error during iso14443a_init\n");
 		return -1;
@@ -307,6 +262,31 @@ int main(int argc, char **argv)
 	char buf[0x40];
 	int i, protocol;
 
+#if 0
+        if (argc) {
+                argc--;
+                argv++;
+        }
+        
+        while (argc) {
+                if ( !strcmp (*argv, "--list")) {
+                        char *p;
+                        p = ccid_get_reader_list ();
+                        if (!p)
+                                return 1;
+                        fputs (p, stderr);
+                        free (p);
+                        return 0;
+                }
+                else if ( !strcmp (*argv, "--debug")) {
+                        ccid_set_debug_level (ccid_set_debug_level (-1) + 1);
+                        argc--; argv++;
+                }
+                else
+                        break;
+        }
+#endif
+
 	if (init() < 0)
 		exit(1);
 
@@ -322,9 +302,6 @@ int main(int argc, char **argv)
 		/* we've established T=CL at this point */
 		select_mf();
 
-		//rc632_register_dump(rh->ah, buf);
-		//select_mf();
-
 		iso7816_select_application();
 		iso7816_select_ef(0x011e);
 		iso7816_select_ef(0x0101);
@@ -337,7 +314,7 @@ int main(int argc, char **argv)
 		mifare_ulight_read(ph);
 #if 0
 		mifare_ulight_blank(ph);
-		//mifare_ulight_write(ph);
+		mifare_ulight_write(ph);
 		mifare_ulight_read(ph);
 #endif
 		break;
@@ -347,7 +324,6 @@ int main(int argc, char **argv)
 			printf("key format error\n");
 			exit(1);
 		}
-		//mfcl_set_key(ph, "xasdfr");
 		rc = mfcl_auth(ph, RFID_CMD_MIFARE_AUTH1B, 10);
 		if (rc < 0) {
 			printf("mifare auth error\n");
