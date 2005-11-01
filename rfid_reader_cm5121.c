@@ -37,10 +37,11 @@
 #include <rfid/rfid_asic_rc632.h>
 #include <rfid/rfid_reader_cm5121.h>
 
-#define SENDBUF_LEN	40
+//#define SENDBUF_LEN	40
+#define SENDBUF_LEN	100
 #define RECVBUF_LEN	40
 
-#if 0
+#if 1
 #ifdef DEBUGP
 #undef DEBUGP
 #define DEBUGP(x, ...)
