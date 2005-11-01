@@ -625,7 +625,6 @@ rc632_iso14443ab_transcieve(struct rfid_asic_handle *handle,
 	u_int8_t rxl = *rx_len & 0xff;
 	u_int8_t channel_red;
 
-	DEBUGP("entered\n");
 	memset(rx_buf, 0, *rx_len);
 
 	switch (frametype) {
