@@ -36,6 +36,14 @@
 
 #include "rfid_iso14443_common.h"
 
+#if 1
+#ifdef DEBUGP
+#undef DEBUGP
+#define DEBUGP(x, ...)
+#define DEBUGPC(x, ...)
+#endif
+#endif
+
 static enum rfid_frametype l2_to_frame(unsigned int layer2)
 {
 	switch (layer2) {
@@ -605,10 +613,10 @@ do_tx:
 		unsigned int net_payload_len;
 		/* we're actually receiving payload data */
 
-		DEBUGP("I-Block\n");
+		DEBUGP("I-Block: ");
 		if (*rx_buf & TCL_PCB_CID_FOLLOWING) {
 			if (*(rx_buf+1) != h->priv.tcl.cid) {
-				DEBUGP("CID %u is not valid\n", *(rx_buf)+1);
+				DEBUGPC("CID %u is not valid\n", *(rx_buf)+1);
 				goto out_rxb;
 			}
 			inf++;
@@ -617,6 +625,7 @@ do_tx:
 			inf++;
 		}
 		net_payload_len = _rx_len - (inf - rx_buf);
+		DEBUGPC("%u bytes\n", net_payload_len);
 		memcpy(_rx_data, inf, net_payload_len);
 		/* increment the number of payload bytes that we actually received */
 		*rx_len += net_payload_len;
