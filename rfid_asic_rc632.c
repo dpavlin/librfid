@@ -629,6 +629,7 @@ rc632_iso14443ab_transcieve(struct rfid_asic_handle *handle,
 
 	switch (frametype) {
 	case RFID_14443A_FRAME_REGULAR:
+	case RFID_MIFARE_FRAME:
 		channel_red = RC632_CR_RX_CRC_ENABLE|RC632_CR_TX_CRC_ENABLE
 				|RC632_CR_PARITY_ENABLE|RC632_CR_PARITY_ODD;
 		break;
@@ -636,17 +637,15 @@ rc632_iso14443ab_transcieve(struct rfid_asic_handle *handle,
 		channel_red = RC632_CR_RX_CRC_ENABLE|RC632_CR_TX_CRC_ENABLE
 				|RC632_CR_CRC3309;
 		break;
+#if 0
 	case RFID_MIFARE_FRAME:
 		channel_red = RC632_CR_PARITY_ENABLE|RC632_CR_PARITY_ODD;
 		break;
-	}
-#if 0
-	ret = rc632_reg_write(handle, RC632_REG_CHANNEL_REDUNDANCY,
-				(RC632_CR_PARITY_ENABLE |
-				 RC632_CR_PARITY_ODD |
-				 RC632_CR_TX_CRC_ENABLE |
-				 RC632_CR_RX_CRC_ENABLE));
 #endif
+	default:
+		return -EINVAL;
+		break;
+	}
 	ret = rc632_reg_write(handle, RC632_REG_CHANNEL_REDUNDANCY,
 			      channel_red);
 	if (ret < 0)
@@ -1214,14 +1213,10 @@ rc632_mifare_auth(struct rfid_asic_handle *h, u_int8_t cmd, u_int32_t serno,
 	if (ret < 0)
 		return ret;
 
-#if 0
 	/* Wait until transmitter is idle */
 	ret = rc632_wait_idle(h, RC632_TMO_AUTH1);
 	if (ret < 0)
 		return ret;
-#else
-	sleep(1);
-#endif
 
 	/* Check whether authentication was successful */
 	ret = rc632_reg_read(h, RC632_REG_CONTROL, &reg);
@@ -1248,15 +1243,16 @@ rc632_mifare_transcieve(struct rfid_asic_handle *handle,
 	DEBUGP("entered\n");
 	memset(rx_buf, 0, *rx_len);
 
-#if 0
+#if 1
 	ret = rc632_reg_write(handle, RC632_REG_CHANNEL_REDUNDANCY,
 				(RC632_CR_PARITY_ENABLE |
 				 RC632_CR_PARITY_ODD |
 				 RC632_CR_TX_CRC_ENABLE |
 				 RC632_CR_RX_CRC_ENABLE));
-#endif
+#else
 	ret = rc632_clear_bits(handle, RC632_REG_CHANNEL_REDUNDANCY,
 				RC632_CR_RX_CRC_ENABLE|RC632_CR_TX_CRC_ENABLE);
+#endif
 	if (ret < 0)
 		return ret;
 
