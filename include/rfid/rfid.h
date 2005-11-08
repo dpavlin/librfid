@@ -15,7 +15,11 @@ enum rfid_frametype {
 #define DEBUGPC(x, args ...) fprintf(stderr, x, ## args)
 extern const char *rfid_hexdump(const void *data, unsigned int len);
 
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 #endif
+
+#endif /* __LIBRFID__ */
 
 int rfid_init();
 

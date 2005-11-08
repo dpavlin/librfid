@@ -96,6 +96,23 @@ rc632_set_bits(struct rfid_asic_handle *handle,
 
 	return rc632_reg_write(handle, reg, (tmp|val)&0xff);
 }
+static int 
+rc632_set_bit_mask(struct rfid_asic_handle *handle, 
+		   u_int8_t reg, u_int8_t mask, u_int8_t val)
+{
+	int ret;
+	u_int8_t tmp;
+
+	ret = rc632_reg_read(handle, reg, &tmp);
+	if (ret < 0)
+		return ret;
+
+	/* if bits are already like we want them, abort */
+	if ((tmp & mask) == val)
+		return 0;
+
+	return rc632_reg_write(handle, reg, (tmp & ~mask)|(val & mask));
+}
 
 static int 
 rc632_clear_bits(struct rfid_asic_handle *handle, 
@@ -739,20 +756,126 @@ rc632_iso14443a_transcieve_acf(struct rfid_asic_handle *handle,
 	return 0;
 }
 
+enum rc632_rate {
+	RC632_RATE_106	= 0x00,
+	RC632_RATE_212	= 0x01,
+	RC632_RATE_424	= 0x02,
+	RC632_RATE_848	= 0x03,
+};
+
+struct rx_config {
+	u_int8_t	subc_pulses;
+	u_int8_t	rx_coding;
+	u_int8_t	rx_threshold;
+	u_int8_t	bpsk_dem_ctrl;
+};
+
+struct tx_config {
+	u_int8_t	rate;
+	u_int8_t	mod_width;
+};
+
+static struct rx_config rx_configs[] = {
+	{
+		.subc_pulses 	= RC632_RXCTRL1_SUBCP_8,
+		.rx_coding	= RC632_DECCTRL_MANCHESTER,
+		.rx_threshold	= 0x88,
+		.bpsk_dem_ctrl	= 0x00,
+	},
+	{
+		.subc_pulses	= RC632_RXCTRL1_SUBCP_4,
+		.rx_coding	= RC632_DECCTRL_BPSK,
+		.rx_threshold	= 0x50,
+		.bpsk_dem_ctrl	= 0x0c,
+	},
+	{
+		.subc_pulses	= RC632_RXCTRL1_SUBCP_2,
+		.rx_coding	= RC632_DECCTRL_BPSK,
+		.rx_threshold	= 0x50,
+		.bpsk_dem_ctrl	= 0x0c,
+	},
+	{
+		.subc_pulses	= RC632_RXCTRL1_SUBCP_1,
+		.rx_coding	= RC632_DECCTRL_BPSK,
+		.rx_threshold	= 0x50,
+		.bpsk_dem_ctrl	= 0x0c,
+	},
+};
+
+static struct tx_config tx_configs[] = {
+	{
+		.rate 		= RC632_CDRCTRL_RATE_106K,
+		.mod_width	= 0x13,
+	},
+	{
+		.rate		= RC632_CDRCTRL_RATE_212K,
+		.mod_width	= 0x07,
+	},
+	{
+		.rate		= RC632_CDRCTRL_RATE_424K,
+		.mod_width	= 0x03,
+	},
+	{
+		.rate		= RC632_CDRCTRL_RATE_848K,
+		.mod_width	= 0x01,
+	},
+};
+
 static int rc632_iso14443a_set_speed(struct rfid_asic_handle *handle,
+				     unsigned int tx,
 				     u_int8_t rate)
 {
 	int rc;
 	u_int8_t reg;
 
-	rc = rc632_reg_read(handle, RC632_REG_CODER_CONTROL, &reg);
-	if (rc < 0)
-		return rc;
 
-	reg &= ~RC632_CDRDTRL_RATE_MASK;
-	reg |= (rate & RC632_CDRDTRL_RATE_MASK);
+	if (!tx) {
+		/* Rx */
+		if (rate > ARRAY_SIZE(rx_configs))
+			return -EINVAL;
 
-	return rc632_reg_write(handle, RC632_REG_CODER_CONTROL, reg);
+		rc = rc632_set_bit_mask(handle, RC632_REG_RX_CONTROL1,
+					RC632_RXCTRL1_SUBCP_MASK,
+					rx_configs[rate].subc_pulses);
+		if (rc < 0)
+			return rc;
+
+		rc = rc632_set_bit_mask(handle, RC632_REG_DECODER_CONTROL,
+					RC632_DECCTRL_BPSK,
+					rx_configs[rate].rx_coding);
+		if (rc < 0)
+			return rc;
+
+		rc = rc632_reg_write(handle, RC632_REG_RX_THRESHOLD,
+					rx_configs[rate].rx_threshold);
+		if (rc < 0)
+			return rc;
+
+		if (rx_configs[rate].rx_coding == RC632_DECCTRL_BPSK) {
+			rc = rc632_reg_write(handle, 
+					     RC632_REG_BPSK_DEM_CONTROL,
+					     rx_configs[rate].bpsk_dem_ctrl);
+			if (rc < 0)
+				return rc;
+		}
+	} else {
+		/* Tx */
+		if (rate > ARRAY_SIZE(tx_configs))
+			return -EINVAL;
+
+		rc = rc632_set_bit_mask(handle, RC632_REG_CODER_CONTROL,
+					RC632_CDRCTRL_RATE_MASK,
+					tx_configs[rate].rate);
+		if (rc < 0)
+			return rc;
+
+		rc = rc632_reg_write(handle, RC632_REG_MOD_WIDTH,
+				     tx_configs[rate].mod_width);
+		if (rc < 0)
+			return rc;
+	}
+
+	return 0;
 }
 
 static int rc632_iso14443b_init(struct rfid_asic_handle *handle)
