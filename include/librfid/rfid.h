@@ -11,8 +11,14 @@ enum rfid_frametype {
 	RFID_MIFARE_FRAME,
 };
 
+#if 0
 #define DEBUGP(x, args ...) fprintf(stderr, "%s(%d):%s: " x, __FILE__, __LINE__, __FUNCTION__, ## args)
 #define DEBUGPC(x, args ...) fprintf(stderr, x, ## args)
+#else
+#define DEBUGP(x, args ...)
+#define DEBUGPC(x, args ...)
+#endif
+
 extern const char *rfid_hexdump(const void *data, unsigned int len);
 
 #ifndef ARRAY_SIZE

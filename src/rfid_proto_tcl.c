@@ -36,17 +36,6 @@
 
 #include "rfid_iso14443_common.h"
 
-#if 0
-#ifdef DEBUGP
-#undef DEBUGP
-#define DEBUGP(x, ...)
-#endif
-#ifdef DEBUGPC
-#undef DEBUGPC
-#define DEBUGPC(x, ...)
-#endif
-#endif
-
 static enum rfid_frametype l2_to_frame(unsigned int layer2)
 {
 	switch (layer2) {
@@ -281,6 +270,7 @@ tcl_do_pps(struct rfid_protocol_handle *h)
 
 	ppss[0] = 0xd0 | (h->priv.tcl.cid & 0x0f);
 	ppss[1] = 0x11;
+	ppss[2] = 0x00;
 
 	/* FIXME: deal with different speed for each direction */
 	DrI = d_to_di(h, Dr);
