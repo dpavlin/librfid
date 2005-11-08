@@ -1,5 +1,5 @@
 LIBVERSION= 0:0:0
-INCLUDES = $(all_includes) -I$(top_srcdir)/include
+INCLUDES = $(all_includes) -I$(top_srcdir)/include -D__LIBRFID__
 
 lib_LTLIBRARIES = librfid.la
 

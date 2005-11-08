@@ -5,8 +5,37 @@
 
 struct rfid_protocol_handle;
 
-#include <rfid/rfid_protocol_tcl.h>
-#include <rfid/rfid_protocol_mifare_ul.h>
+struct rfid_protocol_handle *
+rfid_protocol_init(struct rfid_layer2_handle *l2h, unsigned int id);
+int rfid_protocol_open(struct rfid_protocol_handle *ph);
+int rfid_protocol_transcieve(struct rfid_protocol_handle *ph,
+			     const unsigned char *tx_buf, unsigned int tx_len,
+			     unsigned char *rx_buf, unsigned int *rx_len,
+			     unsigned int timeout, unsigned int flags);
+int
+rfid_protocol_read(struct rfid_protocol_handle *ph,
+	 	   unsigned int page,
+		   unsigned char *rx_data,
+		   unsigned int *rx_len);
+
+int
+rfid_protocol_write(struct rfid_protocol_handle *ph,
+	 	   unsigned int page,
+		   unsigned char *tx_data,
+		   unsigned int tx_len);
+
+int rfid_protocol_fini(struct rfid_protocol_handle *ph);
+int rfid_protocol_close(struct rfid_protocol_handle *ph);
+
+enum rfid_protocol_id {
+	RFID_PROTOCOL_UNKNOWN,
+	RFID_PROTOCOL_TCL,
+	RFID_PROTOCOL_MIFARE_UL,
+	RFID_PROTOCOL_MIFARE_CLASSIC,
+};
+
+
+#ifdef __LIBRFID__
 
 struct rfid_protocol {
 	struct rfid_protocol *next;
@@ -37,6 +66,12 @@ struct rfid_protocol {
 	} fn;
 };
 
+int rfid_protocol_register(struct rfid_protocol *p);
+
+#include <rfid/rfid_protocol_tcl.h>
+#include <rfid/rfid_protocol_mifare_ul.h>
+#include <rfid/rfid_protocol_mifare_classic.h>
+
 struct rfid_protocol_handle {
 	struct rfid_layer2_handle *l2h;
 	struct rfid_protocol *proto;
@@ -48,34 +83,6 @@ struct rfid_protocol_handle {
 					 * sizeof(priv). */
 };
 
-struct rfid_protocol_handle *
-rfid_protocol_init(struct rfid_layer2_handle *l2h, unsigned int id);
-int rfid_protocol_open(struct rfid_protocol_handle *ph);
-int rfid_protocol_transcieve(struct rfid_protocol_handle *ph,
-			     const unsigned char *tx_buf, unsigned int tx_len,
-			     unsigned char *rx_buf, unsigned int *rx_len,
-			     unsigned int timeout, unsigned int flags);
-int
-rfid_protocol_read(struct rfid_protocol_handle *ph,
-	 	   unsigned int page,
-		   unsigned char *rx_data,
-		   unsigned int *rx_len);
+#endif /* __LIBRFID__ */
 
-int
-rfid_protocol_write(struct rfid_protocol_handle *ph,
-	 	   unsigned int page,
-		   unsigned char *tx_data,
-		   unsigned int tx_len);
-
-int rfid_protocol_fini(struct rfid_protocol_handle *ph);
-int rfid_protocol_close(struct rfid_protocol_handle *ph);
-
-int rfid_protocol_register(struct rfid_protocol *p);
-
-enum rfid_protocol_id {
-	RFID_PROTOCOL_UNKNOWN,
-	RFID_PROTOCOL_TCL,
-	RFID_PROTOCOL_MIFARE_UL,
-	RFID_PROTOCOL_MIFARE_CLASSIC,
-};
-#endif
+#endif /* _RFID_PROTOCOL_H */

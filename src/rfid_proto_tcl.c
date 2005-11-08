@@ -40,6 +40,9 @@
 #ifdef DEBUGP
 #undef DEBUGP
 #define DEBUGP(x, ...)
+#endif
+#ifdef DEBUGPC
+#undef DEBUGPC
 #define DEBUGPC(x, ...)
 #endif
 #endif
@@ -185,10 +188,10 @@ tcl_request_ats(struct rfid_protocol_handle *h)
 	rats[1] = (h->priv.tcl.cid & 0x0f) | ((fsdi << 4) & 0xf0);
 
 	/* transcieve (with CRC) */
-	ret = h->l2h->l2->fn.transcieve(h->l2h, RFID_14443A_FRAME_REGULAR,
-					rats, 2, h->priv.tcl.ats,
-				       &h->priv.tcl.ats_len, activation_fwt(h),
-				       TCL_TRANSP_F_TX_CRC);
+	ret = rfid_layer2_transcieve(h->l2h, RFID_14443A_FRAME_REGULAR,
+				     rats, 2, h->priv.tcl.ats,
+				     &h->priv.tcl.ats_len, activation_fwt(h),
+				     TCL_TRANSP_F_TX_CRC);
 	if (ret < 0) {
 		DEBUGP("transcieve of rats failed\n");
 		h->priv.tcl.state = TCL_STATE_RATS_SENT;
@@ -219,11 +222,11 @@ static unsigned char d_to_di(struct rfid_protocol_handle *h, unsigned char D)
 	static char DI;
 	unsigned int speed = h->l2h->rh->reader->iso14443a.speed;
 	
-	if ((D & ATS_TA_DIV_8) && (speed & RFID_READER_SPEED_848K))
+	if ((D & ATS_TA_DIV_8) && (speed & RFID_14443A_SPEED_848K))
 		DI = PPS_DIV_8;
-	else if ((D & ATS_TA_DIV_4) && (speed & RFID_READER_SPEED_424K))
+	else if ((D & ATS_TA_DIV_4) && (speed & RFID_14443A_SPEED_424K))
 		DI = PPS_DIV_4;
-	else if ((D & ATS_TA_DIV_2) && (speed & RFID_READER_SPEED_212K))
+	else if ((D & ATS_TA_DIV_2) && (speed & RFID_14443A_SPEED_212K))
 		DI = PPS_DIV_2;
 	else
 		DI = PPS_DIV_1;
@@ -232,16 +235,17 @@ static unsigned char d_to_di(struct rfid_protocol_handle *h, unsigned char D)
 }
 
 
-/* start a PSS run (autimatically configure highest possible speed */
+/* start a PPS run (autimatically configure highest possible speed */
 static int 
 tcl_do_pps(struct rfid_protocol_handle *h)
 {
-#if 0
+#if 1
 	int ret;
 	unsigned char ppss[3];
 	unsigned char pps_response[1];
 	unsigned int rx_len = 1;
 	unsigned char Dr, Ds, DrI, DsI;
+	unsigned int optlen = 0;
 
 	if (h->priv.tcl.state != TCL_STATE_ATS_RCVD)
 		return -1;
@@ -257,7 +261,7 @@ tcl_do_pps(struct rfid_protocol_handle *h)
 
 	/* ISO 14443-4:2000(E) Section 5.3. */
 
-	ppss[0] = 0xd0 & (h->priv.tcl.cid & 0x0f);
+	ppss[0] = 0xd0 | (h->priv.tcl.cid & 0x0f);
 	ppss[1] = 0x11;
 
 	/* FIXME: deal with different speed for each direction */
@@ -266,9 +270,9 @@ tcl_do_pps(struct rfid_protocol_handle *h)
 
 	ppss[2] = (ppss[2] & 0xf0) | (DrI | DsI << 2);
 
-	ret = h->l2h->l2->fn.transcieve(h->l2h, ppss, 3, pps_response,
-					&rx_len, h->priv.tcl.fwt,
-					TCL_TRANSP_F_TX_CRC);
+	ret = rfid_layer2_transcieve(h->l2h, RFID_14443A_FRAME_REGULAR,
+					ppss, 3, pps_response, &rx_len,
+					h->priv.tcl.fwt, TCL_TRANSP_F_TX_CRC);
 	if (ret < 0)
 		return ret;
 
@@ -276,6 +280,11 @@ tcl_do_pps(struct rfid_protocol_handle *h)
 		DEBUGP("PPS Response != PPSS\n");
 		return -1;
 	}
+
+	ret = rfid_layer2_setopt(h->l2h, RFID_OPT_14443A_SPEED,
+				 NULL, &optlen);
+	if (ret < 0)
+		return ret;
 	
 	h->priv.tcl.state = TCL_STATE_ESTABLISHED;
 #endif
@@ -453,8 +462,8 @@ tcl_deselect(struct rfid_protocol_handle *h)
 	if (ret < 0)
 		return ret;
 
-	ret = h->l2h->l2->fn.transcieve(h->l2h, RFID_14443A_FRAME_REGULAR,
-					frame, prlg_len, rx,
+	ret = rfid_layer2_transcieve(h->l2h, RFID_14443A_FRAME_REGULAR,
+				     frame, prlg_len, rx,
 				     &rx_len, deactivation_fwt(h),
 				     TCL_TRANSP_F_TX_CRC);
 	if (ret < 0) {
@@ -522,9 +531,9 @@ tcl_transcieve(struct rfid_protocol_handle *h,
 	*rx_len = 0;
 
 do_tx:
-	ret = h->l2h->l2->fn.transcieve(h->l2h, l2_to_frame(h->l2h->l2->id),
-					_tx, _tx_len,
-					rx_buf, &_rx_len, _timeout, 0);
+	ret = rfid_layer2_transcieve(h->l2h, l2_to_frame(h->l2h->l2->id),
+				     _tx, _tx_len,
+				     rx_buf, &_rx_len, _timeout, 0);
 	DEBUGP("l2 transcieve finished\n");
 	if (ret < 0)
 		goto out_rxb;

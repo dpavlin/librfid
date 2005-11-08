@@ -24,6 +24,7 @@
 #include <rfid/rfid_protocol.h>
 #include <rfid/rfid_reader_cm5121.h>
 #include <rfid/rfid_protocol_mifare_classic.h>
+#include <rfid/rfid_protocol_mifare_ul.h>
 
 static struct rfid_reader_handle *rh;
 static struct rfid_layer2_handle *l2h;
@@ -250,7 +251,7 @@ mifare_classic_read(struct rfid_protocol_handle *ph)
 		if (ret < 0)
 			return ret;
 
-		printf("Page 0x%x: %s\n", i, rfid_hexdump(buf, 4));
+		printf("Page 0x%x: %s\n", i, rfid_hexdump(buf, len));
 	}
 	return 0;
 }
@@ -319,12 +320,12 @@ int main(int argc, char **argv)
 #endif
 		break;
 	case RFID_PROTOCOL_MIFARE_CLASSIC:
-		rc = mfcl_set_key(ph, MIFARE_CL_KEYB_DEFAULT);
+		rc = mfcl_set_key(ph, MIFARE_CL_KEYA_DEFAULT_INFINEON);
 		if (rc < 0) {
 			printf("key format error\n");
 			exit(1);
 		}
-		rc = mfcl_auth(ph, RFID_CMD_MIFARE_AUTH1B, 10);
+		rc = mfcl_auth(ph, RFID_CMD_MIFARE_AUTH1A, 0);
 		if (rc < 0) {
 			printf("mifare auth error\n");
 			exit(1);
