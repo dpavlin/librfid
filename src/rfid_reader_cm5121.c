@@ -352,7 +352,7 @@ struct rfid_reader rfid_reader_cm5121 = {
 		.transcieve_sf = &cm5121_transcieve_sf,
 		.transcieve_acf = &cm5121_transcieve_acf,
 		.speed = RFID_14443A_SPEED_106K | RFID_14443A_SPEED_212K |
-			 RFID_14443A_SPEED_424K | RFID_14443A_SPEED_848K,
+			 RFID_14443A_SPEED_424K, //| RFID_14443A_SPEED_848K,
 		.set_speed = &cm5121_14443a_set_speed,
 	},
 	.iso14443b = {
