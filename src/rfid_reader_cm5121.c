@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <errno.h>
 
 #include <rfid/rfid.h>
 #include <rfid/rfid_reader.h>
@@ -37,11 +38,14 @@
 #include <rfid/rfid_asic_rc632.h>
 #include <rfid/rfid_reader_cm5121.h>
 
+/* FIXME */
+#include "rc632.h"
+
 //#define SENDBUF_LEN	40
 #define SENDBUF_LEN	100
 #define RECVBUF_LEN	40
 
-#if 1
+#if 0
 #ifdef DEBUGP
 #undef DEBUGP
 #define DEBUGP(x, ...)
@@ -215,6 +219,31 @@ cm5121_14443a_init(struct rfid_reader_handle *rh)
 }
 
 static int
+cm5121_14443a_set_speed(struct rfid_reader_handle *rh, unsigned int speed)
+{
+	u_int8_t rate;
+	
+	switch (speed) {
+	case RFID_14443A_SPEED_106K:
+		rate = RC632_CDRCTRL_RATE_106K;
+		break;
+	case RFID_14443A_SPEED_212K:
+		rate = RC632_CDRCTRL_RATE_212K;
+		break;
+	case RFID_14443A_SPEED_424K:
+		rate = RC632_CDRCTRL_RATE_424K;
+		break;
+	case RFID_14443A_SPEED_848K:
+		rate = RC632_CDRCTRL_RATE_848K;
+		break;
+	default:
+		return -EINVAL;
+		break;
+	}
+	return rh->ah->asic->priv.rc632.fn.iso14443a.set_speed(rh->ah, rate);
+}
+
+static int
 cm5121_14443b_init(struct rfid_reader_handle *rh)
 {
 	return rh->ah->asic->priv.rc632.fn.iso14443b.init(rh->ah);
@@ -322,8 +351,9 @@ struct rfid_reader rfid_reader_cm5121 = {
 		.init = &cm5121_14443a_init,
 		.transcieve_sf = &cm5121_transcieve_sf,
 		.transcieve_acf = &cm5121_transcieve_acf,
-		.speed = RFID_READER_SPEED_106K | RFID_READER_SPEED_212K |
-			 RFID_READER_SPEED_424K | RFID_READER_SPEED_848K,
+		.speed = RFID_14443A_SPEED_106K | RFID_14443A_SPEED_212K |
+			 RFID_14443A_SPEED_424K | RFID_14443A_SPEED_848K,
+		.set_speed = &cm5121_14443a_set_speed,
 	},
 	.iso14443b = {
 		.init = &cm5121_14443b_init,

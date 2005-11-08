@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <errno.h>
 
 #include <rfid/rfid.h>
 #include <rfid/rfid_layer2.h>
@@ -250,6 +251,25 @@ iso14443a_hlta(struct rfid_layer2_handle *handle)
 	return -1;
 }
 
+static int
+iso14443a_setopt(struct rfid_layer2_handle *handle, int optname,
+		 const void *optval, unsigned int optlen)
+{
+	int ret = -EINVAL;
+	struct rfid_reader *rdr = handle->rh->reader;
+	unsigned int speed;
+
+	switch (optname) {
+	case RFID_OPT_14443A_SPEED:
+		speed = *(unsigned int *)optval;
+		ret = rdr->iso14443a.set_speed(handle->rh, speed);
+		break;
+	};
+
+	return ret;
+}
+
+
 static struct rfid_layer2_handle *
 iso14443a_init(struct rfid_reader_handle *rh)
 {
@@ -289,6 +309,7 @@ struct rfid_layer2 rfid_layer2_iso14443a = {
 		.transcieve 	= &iso14443a_transcieve,
 		.close 		= &iso14443a_hlta,
 		.fini 		= &iso14443a_fini,
+		.setopt		= &iso14443a_setopt,
 	},
 };
 

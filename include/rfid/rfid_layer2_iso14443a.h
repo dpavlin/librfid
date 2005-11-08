@@ -1,6 +1,19 @@
 #ifndef _RFID_ISO14443A_H
 #define _RFID_ISO14443A_H
 
+enum rfid_14443a_opt {
+	RFID_OPT_14443A_SPEED		= 0x00000001,
+};
+
+enum rfid_14443_opt_speed {
+	RFID_14443A_SPEED_106K,
+	RFID_14443A_SPEED_212K,
+	RFID_14443A_SPEED_424K,
+	RFID_14443A_SPEED_848K,
+};
+
+#ifdef __LIBRFID__
+
 #include <sys/types.h>
 
 /* protocol definitions */
@@ -38,32 +51,6 @@ enum iso14443a_anticol_sel_code {
 
 #define	ISO14443A_BITOFCOL_NONE		0xffffffff
 
-struct iso14443a_handle;
-
-struct iso14443a_transport {
-	unsigned char	*name;
-
-	struct {
-		int (*init)(struct iso14443a_handle *handle);
-		int (*fini)(struct iso14443a_handle *handle);
-
-		int (*transcieve_sf)(struct iso14443a_handle *handle,
-				     unsigned char cmd,
-				     struct iso14443a_atqa *atqa);
-		int (*transcieve_acf)(struct iso14443a_handle *handle,
-				      struct iso14443a_anticol_cmd *acf,
-				      unsigned int *bit_of_col);
-		int (*transcieve)(struct iso14443a_handle *handle,
-				  const unsigned char *tx_buf,
-				  unsigned int tx_len,
-				  unsigned char *rx_buf,
-				  unsigned int *rx_len);
-	} fn;
-
-	union {
-	} priv;
-};
-
 struct iso14443a_handle {
 	unsigned int state;
 	unsigned int level;
@@ -89,5 +76,8 @@ enum iso14443a_state {
 
 #include <rfid/rfid_layer2.h>
 struct rfid_layer2 rfid_layer2_iso14443a;
+
+#endif /* __LIBRFID__ */
+
 
 #endif /* _ISO14443A_H */

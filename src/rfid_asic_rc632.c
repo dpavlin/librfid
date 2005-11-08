@@ -739,6 +739,22 @@ rc632_iso14443a_transcieve_acf(struct rfid_asic_handle *handle,
 	return 0;
 }
 
+static int rc632_iso14443a_set_speed(struct rfid_asic_handle *handle,
+				     u_int8_t rate)
+{
+	int rc;
+	u_int8_t reg;
+
+	rc = rc632_reg_read(handle, RC632_REG_CODER_CONTROL, &reg);
+	if (rc < 0)
+		return rc;
+
+	reg &= ~RC632_CDRDTRL_RATE_MASK;
+	reg |= (rate & RC632_CDRDTRL_RATE_MASK);
+
+	return rc632_reg_write(handle, RC632_REG_CODER_CONTROL, reg);
+}
+
 static int rc632_iso14443b_init(struct rfid_asic_handle *handle)
 {
 	int ret;
@@ -1279,6 +1295,7 @@ struct rfid_asic rc632 = {
 				.init = &rc632_iso14443a_init,
 				.transcieve_sf = &rc632_iso14443a_transcieve_sf,
 				.transcieve_acf = &rc632_iso14443a_transcieve_acf,
+				.set_speed = &rc632_iso14443a_set_speed,
 			},
 			.iso14443b = {
 				.init = &rc632_iso14443b_init,

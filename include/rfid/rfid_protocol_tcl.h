@@ -1,6 +1,8 @@
 #ifndef _RFID_PROTOCOL_TCL_H
 #define _RFID_PROTOCOL_TCL_H
 
+#ifdef __LIBRFID__
+
 enum tcl_transport_rate {
 	TCL_RATE_106	= 0x01,
 	TCL_RATE_212	= 0x02,
@@ -12,7 +14,6 @@ enum tcl_transport_transcieve_flags {
 	TCL_TRANSP_F_TX_CRC	= 0x01,	/* transport adds TX CRC */
 	TCL_TRANSP_F_RX_CRC	= 0x02, 
 };
-
 
 struct tcl_handle {
 	/* derived from ats */
@@ -63,5 +64,7 @@ enum tcl_pcd_state {
 };
 
 struct rfid_protocol rfid_protocol_tcl;
+
+#endif /* __LIBRFID__ */
 
 #endif

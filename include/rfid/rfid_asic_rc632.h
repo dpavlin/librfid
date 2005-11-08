@@ -51,6 +51,8 @@ struct rfid_asic_rc632 {
 			int (*transcieve_acf)(struct rfid_asic_handle *h,
 					      struct iso14443a_anticol_cmd *cmd,
 					      unsigned int *bit_of_col);
+			int (*set_speed)(struct rfid_asic_handle *h,
+					 unsigned int speed);
 		} iso14443a;
 		struct {
 			int (*init)(struct rfid_asic_handle *h);

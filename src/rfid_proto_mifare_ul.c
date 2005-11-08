@@ -52,9 +52,9 @@ mful_read(struct rfid_protocol_handle *ph, unsigned int page,
 	tx[0] = MIFARE_UL_CMD_READ;
 	tx[1] = page & 0xff;
 
-	ret = ph->l2h->l2->fn.transcieve(ph->l2h, RFID_14443A_FRAME_REGULAR,
-					 tx, sizeof(tx), rx_buf, 
-					 &real_rx_len, MIFARE_UL_READ_FWT, 0);
+	ret = rfid_layer2_transcieve(ph->l2h, RFID_14443A_FRAME_REGULAR,
+				     tx, sizeof(tx), rx_buf, 
+				     &real_rx_len, MIFARE_UL_READ_FWT, 0);
 
 	if (ret < 0)
 		return ret;
@@ -86,9 +86,9 @@ mful_write(struct rfid_protocol_handle *ph, unsigned int page,
 	for (i = 0; i < 4; i++)
 		tx[2+i] = tx_data[i];
 
-	ret = ph->l2h->l2->fn.transcieve(ph->l2h, RFID_14443A_FRAME_REGULAR,
-					 tx, sizeof(tx), rx, &rx_len, 
-					 MIFARE_UL_WRITE_FWT, 0);
+	ret = rfid_layer2_transcieve(ph->l2h, RFID_14443A_FRAME_REGULAR,
+				     tx, sizeof(tx), rx, &rx_len, 
+				     MIFARE_UL_WRITE_FWT, 0);
 					
 	if (ret < 0)
 		return ret;

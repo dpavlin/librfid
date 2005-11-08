@@ -1,6 +1,8 @@
 #ifndef _RFID_LAYER2_ISO14443B_H
 #define _RFID_LAYER2_ISO14443B_H
 
+#ifdef __LIBRFID__
+
 struct iso14443b_atqb {
 	unsigned char fifty;
 	unsigned char pupi[4];
@@ -75,8 +77,9 @@ enum {
 	ISO14443B_STATE_HALTED,
 };
 
-
 #include <rfid/rfid_layer2.h>
 struct rfid_layer2 rfid_layer2_iso14443b;
+
+#endif /* __LIBRFID__ */
 
 #endif
