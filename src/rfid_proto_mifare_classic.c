@@ -64,6 +64,9 @@ mfcl_read(struct rfid_protocol_handle *ph, unsigned int page,
 	if (ret < 0)
 		return ret;
 
+	if (real_rx_len == 1 && *rx_buf == 0x04)
+		return -EPERM;
+
 	if (real_rx_len < *rx_len)
 		*rx_len = real_rx_len;
 
