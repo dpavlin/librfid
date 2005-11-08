@@ -319,7 +319,7 @@ int main(int argc, char **argv)
 #endif
 		break;
 	case RFID_PROTOCOL_MIFARE_CLASSIC:
-		rc = mfcl_set_key(ph, MIFARE_CLASSIC_KEYB_DEFAULT);
+		rc = mfcl_set_key(ph, MIFARE_CL_KEYB_DEFAULT);
 		if (rc < 0) {
 			printf("key format error\n");
 			exit(1);
