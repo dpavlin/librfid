@@ -23,10 +23,10 @@
 #include <unistd.h>
 #include <string.h>
 
-#include <rfid/rfid.h>
-#include <rfid/rfid_layer2.h>
-#include <rfid/rfid_reader.h>
-#include <rfid/rfid_layer2_iso14443b.h>
+#include <librfid/rfid.h>
+#include <librfid/rfid_layer2.h>
+#include <librfid/rfid_reader.h>
+#include <librfid/rfid_layer2_iso14443b.h>
 
 #include "rfid_iso14443_common.h"
 

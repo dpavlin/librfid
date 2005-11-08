@@ -25,12 +25,12 @@
 #include <errno.h>
 #include <sys/types.h>
 
-#include <rfid/rfid.h>
-#include <rfid/rfid_asic.h>
-#include <rfid/rfid_asic_rc632.h>
-#include <rfid/rfid_reader_cm5121.h>
-#include <rfid/rfid_layer2_iso14443a.h>
-#include <rfid/rfid_protocol_mifare_classic.h>
+#include <librfid/rfid.h>
+#include <librfid/rfid_asic.h>
+#include <librfid/rfid_asic_rc632.h>
+#include <librfid/rfid_reader_cm5121.h>
+#include <librfid/rfid_layer2_iso14443a.h>
+#include <librfid/rfid_protocol_mifare_classic.h>
 
 #include "rfid_iso14443_common.h"
 #include "rc632.h"

@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include <stdio.h>
 
-#include <rfid/rfid_asic.h>
+#include <librfid/rfid_asic.h>
 
 #include "ccid/ccid-driver.h"
 

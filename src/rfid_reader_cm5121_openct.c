@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 
-#include <rfid/rfid_asic.h>
+#include <librfid/rfid_asic.h>
 #include <openct/openct.h>
 
 /* FIXME: get rid of this global crap.  In fact this needs to become part of

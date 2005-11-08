@@ -1,2 +1,2 @@
 
-SUBDIRS = rfid
+SUBDIRS = librfid

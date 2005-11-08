@@ -1,8 +1,8 @@
 #ifndef _RFID_READER_H
 #define _RFID_READER_H
 
-#include <rfid/rfid_asic.h>
-#include <rfid/rfid_layer2_iso14443a.h>
+#include <librfid/rfid_asic.h>
+#include <librfid/rfid_layer2_iso14443a.h>
 
 struct rfid_reader_handle;
 

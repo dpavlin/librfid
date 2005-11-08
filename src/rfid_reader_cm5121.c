@@ -32,11 +32,11 @@
 #include <string.h>
 #include <errno.h>
 
-#include <rfid/rfid.h>
-#include <rfid/rfid_reader.h>
-#include <rfid/rfid_asic.h>
-#include <rfid/rfid_asic_rc632.h>
-#include <rfid/rfid_reader_cm5121.h>
+#include <librfid/rfid.h>
+#include <librfid/rfid_reader.h>
+#include <librfid/rfid_asic.h>
+#include <librfid/rfid_asic_rc632.h>
+#include <librfid/rfid_reader_cm5121.h>
 
 /* FIXME */
 #include "rc632.h"

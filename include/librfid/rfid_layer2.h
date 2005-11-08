@@ -2,7 +2,7 @@
 #define _RFID_LAYER2_H
 
 #include <sys/types.h>
-#include <rfid/rfid.h>
+#include <librfid/rfid.h>
 
 struct rfid_layer2_handle;
 struct rfid_reader_handle;
@@ -31,9 +31,9 @@ int rfid_layer2_setopt(struct rfid_layer2_handle *ph, int optname,
 
 #ifdef __LIBRFID__
 
-#include <rfid/rfid_layer2_iso14443a.h>
-#include <rfid/rfid_layer2_iso14443b.h>
-#include <rfid/rfid_layer2_iso15693.h>
+#include <librfid/rfid_layer2_iso14443a.h>
+#include <librfid/rfid_layer2_iso14443b.h>
+#include <librfid/rfid_layer2_iso15693.h>
 
 struct rfid_layer2 {
 	unsigned int id;

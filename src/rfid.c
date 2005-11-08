@@ -15,11 +15,11 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <rfid/rfid_reader_cm5121.h>
-#include <rfid/rfid_protocol.h>
-#include <rfid/rfid_protocol_tcl.h>
-#include <rfid/rfid_protocol_mifare_ul.h>
-#include <rfid/rfid_protocol_mifare_classic.h>
+#include <librfid/rfid_reader_cm5121.h>
+#include <librfid/rfid_protocol.h>
+#include <librfid/rfid_protocol_tcl.h>
+#include <librfid/rfid_protocol_mifare_ul.h>
+#include <librfid/rfid_protocol_mifare_classic.h>
 
 const char *
 rfid_hexdump(const void *data, unsigned int len)

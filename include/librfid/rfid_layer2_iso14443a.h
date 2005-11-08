@@ -75,7 +75,7 @@ enum iso14443a_state {
 	ISO14443A_STATE_SELECTED,
 };
 
-#include <rfid/rfid_layer2.h>
+#include <librfid/rfid_layer2.h>
 struct rfid_layer2 rfid_layer2_iso14443a;
 
 #endif /* __LIBRFID__ */

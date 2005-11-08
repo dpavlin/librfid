@@ -21,8 +21,8 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include <rfid/rfid_layer2.h>
-#include <rfid/rfid_protocol.h>
+#include <librfid/rfid_layer2.h>
+#include <librfid/rfid_protocol.h>
 
 static struct rfid_protocol *rfid_protocol_list;
 

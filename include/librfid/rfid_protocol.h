@@ -1,7 +1,7 @@
 #ifndef _RFID_PROTOCOL_H
 #define _RFID_PROTOCOL_H
 
-#include <rfid/rfid_layer2.h>
+#include <librfid/rfid_layer2.h>
 
 struct rfid_protocol_handle;
 
@@ -68,9 +68,9 @@ struct rfid_protocol {
 
 int rfid_protocol_register(struct rfid_protocol *p);
 
-#include <rfid/rfid_protocol_tcl.h>
-#include <rfid/rfid_protocol_mifare_ul.h>
-#include <rfid/rfid_protocol_mifare_classic.h>
+#include <librfid/rfid_protocol_tcl.h>
+#include <librfid/rfid_protocol_mifare_ul.h>
+#include <librfid/rfid_protocol_mifare_classic.h>
 
 struct rfid_protocol_handle {
 	struct rfid_layer2_handle *l2h;
