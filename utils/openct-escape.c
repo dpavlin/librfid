@@ -26,6 +26,23 @@
 #include <librfid/rfid_protocol_mifare_classic.h>
 #include <librfid/rfid_protocol_mifare_ul.h>
 
+static const char *
+hexdump(const void *data, unsigned int len)
+{
+	static char string[1024];
+	unsigned char *d = (unsigned char *) data;
+	unsigned int i, left;
+
+	string[0] = '\0';
+	left = sizeof(string);
+	for (i = 0; len--; i += 3) {
+		if (i >= sizeof(string) -4)
+			break;
+		snprintf(string+i, 4, " %02x", *d++);
+	}
+	return string;
+}
+
 static struct rfid_reader_handle *rh;
 static struct rfid_layer2_handle *l2h;
 static struct rfid_protocol_handle *ph;
@@ -44,8 +61,6 @@ static int init()
 		fprintf(stderr, "error, no cm5121 handle\n");
 		return -1;
 	}
-
-	sleep(2);
 
 	printf("opening layer2 handle\n");
 	l2h = rfid_layer2_init(rh, RFID_LAYER2_ISO14443A);
@@ -97,7 +112,7 @@ static int select_mf(void)
 	if (rv < 0)
 		return rv;
 
-	printf("%s\n", rfid_hexdump(ret, rlen));
+	printf("%d: [%s]\n", rlen, hexdump(ret, rlen));
 
 	return 0;
 }
@@ -117,7 +132,7 @@ static int iso7816_get_challenge(unsigned char len)
 	if (rv < 0)
 		return rv;
 
-	printf("%d: [%s]\n", rlen, rfid_hexdump(ret, rlen));
+	printf("%d: [%s]\n", rlen, hexdump(ret, rlen));
 
 	return 0;
 }
@@ -137,7 +152,7 @@ iso7816_select_application(void)
 		return rv;
 
 	/* FIXME: parse response */
-	printf("%s\n", rfid_hexdump(resp, rlen));
+	printf("%s\n", hexdump(resp, rlen));
 
 	return 0;
 }
@@ -159,7 +174,7 @@ iso7816_select_ef(u_int16_t fid)
 		return rv;
 
 	/* FIXME: parse response */
-	printf("%s\n", rfid_hexdump(resp, rlen));
+	printf("%s\n", hexdump(resp, rlen));
 
 	return 0;
 }
@@ -232,7 +247,7 @@ mifare_ulight_read(struct rfid_protocol_handle *ph)
 		if (ret < 0)
 			return ret;
 
-		printf("Page 0x%x: %s\n", i, rfid_hexdump(buf, 4));
+		printf("Page 0x%x: %s\n", i, hexdump(buf, 4));
 	}
 	return 0;
 }
@@ -251,7 +266,7 @@ mifare_classic_read(struct rfid_protocol_handle *ph)
 		if (ret < 0)
 			return ret;
 
-		printf("Page 0x%x: %s\n", i, rfid_hexdump(buf, len));
+		printf("Page 0x%x: %s\n", i, hexdump(buf, len));
 	}
 	return 0;
 }
