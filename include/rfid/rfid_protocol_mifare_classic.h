@@ -13,8 +13,10 @@ extern struct rfid_protocol rfid_protocol_mfcl;
 
 #define MIFARE_CL_PAGE_MAX	0xff
 
-#define MIFARE_CLASSIC_KEYA_DEFAULT	"\xa0\xa1\xa2\xa3\xa4\xa5"
-#define MIFARE_CLASSIC_KEYB_DEFAULT	"\xb0\xb1\xb2\xb3\xb4\xb5"
+#define MIFARE_CL_KEYA_DEFAULT	"\xa0\xa1\xa2\xa3\xa4\xa5"
+#define MIFARE_CL_KEYB_DEFAULT	"\xb0\xb1\xb2\xb3\xb4\xb5"
 
+#define MIFARE_CL_KEYA_DEFAULT_INFINEON	"\xff\xff\xff\xff\xff\xff"
+#define MIFARE_CL_KEYB_DEFAULT_INFINEON MIFARE_CL_KEYA_DEFAULT_INFINEON
 
 #endif
