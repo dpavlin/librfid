@@ -3,7 +3,7 @@
 
 enum rfid_frametype;
 
-#include <rfid/rfid_asic_rc632.h>
+#include <librfid/rfid_asic_rc632.h>
 
 struct rfid_asic_transport {
 	char *name;

@@ -20,8 +20,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include <rfid/rfid.h>
-#include <rfid/rfid_reader.h>
+#include <librfid/rfid.h>
+#include <librfid/rfid_reader.h>
 
 static struct rfid_reader *rfid_reader_list;
 

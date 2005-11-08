@@ -18,13 +18,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <rfid/rfid.h>
-#include <rfid/rfid_reader.h>
-#include <rfid/rfid_layer2.h>
-#include <rfid/rfid_protocol.h>
-#include <rfid/rfid_reader_cm5121.h>
-#include <rfid/rfid_protocol_mifare_classic.h>
-#include <rfid/rfid_protocol_mifare_ul.h>
+#include <librfid/rfid.h>
+#include <librfid/rfid_reader.h>
+#include <librfid/rfid_layer2.h>
+#include <librfid/rfid_protocol.h>
+
+#include <librfid/rfid_protocol_mifare_classic.h>
+#include <librfid/rfid_protocol_mifare_ul.h>
 
 static struct rfid_reader_handle *rh;
 static struct rfid_layer2_handle *l2h;
@@ -125,9 +125,9 @@ static int iso7816_get_challenge(unsigned char len)
 int
 iso7816_select_application(void)
 {
-	char cmd[] = { 0x00, 0xa4, 0x04, 0x0c, 0x07,
+	unsigned char cmd[] = { 0x00, 0xa4, 0x04, 0x0c, 0x07,
 		       0xa0, 0x00, 0x00, 0x02, 0x47, 0x10, 0x01 };
-	char resp[7];
+	unsigned char resp[7];
 	unsigned int rlen = sizeof(resp);
 
 	int rv;
@@ -308,7 +308,7 @@ int main(int argc, char **argv)
 		iso7816_select_ef(0x0101);
 #if 1
 		for (i = 0; i < 4; i++)
-			iso7816_get_challenge(0x60);
+			iso7816_get_challenge(0x06);
 #endif
 		break;
 	case RFID_PROTOCOL_MIFARE_UL:

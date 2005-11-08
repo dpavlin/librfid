@@ -21,8 +21,8 @@
 #include <stdio.h>
 #include <errno.h>
 
-#include <rfid/rfid.h>
-#include <rfid/rfid_layer2.h>
+#include <librfid/rfid.h>
+#include <librfid/rfid_layer2.h>
 
 static struct rfid_layer2 *rfid_layer2_list;
 
