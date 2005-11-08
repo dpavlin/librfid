@@ -1,3 +1,21 @@
+/*
+ *  (C) 2005 by Harald Welte <laforge@gnumonks.org>
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License version 2 
+ *  as published by the Free Software Foundation
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -5,68 +23,7 @@
 #include <errno.h>
 
 #include <usb.h>
-
-#define USB_VENDOR_PHILIPS	0x0742
-#define USB_DEVICE_PEGODA	0xff01
-
-/* header of a pegoda usb command packet */
-struct pegoda_cmd_hdr {
-	u_int8_t seq;
-	u_int8_t cmd;
-	u_int16_t len;
-};
-
-enum {
-	PEGODA_CMD_WRITE_RC			= 0x01,
-	PEGODA_CMD_READ_RC			= 0x02,
-	PEGODA_CMD_EXCHANGE_BYTESTREAM		= 0x03,
-	PEGODA_CMD_WRITE_MULTIPLE		= 0x04,
-	PEGODA_CMD_READ_MULTIPLE		= 0x05,
-	
-	PEGODA_CMD_PCD_CONFIG			= 0x10,
-	PEGODA_CMD_PICC_REQUEST			= 0x11,
-	PEGODA_CMD_PICC_ANTICOLL		= 0x12,
-	PEGODA_CMD_PICC_SELECT			= 0x13,
-	PEGODA_CMD_PICC_AUTH			= 0x14,
-	PEGODA_CMD_PICC_AUTH_E2			= 0x15,
-	PEGODA_CMD_LOAD_KEY_E2			= 0x17,
-	PEGODA_CMD_PICC_AUTH_KEY		= 0x18,
-	PEGODA_CMD_PICC_READ			= 0x19,
-	PEGODA_CMD_PICC_WRITE			= 0x1a,
-	PEGODA_CMD_PICC_VALUE			= 0x1b,
-	PEGODA_CMD_PICC_VALUE_DEBIT		= 0x1c,
-	PEGODA_CMD_PICC_HALT			= 0x1d,
-	PEGODA_CMD_PICC_WRITE4			= 0x1e,
-	PEGODA_CMD_PICC_COMMON_WRITE		= 0x1f,
-
-	PEGODA_CMD_PCD_RF_RESET			= 0x21,
-	PEGODA_CMD_PCD_RESET			= 0x21,
-	PEGODA_CMD_PCD_GET_SNR			= 0x22,
-	PEGODA_CMD_PCD_READ_E2			= 0x23,
-	PEGODA_CMD_PCD_SET_TMO			= 0x27,
-	PEGODA_CMD_PICC_COMMON_READ		= 0x28,
-	PEGODA_CMD_ACTIVE_ANTENNA_MASTER	= 0x2a,
-	PEGODA_CMD_ACTIVE_ANTENNA_SLAVE		= 0x2b,
-
-	PEGODA_CMD_PICC_COMMON_REQUEST		= 0x40,
-	PEGODA_CMD_PICC_CASC_ANTICOLL		= 0x41,
-	PEGODA_CMD_PICC_CASC_SELECT		= 0x42,
-	PEGODA_CMD_PICC_ACTIVATE_IDLE		= 0x43,
-	PEGODA_CMD_ACTIVATE_WAKEUP		= 0x44,
-
-	PEGODA_CMD_PICC_ACTIVATE_WAKEUP		= 0x44,
-	PEGODA_CMD_PCD_SET_DEFAULT_ATTRIB	= 0x45,
-	PEGODA_CMD_PCD_SET_ATTRIB		= 0x46,
-	PEGODA_CMD_PCD_GET_ATTRIB		= 0x47,
-	PEGODA_CMD_PICC_EXCHANGE_BLOCK		= 0x48,
-	PEGODA_CMD_PICC_ACTIVATE_IDLE_LOOP	= 0x49,
-	PEGODA_CMD_PICC_ACTTIVATION		= 0x4a,
-
-
-	PEGODA_CMD_GET_FW_VERSION		= 0x63,
-	PEGODA_CMD_GET_RIC_VERSION		= 0x64,
-	PEGODA_CMD_ENABLE_DEBUG_PINS		= 0x65,
-};
+#include "pegoda.h"
 
 const char *
 rfid_hexdump(const void *data, unsigned int len)
