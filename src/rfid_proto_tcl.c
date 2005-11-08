@@ -662,13 +662,14 @@ do_tx:
 		net_payload_len = _rx_len - (inf - rx_buf);
 		DEBUGPC("%u bytes\n", net_payload_len);
 		memcpy(_rx_data, inf, net_payload_len);
-		/* increment the number of payload bytes that we actually received */
+		/* increment the number of payload bytes that we actually
+		 * received */
 		*rx_len += net_payload_len;
 		_rx_data += net_payload_len;
 
 		if (*rx_buf & 0x10) {
 			/* we're not the last frame in the chain, continue rx */
-			DEBUGP("we're not the last frame in the chain, continue\n");
+			DEBUGP("not the last frame in the chain, continue\n");
 			ack_len = sizeof(ack);
 			tcl_build_prologue_r(&h->priv.tcl, ack, &ack_len, 0);
 			_tx = ack;
