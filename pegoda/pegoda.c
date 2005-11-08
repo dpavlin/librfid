@@ -26,7 +26,7 @@
 #include "pegoda.h"
 
 const char *
-rfid_hexdump(const void *data, unsigned int len)
+hexdump(const void *data, unsigned int len)
 {
 	static char string[1024];
 	unsigned char *d = (unsigned char *) data;
@@ -74,6 +74,7 @@ int pegoda_transcieve(struct pegoda_handle *ph,
 	int rc;
 	unsigned int len_expected;
 	struct pegoda_cmd_hdr *hdr = (struct pegoda_cmd_hdr *)txbuf;
+	struct pegoda_cmd_hdr *rxhdr = (struct pegoda_cmd_hdr *)rxbuf;
 
 	hdr->seq = ++(ph->seq);
 	hdr->cmd = cmd;
@@ -81,7 +82,7 @@ int pegoda_transcieve(struct pegoda_handle *ph,
 	memcpy(txbuf + sizeof(*hdr), tx, tx_len);
 
 	printf("tx [%u]: %s\n", tx_len+sizeof(*hdr),
-		rfid_hexdump(txbuf, tx_len + sizeof(*hdr)));
+		hexdump(txbuf, tx_len + sizeof(*hdr)));
 	rc = usb_bulk_write(ph->handle, 0x02, (char *)txbuf,
 			    tx_len + sizeof(*hdr), 0);
 	if (rc < 0)
@@ -95,7 +96,7 @@ int pegoda_transcieve(struct pegoda_handle *ph,
 		fprintf(stderr, "unexpected: received %u bytes as length?\n");
 		return -EIO;
 	}
-	printf("len [%u]: %s\n", rc, rfid_hexdump(rxbuf, rc));
+	printf("len [%u]: %s\n", rc, hexdump(rxbuf, rc));
 
 	len_expected = rxbuf[0];
 
@@ -105,10 +106,17 @@ int pegoda_transcieve(struct pegoda_handle *ph,
 	rc = usb_bulk_read(ph->handle, 0x81, (char *)rxbuf, len_expected, 0);
 	if (rc <= 0)
 		return rc;
-	printf("rx [%u]: %s\n", rc, rfid_hexdump(rxbuf, rc));
+	printf("rx [%u]: %s\n", rc, hexdump(rxbuf, rc));
 
-	memcpy(rx, rxbuf+1, rc-1);
-	*rx_len = rc - 1;
+	if (rc < 4)
+		return -EIO;
+
+	if (rxhdr->seq != hdr->seq)
+		return -EIO;
+
+	*rx_len = ntohs(rxhdr->len);
+
+	memcpy(rx, rxbuf+sizeof(*rxhdr), rc-sizeof(*rxhdr));
 
 	return 0;
 }
@@ -228,10 +236,15 @@ static int pegoda_auth_key(struct pegoda_handle *ph,
 static int pegoda_read16(struct pegoda_handle *ph,
 			 u_int8_t page, unsigned char *rx)
 {
-	unsigned int rlen = 24;
+	int rc;
+	unsigned int rlen = 16;
 
-	return pegoda_transcieve(ph, PEGODA_CMD_PICC_READ,
-				 &page, 1, rx, &rlen);
+	rc = pegoda_transcieve(ph, PEGODA_CMD_PICC_READ,
+				&page, 1, rx, &rlen);
+	if (rlen != 16)
+		return -EIO;
+
+	return 0;
 }
 
 int main(int argc, char **argv)
@@ -263,7 +276,7 @@ int main(int argc, char **argv)
 	pegoda_transcieve(ph, PEGODA_CMD_PICC_CASC_ANTICOLL, 
 			  buf, 6, rbuf, &rlen);
 
-	memcpy(ph->snr, rbuf+3, 4);
+	memcpy(ph->snr, rbuf, 4);
 
 	buf[0] = 0x93;
 	memcpy(buf+1, ph->snr, 4);
@@ -273,6 +286,7 @@ int main(int argc, char **argv)
 
 	pegoda_auth_key(ph, 0, "\xff\xff\xff\xff\xff\xff");
 	pegoda_read16(ph, 0, rbuf);
+	printf("read16 = %s\n", hexdump(rbuf, 16));
 	
 	exit(0);
 }
