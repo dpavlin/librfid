@@ -26,6 +26,7 @@ struct rfid_reader {
 				      struct iso14443a_anticol_cmd *cmd,
 				      unsigned int *bit_of_col);
 		int (*set_speed)(struct rfid_reader_handle *h,
+				 unsigned int tx,
 				 unsigned int speed);
 		unsigned int speed;
 	} iso14443a;

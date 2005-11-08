@@ -36,7 +36,7 @@
 
 #include "rfid_iso14443_common.h"
 
-#if 1
+#if 0
 #ifdef DEBUGP
 #undef DEBUGP
 #define DEBUGP(x, ...)
@@ -234,27 +234,45 @@ static unsigned char d_to_di(struct rfid_protocol_handle *h, unsigned char D)
 	return DI;
 }
 
+static unsigned int di_to_speed(unsigned char DI)
+{
+	switch (DI) {
+	case PPS_DIV_8:
+		return RFID_14443A_SPEED_848K;
+		break;
+	case PPS_DIV_4:
+		return RFID_14443A_SPEED_424K;
+		break;
+	case PPS_DIV_2:
+		return RFID_14443A_SPEED_212K;
+		break;
+	case PPS_DIV_1:
+		return RFID_14443A_SPEED_106K;
+		break;
+	}
+}
 
 /* start a PPS run (autimatically configure highest possible speed */
 static int 
 tcl_do_pps(struct rfid_protocol_handle *h)
 {
-#if 1
 	int ret;
 	unsigned char ppss[3];
 	unsigned char pps_response[1];
 	unsigned int rx_len = 1;
 	unsigned char Dr, Ds, DrI, DsI;
-	unsigned int optlen = 0;
+	unsigned int speed;
 
 	if (h->priv.tcl.state != TCL_STATE_ATS_RCVD)
 		return -1;
 
 	Dr = h->priv.tcl.ta & 0x07;
 	Ds = h->priv.tcl.ta & 0x70 >> 4;
+	DEBUGP("Dr = 0x%x, Ds = 0x%x\n", Dr, Ds);
 
 	if (Dr != Ds && !(h->priv.tcl.ta & 0x80)) {
-		/* device supports different divisors for rx and tx, but not ?!? */
+		/* device supports different divisors for rx and tx, but not
+		 * really ?!? */
 		DEBUGP("PICC has contradictory TA, aborting PPS\n");
 		return -1;
 	};
@@ -267,6 +285,7 @@ tcl_do_pps(struct rfid_protocol_handle *h)
 	/* FIXME: deal with different speed for each direction */
 	DrI = d_to_di(h, Dr);
 	DsI = d_to_di(h, Ds);
+	DEBUGP("DrI = 0x%x, DsI = 0x%x\n", DrI, DsI);
 
 	ppss[2] = (ppss[2] & 0xf0) | (DrI | DsI << 2);
 
@@ -281,13 +300,18 @@ tcl_do_pps(struct rfid_protocol_handle *h)
 		return -1;
 	}
 
-	ret = rfid_layer2_setopt(h->l2h, RFID_OPT_14443A_SPEED,
-				 NULL, &optlen);
+	speed = di_to_speed(DrI);
+
+	ret = rfid_layer2_setopt(h->l2h, RFID_OPT_14443A_SPEED_RX,
+				 &speed, sizeof(speed));
+	if (ret < 0)
+		return ret;
+
+	ret = rfid_layer2_setopt(h->l2h, RFID_OPT_14443A_SPEED_TX,
+				 &speed, sizeof(speed));
 	if (ret < 0)
 		return ret;
 	
-	h->priv.tcl.state = TCL_STATE_ESTABLISHED;
-#endif
 	return 0;
 }
 
@@ -437,6 +461,8 @@ tcl_connect(struct rfid_protocol_handle *h)
 		return -1;
 		break;
 	}
+
+	h->priv.tcl.state = TCL_STATE_ESTABLISHED;
 
 	return 0;
 }

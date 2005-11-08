@@ -219,28 +219,36 @@ cm5121_14443a_init(struct rfid_reader_handle *rh)
 }
 
 static int
-cm5121_14443a_set_speed(struct rfid_reader_handle *rh, unsigned int speed)
+cm5121_14443a_set_speed(struct rfid_reader_handle *rh, 
+			unsigned int tx,
+			unsigned int speed)
 {
 	u_int8_t rate;
 	
+	DEBUGP("setting rate: ");
 	switch (speed) {
 	case RFID_14443A_SPEED_106K:
-		rate = RC632_CDRCTRL_RATE_106K;
+		rate = 0x00;
+		DEBUGPC("106K\n");
 		break;
 	case RFID_14443A_SPEED_212K:
-		rate = RC632_CDRCTRL_RATE_212K;
+		rate = 0x01;
+		DEBUGPC("212K\n");
 		break;
 	case RFID_14443A_SPEED_424K:
-		rate = RC632_CDRCTRL_RATE_424K;
+		rate = 0x02;
+		DEBUGPC("424K\n");
 		break;
 	case RFID_14443A_SPEED_848K:
-		rate = RC632_CDRCTRL_RATE_848K;
+		rate = 0x03;
+		DEBUGPC("848K\n");
 		break;
 	default:
 		return -EINVAL;
 		break;
 	}
-	return rh->ah->asic->priv.rc632.fn.iso14443a.set_speed(rh->ah, rate);
+	return rh->ah->asic->priv.rc632.fn.iso14443a.set_speed(rh->ah,
+								tx, rate);
 }
 
 static int

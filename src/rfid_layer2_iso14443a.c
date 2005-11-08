@@ -260,9 +260,17 @@ iso14443a_setopt(struct rfid_layer2_handle *handle, int optname,
 	unsigned int speed;
 
 	switch (optname) {
-	case RFID_OPT_14443A_SPEED:
+	case RFID_OPT_14443A_SPEED_RX:
+		if (!rdr->iso14443a.set_speed)
+			return -ENOTSUP;
 		speed = *(unsigned int *)optval;
-		ret = rdr->iso14443a.set_speed(handle->rh, speed);
+		ret = rdr->iso14443a.set_speed(handle->rh, 0, speed);
+		break;
+	case RFID_OPT_14443A_SPEED_TX:
+		if (!rdr->iso14443a.set_speed)
+			return -ENOTSUP;
+		speed = *(unsigned int *)optval;
+		ret = rdr->iso14443a.set_speed(handle->rh, 1, speed);
 		break;
 	};
 
