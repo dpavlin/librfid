@@ -2,7 +2,7 @@
  *
  * (C) 2005 by Harald Welte <laforge@gnumonks.org>
  *
- * The 5121 is an Atmel AT98C5122 based USB CCID reader (probably the same
+ * The 5121 is an Atmel AT89C5122 based USB CCID reader (probably the same
  * design like the 3121).  It's CL RC632 is connected via address/data bus,
  * not via SPI.
  *
