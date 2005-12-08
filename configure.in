@@ -1,0 +1,15 @@
+dnl Process this file with autoconf to create configure.
+
+AC_INIT
+
+AC_CANONICAL_SYSTEM
+
+AM_INIT_AUTOMAKE(librfid, 0.0.1)
+
+AC_PROG_CC
+AC_EXEEXT
+AM_PROG_LIBTOOL
+AC_SUBST(LIBTOOL_DEPS)
+
+dnl Output the makefile
+AC_OUTPUT(Makefile src/Makefile include/Makefile include/librfid/Makefile utils/Makefile)
