@@ -196,6 +196,7 @@ enum {
 enum {
   VENDOR_SCM    = 0x04e6,
   VENDOR_CHERRY = 0x046a,
+  VENDOR_OMNIKEY= 0x076b,
   VENDOR_GEMPC  = 0x08e6
 };
 
@@ -1302,12 +1303,12 @@ send_escape_cmd (ccid_driver_t handle,
       case CCID_DRIVER_ERR_CARD_INACTIVE:
       case CCID_DRIVER_ERR_NO_CARD:
         {
-          if (msglen > resultmax)
-            rc = CCID_DRIVER_ERR_INV_VALUE; /* Response too large. */
+          if (msglen < 10 || (msglen-10) > resultmax )
+            rc = CCID_DRIVER_ERR_INV_VALUE; /* Invalid length of response. */
           else
             {
-              memcpy (result, msg, msglen);
-              *resultlen = msglen;
+              memcpy (result, msg+10, msglen-10);
+              *resultlen = msglen-10;
             }
           rc = 0;
         }
