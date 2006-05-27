@@ -8,6 +8,6 @@ ACTION!="add", GOTO="librfid_rules_end"
 SUBSYSTEM!="usb_device", GOTO="librfid_rules_end"
 
 # Omnikey 5121
-SYSFS{idVendor}=="076b", SYSFS{idProduct}=="5121", MODE="664", GROUP="laforge"
+SYSFS{idVendor}=="076b", SYSFS{idProduct}=="5121", MODE="664", GROUP="users"
 
 LABEL="librfid_rules_end"

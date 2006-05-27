@@ -52,6 +52,9 @@ In order to use the reader, you will need to set the permissions of the respecti
 /proc/bus/usb or /sys/bus/usb files (or run the application as root, if you
 trust my code, which you shouldn't).
 
+If you run udev, just use the 'etc/udev/librfid.rules' udev rulefile, which should
+change the group of the usb device to 'users'.
+
 3.2 (old) OpenCT backend
 
 This backend has the advantage that it will allow you to use the contact-based
