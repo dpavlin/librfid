@@ -18,6 +18,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define _GNU_SOURCE
+#include <getopt.h>
+
 #include <librfid/rfid.h>
 #include <librfid/rfid_reader.h>
 #include <librfid/rfid_layer2.h>
@@ -25,6 +28,8 @@
 
 #include <librfid/rfid_protocol_mifare_classic.h>
 #include <librfid/rfid_protocol_mifare_ul.h>
+
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 
 static const char *
 hexdump(const void *data, unsigned int len)
@@ -277,46 +282,73 @@ mifare_classic_read_sector(struct rfid_protocol_handle *ph, int sector)
 	return 0;
 }
 
+static char *proto_names[] = {
+	[RFID_PROTOCOL_TCL] = "tcl",
+	[RFID_PROTOCOL_MIFARE_UL] = "mifare-ultralight",
+	[RFID_PROTOCOL_MIFARE_CLASSIC] = "mifare-classic",
+};
+
+static int proto_by_name(const char *name)
+{
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(proto_names); i++) {
+		if (proto_names[i] == NULL)
+			continue;
+		if (!strcasecmp(name, proto_names[i]))
+			return i;
+	}
+	return -1;
+}
+
+static void help(void)
+{
+	printf(" -p	--protocol {tcl,mifare-ultralight,mifare-classic}\n");
+}
+
+static struct option opts[] = {
+	{ "help", 0, 0, 'h' },
+	{ "protocol", 1, 0, 'p' },
+	{0, 0, 0, 0}
+};
 
 int main(int argc, char **argv)
 {
 	int rc;
 	char buf[0x40];
-	int i, protocol;
+	int i, protocol = -1;
+	
+	printf("librfid_tool - (C) 2006 by Harald Welte\n"
+	       "This program is Free Software and has ABSOLUTELY NO WARRANTY\n\n");
 
-#if 0
-        if (argc) {
-                argc--;
-                argv++;
-        }
-        
-        while (argc) {
-                if ( !strcmp (*argv, "--list")) {
-                        char *p;
-                        p = ccid_get_reader_list ();
-                        if (!p)
-                                return 1;
-                        fputs (p, stderr);
-                        free (p);
-                        return 0;
-                }
-                else if ( !strcmp (*argv, "--debug")) {
-                        ccid_set_debug_level (ccid_set_debug_level (-1) + 1);
-                        argc--; argv++;
-                }
-                else
-                        break;
-        }
-#endif
+	while (1) {
+		int c, option_index = 0;
+		c = getopt_long(argc, argv, "hp:", opts, &option_index);
+		if (c == -1)
+			break;
+
+		switch (c) {
+		case 'p':
+			protocol = proto_by_name(optarg);
+			if (protocol < 0) {
+				fprintf(stderr, "unknown protocol `%s'\n", optarg);
+				exit(2);
+			}
+			break;
+		case 'h':
+			help();
+			exit(0);
+			break;
+		}
+	}
+
+	if (protocol < 0) {
+		fprintf(stderr, "you have to specify --protocol\n");
+		exit(2);
+	}
 
 	if (init() < 0)
 		exit(1);
-
-	//while(1) { }
-
-	//protocol = RFID_PROTOCOL_MIFARE_UL;
-	//protocol = RFID_PROTOCOL_MIFARE_CLASSIC;
-	protocol = RFID_PROTOCOL_TCL;
 
 	if (l3(protocol) < 0)
 		exit(1);
@@ -326,14 +358,25 @@ int main(int argc, char **argv)
 		int len = 200;
 
 	case RFID_PROTOCOL_TCL:
+		printf("Protocol T=CL\n");
 		/* we've established T=CL at this point */
+		printf("selecting Master File\n");
 		select_mf();
 
+		printf("Getting random challenge, length 255\n");
+		iso7816_get_challenge(0xff);
+
+		printf("selecting Passport application\n");
 		iso7816_select_application();
+
+		printf("selecting EF 0x1e\n");
 		iso7816_select_ef(0x011e);
+
+		printf("selecting EF 0x01\n");
 		iso7816_select_ef(0x0101);
 
 		while (1) {
+			printf("reading EF1\n");
 			len = 200;
 			printf("reading ef\n");
 			iso7816_read_binary(buf, &len);
@@ -344,6 +387,7 @@ int main(int argc, char **argv)
 #endif
 		break;
 	case RFID_PROTOCOL_MIFARE_UL:
+		printf("Protocol Mifare Ultralight\n");
 		mifare_ulight_read(ph);
 #if 0
 		mifare_ulight_blank(ph);
@@ -352,6 +396,7 @@ int main(int argc, char **argv)
 #endif
 		break;
 	case RFID_PROTOCOL_MIFARE_CLASSIC:
+		printf("Protocol Mifare Classic\n");
 		{
 			int sector;
 			for (sector = 1; sector < 31; sector++) {
@@ -370,6 +415,10 @@ int main(int argc, char **argv)
 				mifare_classic_read_sector(ph, sector);
 			}
 		}
+		break;
+	default:
+		printf("unknown protocol\n");
+		exit(1);
 		break;
 	}
 
