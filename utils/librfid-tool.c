@@ -361,25 +361,49 @@ int main(int argc, char **argv)
 		printf("Protocol T=CL\n");
 		/* we've established T=CL at this point */
 		printf("selecting Master File\n");
-		select_mf();
+		rc = select_mf();
+		if (rc < 0) {
+			printf("error selecting MF\n");
+			break;
+		}
 
 		printf("Getting random challenge, length 255\n");
-		iso7816_get_challenge(0xff);
+		rc = iso7816_get_challenge(0xff);
+		if (rc < 0) {
+			printf("error getting random challenge\n");
+			break;
+		}
 
 		printf("selecting Passport application\n");
-		iso7816_select_application();
+		rc = iso7816_select_application();
+		if (rc < 0) {
+			printf("error selecting passport application\n");
+			break;
+		}
 
 		printf("selecting EF 0x1e\n");
-		iso7816_select_ef(0x011e);
+		rc = iso7816_select_ef(0x011e);
+		if (rc < 0) {
+			printf("error selecting EF 0x1e\n");
+			break;
+		}
 
 		printf("selecting EF 0x01\n");
-		iso7816_select_ef(0x0101);
+		rc = iso7816_select_ef(0x0101);
+		if (rc < 0) {
+			printf("error selecting EF 0x01\n");
+			break;
+		}
 
 		while (1) {
 			printf("reading EF1\n");
 			len = 200;
 			printf("reading ef\n");
-			iso7816_read_binary(buf, &len);
+			rc = iso7816_read_binary(buf, &len);
+			if (rc < 0) {
+				printf("error reading EF\n");
+				break;
+			}
 		}
 #if 0
 		for (i = 0; i < 4; i++)
