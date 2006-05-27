@@ -405,7 +405,7 @@ int main(int argc, char **argv)
 					printf("key format error\n");
 					exit(1);
 				}
-				rc = mfcl_auth(ph, RFID_CMD_MIFARE_AUTH1A, sector);
+				rc = mfcl_auth(ph, RFID_CMD_MIFARE_AUTH1A, sector*4);
 				if (rc < 0) {
 					printf("mifare auth error\n");
 					exit(1);
