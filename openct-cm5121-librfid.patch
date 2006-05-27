@@ -1,0 +1,306 @@
+diff -Nru openct-0.6.7/src/ifd/Makefile.am openct-0.6.7-rfid/src/ifd/Makefile.am
+--- openct-0.6.7/src/ifd/Makefile.am	2006-04-21 08:37:58.000000000 +0200
++++ openct-0.6.7-rfid/src/ifd/Makefile.am	2006-05-27 19:32:21.000000000 +0200
+@@ -20,7 +20,7 @@
+ 	ifd-wbeiuu.c \
+ 	\
+ 	proto-gbp.c proto-sync.c proto-t0.c proto-t1.c \
+-	proto-trans.c \
++	proto-trans.c proto-escape.c \
+ 	\
+ 	sys-sunray.c sys-solaris.c sys-bsd.c sys-linux.c sys-null.c sys-osx.c \
+ 	\
+diff -Nru openct-0.6.7/src/ifd/ifd-ccid.c openct-0.6.7-rfid/src/ifd/ifd-ccid.c
+--- openct-0.6.7/src/ifd/ifd-ccid.c	2006-04-24 21:52:03.000000000 +0200
++++ openct-0.6.7-rfid/src/ifd/ifd-ccid.c	2006-05-27 19:46:29.000000000 +0200
+@@ -5,6 +5,9 @@
+  *
+  * 2005-04-20: Harald Welte <laforge@gnumonks.org>
+  * 	Add support for PCMCIA based CCID Device (CardMan 4040)
++ *
++ * 2005-05-22: Harald Welte <laforge@gnumonks.org>
++ * 	Add suport for OmniKey Cardman 5121 RFID extensions
+  */
+ 
+ #include "internal.h"
+@@ -122,6 +125,7 @@
+ 
+ #define SUPPORT_T0	0x1
+ #define SUPPORT_T1	0x2
++#define SUPPORT_ESCAPE	0x80
+ 
+ #define SUPPORT_50V	1
+ #define SUPPORT_33V	2
+@@ -740,6 +744,12 @@
+ 		st->reader_type = TYPE_TPDU;
+ 	}
+ 
++	if (de.idVendor == 0x076b && de.idProduct == 0x5121) {
++		/* special handling of RFID part of OmniKey 5121 */
++		reader->nslots++;	/* one virtual slot for RFID escape */
++		st->proto_support |= SUPPORT_ESCAPE;
++	}
++
+ 	return 0;
+ }
+ 
+@@ -816,6 +826,13 @@
+ 		int any = 0;
+ 		int i, j, bits, stat;
+ 
++		if (st->proto_support & SUPPORT_ESCAPE
++		    && slot == reader->nslots-1) {
++			ifd_debug(1, "virtual escape slot, setting card present\n");
++			*status = IFD_CARD_PRESENT;
++			return 0;
++		}
++
+ 		i = 1 + (slot / 4);
+ 		j = 2 * (slot % 4);
+ 		stat = 0;
+@@ -880,6 +897,8 @@
+ 	return 0;
+ }
+ 
++static int ccid_set_protocol(ifd_reader_t *reader, int s, int proto);
++
+ /*
+  * Reset
+  */
+@@ -898,6 +917,13 @@
+ 	if (!(status & IFD_CARD_PRESENT))
+ 		return IFD_ERROR_NO_CARD;
+ 
++	if (st->proto_support & SUPPORT_ESCAPE
++	    && slot == reader->nslots-1) {
++		ifd_debug(1, "slot: %d, setting atr to 0xff", slot);
++		*((char *)atr) = 0xff;
++		ccid_set_protocol(reader, slot, IFD_PROTOCOL_ESCAPE);
++		return 1;
++	}
+ 	memset(ctlbuf, 0, 3);
+ 
+ 	n = -1;
+@@ -940,6 +966,17 @@
+ 	ifd_atr_info_t atr_info;
+ 	int r;
+ 
++	slot = &reader->slot[s];
++
++	/* If we support RFID escaping, we only allow ESCAPE protocol
++	 * at the last (== virtual) slot */
++	if ((st->proto_support & SUPPORT_ESCAPE)
++	    && (proto != IFD_PROTOCOL_ESCAPE)
++	    && (s == reader->nslots-1)) {
++		ct_error("reader doesn't support this protocol at this slot\n");
++		return IFD_ERROR_NOT_SUPPORTED;
++	}
++
+ 	switch (proto) {
+ 	case IFD_PROTOCOL_T0:
+ 		if (!(st->proto_support & SUPPORT_T0)) {
+@@ -953,13 +990,36 @@
+ 			return IFD_ERROR_NOT_SUPPORTED;
+ 		}
+ 		break;
++	case IFD_PROTOCOL_ESCAPE:
++		/* virtual "escape" fallthrough protocol for stacking RFID
++		 * protocol stack on top of openct */
++		if (!(st->proto_support & SUPPORT_ESCAPE)) {
++			ct_error("reader does not support this protocol");
++			return IFD_ERROR_NOT_SUPPORTED;
++		}
++		if (s != reader->nslots-1) {
++			ct_error("reader doesn't support this protocol at this slot");
++			return IFD_ERROR_NOT_SUPPORTED;
++		}
++		p = ifd_protocol_new(IFD_PROTOCOL_ESCAPE,reader, slot->dad);
++		if (!p) {
++			ct_error("%s: internal error", reader->name);
++			return -1;
++		}
++		if (slot->proto) {
++			ifd_protocol_free(slot->proto);
++			slot->proto = NULL;
++		}
++		slot->proto = p;
++		st->icc_proto[s] = proto;
++		ifd_debug(1, "set protocol to ESCAPE\n");
++		return 0;
++		break;
+ 	default:
+ 		ct_error("protocol unknown");
+ 		return IFD_ERROR_NOT_SUPPORTED;
+ 	}
+ 
+-	slot = &reader->slot[s];
+-
+ 	if (st->reader_type == TYPE_APDU) {
+ 		p = ifd_protocol_new(IFD_PROTOCOL_TRANSPARENT,
+ 				     reader, slot->dad);
+@@ -1103,6 +1163,27 @@
+ 	return 0;
+ }
+ 
++static int ccid_escape(ifd_reader_t *reader, int slot, void *sbuf,
++		       size_t slen, void *rbuf, size_t rlen)
++{
++     unsigned char sendbuf[CCID_MAX_MSG_LEN];
++     unsigned char recvbuf[CCID_MAX_MSG_LEN];
++     int r;
++
++     ifd_debug(1, "slot: %d, slen %d, rlen %d", slot, slen, rlen);
++
++     r = ccid_prepare_cmd(reader, sendbuf, sizeof(sendbuf), slot,
++		          CCID_CMD_ESCAPE, NULL, sbuf, slen);
++     if (r < 0)
++	  return r;
++
++     r = ccid_command(reader, &sendbuf[0], r, recvbuf, sizeof(recvbuf));
++     if (r < 0)
++	  return r;
++
++     return ccid_extract_data(&recvbuf, r, rbuf, rlen);
++}
++
+ static int
+ ccid_transparent(ifd_reader_t * reader, int slot,
+ 		 const void *sbuf, size_t slen, void *rbuf, size_t rlen)
+@@ -1177,6 +1258,7 @@
+ 	ccid_driver.transparent = ccid_transparent;
+ 	ccid_driver.send = ccid_send;
+ 	ccid_driver.recv = ccid_recv;
++	ccid_driver.escape = ccid_escape;
+ 
+ 	ifd_driver_register("ccid", &ccid_driver);
+ }
+diff -Nru openct-0.6.7/src/ifd/init.c openct-0.6.7-rfid/src/ifd/init.c
+--- openct-0.6.7/src/ifd/init.c	2006-04-21 08:37:58.000000000 +0200
++++ openct-0.6.7-rfid/src/ifd/init.c	2006-05-27 19:32:21.000000000 +0200
+@@ -54,6 +54,7 @@
+ 	ifd_protocol_register(&ifd_protocol_2wire);
+ 	ifd_protocol_register(&ifd_protocol_3wire);
+ 	ifd_protocol_register(&ifd_protocol_eurochip);
++	ifd_protocol_register(&ifd_protocol_esc);
+ 
+ 	if (ifd_conf_get_integer("debug", &ival) >= 0 && ival > ct_config.debug)
+ 		ct_config.debug = ival;
+diff -Nru openct-0.6.7/src/ifd/internal.h openct-0.6.7-rfid/src/ifd/internal.h
+--- openct-0.6.7/src/ifd/internal.h	2006-04-21 08:37:58.000000000 +0200
++++ openct-0.6.7-rfid/src/ifd/internal.h	2006-05-27 19:32:21.000000000 +0200
+@@ -118,6 +118,7 @@
+ extern struct ifd_protocol_ops ifd_protocol_2wire;
+ extern struct ifd_protocol_ops ifd_protocol_3wire;
+ extern struct ifd_protocol_ops ifd_protocol_eurochip;
++extern struct ifd_protocol_ops ifd_protocol_esc;
+ 
+ extern void ifd_acr30u_register(void);
+ extern void ifd_cardman_register(void);
+diff -Nru openct-0.6.7/src/ifd/proto-escape.c openct-0.6.7-rfid/src/ifd/proto-escape.c
+--- openct-0.6.7/src/ifd/proto-escape.c	1970-01-01 01:00:00.000000000 +0100
++++ openct-0.6.7-rfid/src/ifd/proto-escape.c	2006-05-27 19:32:21.000000000 +0200
+@@ -0,0 +1,77 @@
++/*
++ * Escape protocol - simply pass everything to the reader driver's escape()
++ *
++ * This is required for exporting access to vendor-specific CCID extensions,
++ * such as the Omnikey CardMan 5121 RFID support.
++ *
++ * The higher-level applications select a virtual slot (the last available slot
++ * number).  This virtual slot will automatically get the IFD_PROTOCOL_ESCAPE 
++ * assgigned to it and can then be used to transceive() data to/from the CCID.
++ *
++ * It's a bit ugly, but I was unable to come up with something cleaner.
++ *
++ * Copyright (C) 2005, Harald Welte <laforge@gnumonks.org>
++ */
++
++#include "internal.h"
++#include <unistd.h>
++#include <stdlib.h>
++#include <string.h>
++
++static int
++escape_init(ifd_protocol_t *prot)
++{
++	ifd_reader_t	*reader = prot->reader;
++	const ifd_driver_t *drv;
++
++	if (!reader || !(drv = reader->driver)
++	 || !drv->ops || !drv->ops->escape)
++	 	return -1;
++	return 0;
++}
++
++static void
++escape_release(ifd_protocol_t *prot)
++{
++	/* NOP */
++}
++
++static int
++escape_set_param(ifd_protocol_t *prot, int type, long value)
++{
++	ct_error("set_pameter not supported");
++	return -1;
++}
++
++static int
++escape_get_param(ifd_protocol_t *prot, int type, long *result)
++{
++	ct_error("get_pameter not supported");
++	return -1;
++}
++
++static int
++escape_transceive(ifd_protocol_t *prot, int dad,
++		const void *sbuf, size_t slen,
++		void *rbuf, size_t rlen)
++{
++	ifd_reader_t	*reader = prot->reader;
++	const ifd_driver_t *drv = reader->driver;
++
++	return drv->ops->escape(reader, dad, sbuf, slen, rbuf, rlen);
++}
++
++struct ifd_protocol_ops	ifd_protocol_esc = {
++	IFD_PROTOCOL_ESCAPE,		/* id */
++	"escape",			/* name */
++	sizeof(ifd_protocol_t),		/* size */
++	escape_init,			/* init */
++	escape_release,			/* release */
++	escape_set_param,		/* set_param */
++	escape_get_param,		/* get_param */
++	NULL,				/* resynchronize */
++	escape_transceive,		/* transceive */
++	NULL,				/* sync_read */
++	NULL,				/* sync_write */
++};
++
+diff -Nru openct-0.6.7/src/include/openct/driver.h openct-0.6.7-rfid/src/include/openct/driver.h
+--- openct-0.6.7/src/include/openct/driver.h	2006-04-21 08:37:58.000000000 +0200
++++ openct-0.6.7-rfid/src/include/openct/driver.h	2006-05-27 19:32:21.000000000 +0200
+@@ -318,6 +318,11 @@
+ 	int		(*sync_write)(ifd_reader_t *reader, int slot, int proto,
+ 				unsigned short addr,
+ 				const unsigned char *sbuf, size_t slen);
++
++	/*Support for transparent access to "escape" */
++	int		(*escape)(ifd_reader_t *reader, int slot,
++				void *sbuf, size_t slen,
++				void *rbuf, size_t rlen);
+ };
+ 
+ extern void		ifd_driver_register(const char *,
+diff -Nru openct-0.6.7/src/include/openct/ifd.h openct-0.6.7-rfid/src/include/openct/ifd.h
+--- openct-0.6.7/src/include/openct/ifd.h	2006-04-21 08:37:58.000000000 +0200
++++ openct-0.6.7-rfid/src/include/openct/ifd.h	2006-05-27 19:42:54.000000000 +0200
+@@ -29,6 +29,8 @@
+ 	IFD_PROTOCOL_TLP,		/* older Gemplus protocol */
+ 	IFD_PROTOCOL_GBP,		/* Gemplus block protocol */
+ 	IFD_PROTOCOL_EUROCHIP,		/* Eurochip Countercard */
++	IFD_PROTOCOL_TCL,		/* ISO 14443-4 T=CL */
++	IFD_PROTOCOL_ESCAPE,		/* Virtual 'escape' protocol */
+ 	IFD_PROTOCOL_TRANSPARENT = 128
+ };
+ 
