@@ -11,5 +11,17 @@ AC_EXEEXT
 AM_PROG_LIBTOOL
 AC_SUBST(LIBTOOL_DEPS)
 
+AC_ARG_WITH(ccid,
+	[  --with-ccid		Include internal CCID driver],
+	[MY_CCID=1], [MY_CCID=0])
+
+# AC_SUBST(MY_CCID)
+AM_CONDITIONAL(MY_CCID, test "$MY_CCID" == "1")
+
+#AC_CHECK_HEADERS(usb.h, [have_libusb="yes"], [ AC_MSG_WARN([usb.h not found, use --enable-libusb=PATH. Otherwise, INDI will compile without Apogee USB support.]) ])
+
+AC_CHECK_LIB(usb, usb_close,,)
+AM_CONDITIONAL(HAVE_LIBUSB, test "x$have_libusb" = "xyes")
+
 dnl Output the makefile
 AC_OUTPUT(Makefile src/Makefile include/Makefile include/librfid/Makefile utils/Makefile)

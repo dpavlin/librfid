@@ -5,7 +5,7 @@
 
 #include <librfid/rfid_asic.h>
 
-#include <include/ccid/ccid-driver.h>
+#include "ccid-driver.h"
 
 /* this is the sole function required by rfid_reader_cm5121.c */
 int 
