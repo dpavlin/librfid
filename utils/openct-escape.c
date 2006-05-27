@@ -192,6 +192,8 @@ iso7816_read_binary(unsigned char *buf, unsigned int *len)
 	if (rv < 0)
 		return rv;
 
+	printf("%s\n", hexdump(resp, rlen));
+
 	/* FIXME: parse response, determine whether we need additional reads */
 
 	/* FIXME: copy 'len' number of response bytes to 'buf' */
@@ -254,19 +256,23 @@ mifare_ulight_read(struct rfid_protocol_handle *ph)
 
 /* mifare classic helpers */
 static int
-mifare_classic_read(struct rfid_protocol_handle *ph)
+mifare_classic_read_sector(struct rfid_protocol_handle *ph, int sector)
 {
 	unsigned char buf[20];
 	unsigned int len = sizeof(buf);
 	int ret;
-	int i;
+	int block;
 
-	for (i = 0; i <= MIFARE_CL_PAGE_MAX; i++) {
-		ret = rfid_protocol_read(ph, i, buf, &len);
+	/* FIXME: make this work for sectors > 31 */
+	printf("reading sector %u\n", sector);
+
+	for (block = sector*4; block < sector*4+4; block++) {
+		printf("reading block %u\n", block);
+		ret = rfid_protocol_read(ph, block, buf, &len);
 		if (ret < 0)
 			return ret;
 
-		printf("Page 0x%x: %s\n", i, hexdump(buf, len));
+		printf("Page 0x%x: %s\n", block, hexdump(buf, len));
 	}
 	return 0;
 }
@@ -306,6 +312,8 @@ int main(int argc, char **argv)
 	if (init() < 0)
 		exit(1);
 
+	//while(1) { }
+
 	//protocol = RFID_PROTOCOL_MIFARE_UL;
 	//protocol = RFID_PROTOCOL_MIFARE_CLASSIC;
 	protocol = RFID_PROTOCOL_TCL;
@@ -314,6 +322,9 @@ int main(int argc, char **argv)
 		exit(1);
 
 	switch (protocol) {
+		char buf[32000];
+		int len = 200;
+
 	case RFID_PROTOCOL_TCL:
 		/* we've established T=CL at this point */
 		select_mf();
@@ -321,9 +332,15 @@ int main(int argc, char **argv)
 		iso7816_select_application();
 		iso7816_select_ef(0x011e);
 		iso7816_select_ef(0x0101);
-#if 1
+
+		while (1) {
+			len = 200;
+			printf("reading ef\n");
+			iso7816_read_binary(buf, &len);
+		}
+#if 0
 		for (i = 0; i < 4; i++)
-			iso7816_get_challenge(0x06);
+			iso7816_get_challenge(0xff);
 #endif
 		break;
 	case RFID_PROTOCOL_MIFARE_UL:
@@ -335,18 +352,24 @@ int main(int argc, char **argv)
 #endif
 		break;
 	case RFID_PROTOCOL_MIFARE_CLASSIC:
-		rc = mfcl_set_key(ph, MIFARE_CL_KEYA_DEFAULT_INFINEON);
-		if (rc < 0) {
-			printf("key format error\n");
-			exit(1);
+		{
+			int sector;
+			for (sector = 1; sector < 31; sector++) {
+				rc = mfcl_set_key(ph, MIFARE_CL_KEYA_DEFAULT_INFINEON);
+				if (rc < 0) {
+					printf("key format error\n");
+					exit(1);
+				}
+				rc = mfcl_auth(ph, RFID_CMD_MIFARE_AUTH1A, sector);
+				if (rc < 0) {
+					printf("mifare auth error\n");
+					exit(1);
+				} else 
+					printf("mifare authe succeeded!\n");
+
+				mifare_classic_read_sector(ph, sector);
+			}
 		}
-		rc = mfcl_auth(ph, RFID_CMD_MIFARE_AUTH1A, 0);
-		if (rc < 0) {
-			printf("mifare auth error\n");
-			exit(1);
-		} else 
-			printf("mifare authe succeeded!\n");
-		mifare_classic_read(ph);
 		break;
 	}
 
