@@ -170,7 +170,8 @@ static int
 rc632_wait_idle(struct rfid_asic_handle *handle, u_int64_t timeout)
 {
 	u_int8_t cmd = 0xff;
-	int ret;
+	int ret, cycles = 0;
+#define USLEEP_PER_CYCLE	128
 
 	while (cmd != 0) {
 		ret = rc632_reg_read(handle, RC632_REG_COMMAND, &cmd);
@@ -189,9 +190,14 @@ rc632_wait_idle(struct rfid_asic_handle *handle, u_int64_t timeout)
 				rc632_reg_read(handle, RC632_REG_ERROR_FLAG, &foo);
 		}
 
-		usleep(100);
+		/* Abort after some timeout */
+		if (cycles > timeout*10/USLEEP_PER_CYCLE) {
+			fprintf(stderr, "TIMEOUT!!\n");
+			return -1;
+		}
 
-		/* Fixme: Abort after some timeout */
+		cycles++;
+		usleep(USLEEP_PER_CYCLE);
 	}
 
 	return 0;
