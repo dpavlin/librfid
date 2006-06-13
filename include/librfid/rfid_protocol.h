@@ -8,7 +8,7 @@ struct rfid_protocol_handle;
 struct rfid_protocol_handle *
 rfid_protocol_init(struct rfid_layer2_handle *l2h, unsigned int id);
 int rfid_protocol_open(struct rfid_protocol_handle *ph);
-int rfid_protocol_transcieve(struct rfid_protocol_handle *ph,
+int rfid_protocol_transceive(struct rfid_protocol_handle *ph,
 			     const unsigned char *tx_buf, unsigned int tx_len,
 			     unsigned char *rx_buf, unsigned int *rx_len,
 			     unsigned int timeout, unsigned int flags);
@@ -46,8 +46,8 @@ struct rfid_protocol {
 		int (*open)(struct rfid_protocol_handle *ph);
 		int (*close)(struct rfid_protocol_handle *ph);
 		int (*fini)(struct rfid_protocol_handle *ph);
-		/* transcieve for session based transport protocols */
-		int (*transcieve)(struct rfid_protocol_handle *ph,
+		/* transceive for session based transport protocols */
+		int (*transceive)(struct rfid_protocol_handle *ph,
 				  const unsigned char *tx_buf,
 				  unsigned int tx_len,
 				  unsigned char *rx_buf,

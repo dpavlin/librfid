@@ -176,31 +176,31 @@ static int TestFIFO(struct rc632_handle *handle)
 }
 #endif
 
-static int cm5121_transcieve(struct rfid_reader_handle *rh,
+static int cm5121_transceive(struct rfid_reader_handle *rh,
 			     enum rfid_frametype frametype,
 			     const unsigned char *tx_data, unsigned int tx_len,
 			     unsigned char *rx_data, unsigned int *rx_len,
 			     u_int64_t timeout, unsigned int flags)
 {
-	return rh->ah->asic->priv.rc632.fn.transcieve(rh->ah, frametype,
+	return rh->ah->asic->priv.rc632.fn.transceive(rh->ah, frametype,
 						tx_data, tx_len, rx_data,
 						rx_len, timeout, flags);
 }
 
-static int cm5121_transcieve_sf(struct rfid_reader_handle *rh,
+static int cm5121_transceive_sf(struct rfid_reader_handle *rh,
 			       unsigned char cmd, struct iso14443a_atqa *atqa)
 {
-	return rh->ah->asic->priv.rc632.fn.iso14443a.transcieve_sf(rh->ah,
+	return rh->ah->asic->priv.rc632.fn.iso14443a.transceive_sf(rh->ah,
 								   cmd,
 								   atqa);
 }
 
 static int
-cm5121_transcieve_acf(struct rfid_reader_handle *rh,
+cm5121_transceive_acf(struct rfid_reader_handle *rh,
 		      struct iso14443a_anticol_cmd *cmd,
 		      unsigned int *bit_of_col)
 {
-	return rh->ah->asic->priv.rc632.fn.iso14443a.transcieve_acf(rh->ah,
+	return rh->ah->asic->priv.rc632.fn.iso14443a.transceive_acf(rh->ah,
 							 cmd, bit_of_col);
 }
 
@@ -346,11 +346,11 @@ struct rfid_reader rfid_reader_cm5121 = {
 	.name 	= "Omnikey CardMan 5121 RFID",
 	.open = &cm5121_open,
 	.close = &cm5121_close,
-	.transcieve = &cm5121_transcieve,
+	.transceive = &cm5121_transceive,
 	.iso14443a = {
 		.init = &cm5121_14443a_init,
-		.transcieve_sf = &cm5121_transcieve_sf,
-		.transcieve_acf = &cm5121_transcieve_acf,
+		.transceive_sf = &cm5121_transceive_sf,
+		.transceive_acf = &cm5121_transceive_acf,
 		.speed = RFID_14443A_SPEED_106K | RFID_14443A_SPEED_212K |
 			 RFID_14443A_SPEED_424K, //| RFID_14443A_SPEED_848K,
 		.set_speed = &cm5121_14443a_set_speed,

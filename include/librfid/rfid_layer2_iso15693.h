@@ -22,14 +22,14 @@ struct iso15693_transport {
 		int (*fini)(struct iso15693_handle *handle);
 
 #if 0
-		int (*transcieve_sf)(struct iso14443a_handle *handle,
+		int (*transceive_sf)(struct iso14443a_handle *handle,
 				     unsigned char cmd,
 				     struct iso14443a_atqa *atqa);
-		int (*transcieve_acf)(struct iso14443a_handle *handle,
+		int (*transceive_acf)(struct iso14443a_handle *handle,
 				      struct iso14443a_anticol_cmd *acf,
 				      unsigned int *bit_of_col);
 #endif
-		int (*transcieve)(struct iso15693_handle *handle,
+		int (*transceive)(struct iso15693_handle *handle,
 				  const unsigned char *tx_buf,
 				  unsigned int tx_len,
 				  unsigned char *rx_buf,

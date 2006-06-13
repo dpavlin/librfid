@@ -65,7 +65,7 @@ struct usb_device *find_device(u_int16_t vendor, u_int16_t device)
 	return NULL;
 }
 
-int pegoda_transcieve(struct pegoda_handle *ph,
+int pegoda_transceive(struct pegoda_handle *ph,
 		      u_int8_t cmd, unsigned char *tx, unsigned int tx_len,
 		      unsigned char *rx, unsigned int *rx_len)
 {
@@ -171,7 +171,7 @@ struct pegoda_handle *pegoda_open(void)
 
 	printf("alt setting 1 selected\n");
 
-	pegoda_transcieve(ph, PEGODA_CMD_PCD_CONFIG, NULL, 0, rbuf, &rlen);
+	pegoda_transceive(ph, PEGODA_CMD_PCD_CONFIG, NULL, 0, rbuf, &rlen);
 
 	return ph;
 out_free:
@@ -207,7 +207,7 @@ static int pegoda_auth_e2(struct pegoda_handle *ph,
 	buf[1] = keynr;		/* key number */
 	buf[2] = sector;	/* sector */
 	rlen = sizeof(rbuf);
-	pegoda_transcieve(ph, PEGODA_CMD_PICC_AUTH, buf, 3, rbuf, &rlen);
+	pegoda_transceive(ph, PEGODA_CMD_PICC_AUTH, buf, 3, rbuf, &rlen);
 
 	/* FIXME: check response */
 
@@ -226,7 +226,7 @@ static int pegoda_auth_key(struct pegoda_handle *ph,
 	mifare_transform_key(key6, buf+5);
 	buf[17] = sector;
 
-	pegoda_transcieve(ph, PEGODA_CMD_PICC_AUTH_KEY, buf, 18, rbuf, &rlen);
+	pegoda_transceive(ph, PEGODA_CMD_PICC_AUTH_KEY, buf, 18, rbuf, &rlen);
 
 	/* FIXME: check response */
 
@@ -239,7 +239,7 @@ static int pegoda_read16(struct pegoda_handle *ph,
 	int rc;
 	unsigned int rlen = 16;
 
-	rc = pegoda_transcieve(ph, PEGODA_CMD_PICC_READ,
+	rc = pegoda_transceive(ph, PEGODA_CMD_PICC_READ,
 				&page, 1, rx, &rlen);
 	if (rlen != 16)
 		return -EIO;
@@ -261,19 +261,19 @@ int main(int argc, char **argv)
 	/* LED off */
 	buf[0] = 0x00;
 	rlen = sizeof(rbuf);
-	pegoda_transcieve(ph, PEGODA_CMD_SWITCH_LED, buf, 1, rbuf, &rlen);
+	pegoda_transceive(ph, PEGODA_CMD_SWITCH_LED, buf, 1, rbuf, &rlen);
 
 	/* anticollision */
 
 	buf[0] = 0x26;
 	rlen = sizeof(rbuf);
-	pegoda_transcieve(ph, PEGODA_CMD_PICC_COMMON_REQUEST, 
+	pegoda_transceive(ph, PEGODA_CMD_PICC_COMMON_REQUEST, 
 			  buf, 1, rbuf, &rlen);
 
 	buf[0] = 0x93;
 	memset(buf+1, 0, 5);
 	rlen = sizeof(rbuf);
-	pegoda_transcieve(ph, PEGODA_CMD_PICC_CASC_ANTICOLL, 
+	pegoda_transceive(ph, PEGODA_CMD_PICC_CASC_ANTICOLL, 
 			  buf, 6, rbuf, &rlen);
 
 	memcpy(ph->snr, rbuf, 4);
@@ -281,7 +281,7 @@ int main(int argc, char **argv)
 	buf[0] = 0x93;
 	memcpy(buf+1, ph->snr, 4);
 	rlen = sizeof(rbuf);
-	pegoda_transcieve(ph, PEGODA_CMD_PICC_CASC_SELECT, 
+	pegoda_transceive(ph, PEGODA_CMD_PICC_CASC_SELECT, 
 			  buf, 5, rbuf, &rlen);
 
 	pegoda_auth_key(ph, 0, "\xff\xff\xff\xff\xff\xff");
