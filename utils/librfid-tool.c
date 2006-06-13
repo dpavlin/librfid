@@ -17,6 +17,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 
 #define _GNU_SOURCE
 #include <getopt.h>
@@ -274,6 +275,8 @@ mifare_classic_read_sector(struct rfid_protocol_handle *ph, int sector)
 	for (block = sector*4; block < sector*4+4; block++) {
 		printf("reading block %u\n", block);
 		ret = rfid_protocol_read(ph, block, buf, &len);
+		if(ret == -ETIMEDOUT)
+			fprintf(stderr, "TIMEOUT\n");
 		if (ret < 0)
 			return ret;
 

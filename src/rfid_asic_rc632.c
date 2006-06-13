@@ -192,8 +192,7 @@ rc632_wait_idle(struct rfid_asic_handle *handle, u_int64_t timeout)
 
 		/* Abort after some timeout */
 		if (cycles > timeout*10/USLEEP_PER_CYCLE) {
-			fprintf(stderr, "TIMEOUT!!\n");
-			return -1;
+			return -ETIMEDOUT;
 		}
 
 		cycles++;
