@@ -1318,9 +1318,6 @@ rc632_mifare_auth(struct rfid_asic_handle *h, u_int8_t cmd, u_int32_t serno,
 	//acmd.serno = htonl(serno);
 	acmd.serno = serno;
 
-	ret = rc632_clear_bits(h, RC632_REG_CONTROL,
-				RC632_CONTROL_CRYPTO1_ON);
-
 	/* Clear Rx CRC */
 	ret = rc632_clear_bits(h, RC632_REG_CHANNEL_REDUNDANCY,
 				RC632_CR_RX_CRC_ENABLE);
