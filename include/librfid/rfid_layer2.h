@@ -17,7 +17,7 @@ enum rfid_layer2_id {
 struct rfid_layer2_handle *rfid_layer2_init(struct rfid_reader_handle *rh,
 					    unsigned int id);
 int rfid_layer2_open(struct rfid_layer2_handle *l2h);
-int rfid_layer2_transcieve(struct rfid_layer2_handle *l2h,
+int rfid_layer2_transceive(struct rfid_layer2_handle *l2h,
 			   enum rfid_frametype frametype,
 			   const unsigned char *tx_buf, unsigned int tx_len,
 			   unsigned char *rx_buf, unsigned int *rx_len,
@@ -42,7 +42,7 @@ struct rfid_layer2 {
 	struct {
 		struct rfid_layer2_handle *(*init)(struct rfid_reader_handle *h);
 		int (*open)(struct rfid_layer2_handle *h);
-		int (*transcieve)(struct rfid_layer2_handle *h,
+		int (*transceive)(struct rfid_layer2_handle *h,
 				  enum rfid_frametype frametype,
 				  const unsigned char *tx_buf, 
 				  unsigned int tx_len, unsigned char *rx_buf, 

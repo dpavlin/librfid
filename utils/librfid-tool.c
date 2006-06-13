@@ -114,7 +114,7 @@ static int select_mf(void)
 
 	int rv;
 
-	rv = rfid_protocol_transcieve(ph, cmd, sizeof(cmd), ret, &rlen, 0, 0);
+	rv = rfid_protocol_transceive(ph, cmd, sizeof(cmd), ret, &rlen, 0, 0);
 	if (rv < 0)
 		return rv;
 
@@ -134,7 +134,7 @@ static int iso7816_get_challenge(unsigned char len)
 
 	int rv;
 
-	rv = rfid_protocol_transcieve(ph, cmd, sizeof(cmd), ret, &rlen, 0, 0);
+	rv = rfid_protocol_transceive(ph, cmd, sizeof(cmd), ret, &rlen, 0, 0);
 	if (rv < 0)
 		return rv;
 
@@ -153,7 +153,7 @@ iso7816_select_application(void)
 
 	int rv;
 
-	rv = rfid_protocol_transcieve(ph, cmd, sizeof(cmd), resp, &rlen, 0, 0);
+	rv = rfid_protocol_transceive(ph, cmd, sizeof(cmd), resp, &rlen, 0, 0);
 	if (rv < 0)
 		return rv;
 
@@ -175,7 +175,7 @@ iso7816_select_ef(u_int16_t fid)
 	cmd[5] = (fid >> 8) & 0xff;
 	cmd[6] = fid & 0xff;
 
-	rv = rfid_protocol_transcieve(ph, cmd, sizeof(cmd), resp, &rlen, 0, 0);
+	rv = rfid_protocol_transceive(ph, cmd, sizeof(cmd), resp, &rlen, 0, 0);
 	if (rv < 0)
 		return rv;
 
@@ -194,7 +194,7 @@ iso7816_read_binary(unsigned char *buf, unsigned int *len)
 	
 	int rv;
 
-	rv = rfid_protocol_transcieve(ph, cmd, sizeof(cmd), resp, &rlen, 0, 0);
+	rv = rfid_protocol_transceive(ph, cmd, sizeof(cmd), resp, &rlen, 0, 0);
 	if (rv < 0)
 		return rv;
 

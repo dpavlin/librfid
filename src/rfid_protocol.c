@@ -57,12 +57,12 @@ rfid_protocol_open(struct rfid_protocol_handle *ph)
 }
 
 int
-rfid_protocol_transcieve(struct rfid_protocol_handle *ph,
+rfid_protocol_transceive(struct rfid_protocol_handle *ph,
 			 const unsigned char *tx_buf, unsigned int len,
 			 unsigned char *rx_buf, unsigned int *rx_len,
 			 unsigned int timeout, unsigned int flags)
 {
-	return ph->proto->fn.transcieve(ph, tx_buf, len, rx_buf, rx_len,
+	return ph->proto->fn.transceive(ph, tx_buf, len, rx_buf, rx_len,
 					timeout, flags);
 }
 

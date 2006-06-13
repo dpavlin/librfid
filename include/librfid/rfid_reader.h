@@ -9,7 +9,7 @@ struct rfid_reader_handle;
 struct rfid_reader {
 	char *name;
 	unsigned int id;
-	int (*transcieve)(struct rfid_reader_handle *h,
+	int (*transceive)(struct rfid_reader_handle *h,
 			  enum rfid_frametype frametype,
 			  const unsigned char *tx_buf, unsigned int tx_len,
 			  unsigned char *rx_buf, unsigned int *rx_len,
@@ -19,10 +19,10 @@ struct rfid_reader {
 
 	struct rfid_14443a_reader {
 		int (*init)(struct rfid_reader_handle *h);
-		int (*transcieve_sf)(struct rfid_reader_handle *h,
+		int (*transceive_sf)(struct rfid_reader_handle *h,
 				     unsigned char cmd,
 				     struct iso14443a_atqa *atqa);
-		int (*transcieve_acf)(struct rfid_reader_handle *h,
+		int (*transceive_acf)(struct rfid_reader_handle *h,
 				      struct iso14443a_anticol_cmd *cmd,
 				      unsigned int *bit_of_col);
 		int (*set_speed)(struct rfid_reader_handle *h,

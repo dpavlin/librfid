@@ -176,13 +176,13 @@ tcl_request_ats(struct rfid_protocol_handle *h)
 	rats[0] = 0xe0;
 	rats[1] = (h->priv.tcl.cid & 0x0f) | ((fsdi << 4) & 0xf0);
 
-	/* transcieve (with CRC) */
-	ret = rfid_layer2_transcieve(h->l2h, RFID_14443A_FRAME_REGULAR,
+	/* transceive (with CRC) */
+	ret = rfid_layer2_transceive(h->l2h, RFID_14443A_FRAME_REGULAR,
 				     rats, 2, h->priv.tcl.ats,
 				     &h->priv.tcl.ats_len, activation_fwt(h),
 				     TCL_TRANSP_F_TX_CRC);
 	if (ret < 0) {
-		DEBUGP("transcieve of rats failed\n");
+		DEBUGP("transceive of rats failed\n");
 		h->priv.tcl.state = TCL_STATE_RATS_SENT;
 		/* FIXME: retransmit */
 		return ret;
@@ -279,7 +279,7 @@ tcl_do_pps(struct rfid_protocol_handle *h)
 
 	ppss[2] = (ppss[2] & 0xf0) | (DrI | DsI << 2);
 
-	ret = rfid_layer2_transcieve(h->l2h, RFID_14443A_FRAME_REGULAR,
+	ret = rfid_layer2_transceive(h->l2h, RFID_14443A_FRAME_REGULAR,
 					ppss, 3, pps_response, &rx_len,
 					h->priv.tcl.fwt, TCL_TRANSP_F_TX_CRC);
 	if (ret < 0)
@@ -478,7 +478,7 @@ tcl_deselect(struct rfid_protocol_handle *h)
 	if (ret < 0)
 		return ret;
 
-	ret = rfid_layer2_transcieve(h->l2h, RFID_14443A_FRAME_REGULAR,
+	ret = rfid_layer2_transceive(h->l2h, RFID_14443A_FRAME_REGULAR,
 				     frame, prlg_len, rx,
 				     &rx_len, deactivation_fwt(h),
 				     TCL_TRANSP_F_TX_CRC);
@@ -497,7 +497,7 @@ tcl_deselect(struct rfid_protocol_handle *h)
 #define is_i_block(x) ((x & 0xc0) == 0x00)
 
 static int
-tcl_transcieve(struct rfid_protocol_handle *h,
+tcl_transceive(struct rfid_protocol_handle *h,
 		const unsigned char *tx_data, unsigned int tx_len,
 		unsigned char *rx_data, unsigned int *rx_len,
 		unsigned int timeout, unsigned int flags)
@@ -547,10 +547,10 @@ tcl_transcieve(struct rfid_protocol_handle *h,
 	*rx_len = 0;
 
 do_tx:
-	ret = rfid_layer2_transcieve(h->l2h, l2_to_frame(h->l2h->l2->id),
+	ret = rfid_layer2_transceive(h->l2h, l2_to_frame(h->l2h->l2->id),
 				     _tx, _tx_len,
 				     rx_buf, &_rx_len, _timeout, 0);
-	DEBUGP("l2 transcieve finished\n");
+	DEBUGP("l2 transceive finished\n");
 	if (ret < 0)
 		goto out_rxb;
 
@@ -629,8 +629,8 @@ do_tx:
 		_tx_len = prlg_len+1;
 		_timeout = th->fwt * inf;
 
-		/* start over with next transcieve */
-		goto do_tx; /* FIXME: do transcieve locally since we use
+		/* start over with next transceive */
+		goto do_tx; /* FIXME: do transceive locally since we use
 				totally different buffer */
 
 	} else if (is_i_block(*rx_buf)) {
@@ -713,7 +713,7 @@ struct rfid_protocol rfid_protocol_tcl = {
 	.fn	= {
 		.init = &tcl_init,
 		.open = &tcl_connect,
-		.transcieve = &tcl_transcieve,
+		.transceive = &tcl_transceive,
 		.close = &tcl_deselect,
 		.fini = &tcl_fini,
 	},

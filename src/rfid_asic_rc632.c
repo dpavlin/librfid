@@ -229,7 +229,7 @@ tcl_toggle_pcb(struct rfid_asic_handle *handle)
 }
 
 static int
-rc632_transcieve(struct rfid_asic_handle *handle,
+rc632_transceive(struct rfid_asic_handle *handle,
 		 const u_int8_t *tx_buf,
 		 u_int8_t tx_len,
 		 u_int8_t *rx_buf,
@@ -243,7 +243,7 @@ rc632_transcieve(struct rfid_asic_handle *handle,
 	if (ret < 0)
 		return ret;
 
-	ret = rc632_reg_write(handle, RC632_REG_COMMAND, RC632_CMD_TRANSCIEVE);
+	ret = rc632_reg_write(handle, RC632_REG_COMMAND, RC632_CMD_TRANSCEIVE);
 	if (ret < 0)
 		return ret;
 
@@ -581,7 +581,7 @@ rc632_iso14443a_fini(struct iso14443a_handle *handle_14443)
 
 /* issue a 14443-3 A PCD -> PICC command in a short frame, such as REQA, WUPA */
 static int
-rc632_iso14443a_transcieve_sf(struct rfid_asic_handle *handle,
+rc632_iso14443a_transceive_sf(struct rfid_asic_handle *handle,
 				u_int8_t cmd,
 		    		struct iso14443a_atqa *atqa)
 {
@@ -615,10 +615,10 @@ rc632_iso14443a_transcieve_sf(struct rfid_asic_handle *handle,
 	if (ret < 0)
 		return ret;
 
-	ret = rc632_transcieve(handle, tx_buf, sizeof(tx_buf),
+	ret = rc632_transceive(handle, tx_buf, sizeof(tx_buf),
 				(u_int8_t *)atqa, &rx_len, 0x32, 0);
 	if (ret < 0) {
-		DEBUGP("error during rc632_transcieve()\n");
+		DEBUGP("error during rc632_transceive()\n");
 		return ret;
 	}
 
@@ -635,9 +635,9 @@ rc632_iso14443a_transcieve_sf(struct rfid_asic_handle *handle,
 	return 0;
 }
 
-/* transcieve regular frame */
+/* transceive regular frame */
 static int
-rc632_iso14443ab_transcieve(struct rfid_asic_handle *handle,
+rc632_iso14443ab_transceive(struct rfid_asic_handle *handle,
 			   unsigned int frametype,
 			   const u_int8_t *tx_buf, unsigned int tx_len,
 			   u_int8_t *rx_buf, unsigned int *rx_len,
@@ -673,7 +673,7 @@ rc632_iso14443ab_transcieve(struct rfid_asic_handle *handle,
 	if (ret < 0)
 		return ret;
 
-	ret = rc632_transcieve(handle, tx_buf, tx_len, rx_buf, &rxl, 0x32, 0);
+	ret = rc632_transceive(handle, tx_buf, tx_len, rx_buf, &rxl, 0x32, 0);
 	*rx_len = rxl;
 	if (ret < 0)
 		return ret;
@@ -682,9 +682,9 @@ rc632_iso14443ab_transcieve(struct rfid_asic_handle *handle,
 	return 0; 
 }
 
-/* transcieve anti collission bitframe */
+/* transceive anti collission bitframe */
 static int
-rc632_iso14443a_transcieve_acf(struct rfid_asic_handle *handle,
+rc632_iso14443a_transceive_acf(struct rfid_asic_handle *handle,
 				struct iso14443a_anticol_cmd *acf,
 				unsigned int *bit_of_col)
 {
@@ -730,7 +730,7 @@ rc632_iso14443a_transcieve_acf(struct rfid_asic_handle *handle,
 	if (ret < 0)
 		return ret;
 
-	ret = rc632_transcieve(handle, (u_int8_t *)acf, tx_bytes,
+	ret = rc632_transceive(handle, (u_int8_t *)acf, tx_bytes,
 				rx_buf, &rx_len, 0x32, 0);
 	if (ret < 0)
 		return ret;
@@ -1371,9 +1371,9 @@ rc632_mifare_auth(struct rfid_asic_handle *h, u_int8_t cmd, u_int32_t serno,
 
 }
 
-/* transcieve regular frame */
+/* transceive regular frame */
 static int
-rc632_mifare_transcieve(struct rfid_asic_handle *handle,
+rc632_mifare_transceive(struct rfid_asic_handle *handle,
 			const u_int8_t *tx_buf, unsigned int tx_len,
 			u_int8_t *rx_buf, unsigned int *rx_len,
 			u_int64_t timeout, unsigned int flags)
@@ -1397,7 +1397,7 @@ rc632_mifare_transcieve(struct rfid_asic_handle *handle,
 	if (ret < 0)
 		return ret;
 
-	ret = rc632_transcieve(handle, tx_buf, tx_len, rx_buf, &rxl, 0x32, 0);
+	ret = rc632_transceive(handle, tx_buf, tx_len, rx_buf, &rxl, 0x32, 0);
 	*rx_len = rxl;
 	if (ret < 0)
 		return ret;
@@ -1415,11 +1415,11 @@ struct rfid_asic rc632 = {
 			.power_down = &rc632_power_down,
 			.turn_on_rf = &rc632_turn_on_rf,
 			.turn_off_rf = &rc632_turn_off_rf,
-			.transcieve = &rc632_iso14443ab_transcieve,
+			.transceive = &rc632_iso14443ab_transceive,
 			.iso14443a = {
 				.init = &rc632_iso14443a_init,
-				.transcieve_sf = &rc632_iso14443a_transcieve_sf,
-				.transcieve_acf = &rc632_iso14443a_transcieve_acf,
+				.transceive_sf = &rc632_iso14443a_transceive_sf,
+				.transceive_acf = &rc632_iso14443a_transceive_acf,
 				.set_speed = &rc632_iso14443a_set_speed,
 			},
 			.iso14443b = {

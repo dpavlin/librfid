@@ -10,7 +10,7 @@ enum tcl_transport_rate {
 	TCL_RATE_848	= 0x08,
 };
 
-enum tcl_transport_transcieve_flags {
+enum tcl_transport_transceive_flags {
 	TCL_TRANSP_F_TX_CRC	= 0x01,	/* transport adds TX CRC */
 	TCL_TRANSP_F_RX_CRC	= 0x02, 
 };

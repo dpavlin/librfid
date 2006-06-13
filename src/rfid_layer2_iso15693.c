@@ -29,36 +29,36 @@
 #include <librfid/rfid_layer2_iso15693.h>
 
 #if 0
-/* Transcieve a 7-bit short frame */
+/* Transceive a 7-bit short frame */
 static int
-iso14443a_transcieve_sf(struct rfid_layer2_handle *handle,
+iso14443a_transceive_sf(struct rfid_layer2_handle *handle,
 			 unsigned char cmd,
 			 struct iso14443a_atqa *atqa)
 {
 	struct rfid_reader *rdr = handle->rh->reader;
 
-	return rdr->iso14443a.transcieve_sf(handle->rh, cmd, atqa);
+	return rdr->iso14443a.transceive_sf(handle->rh, cmd, atqa);
 }
 
 /* Transmit an anticollission bit frame */
 static int
-iso14443a_transcieve_acf(struct rfid_layer2_handle *handle,
+iso14443a_transceive_acf(struct rfid_layer2_handle *handle,
 			 struct iso14443a_anticol_cmd *acf,
 			 unsigned int *bit_of_col)
 {
 	struct rfid_reader *rdr = handle->rh->reader;
 
-	return rdr->iso14443a.transcieve_acf(handle->rh, acf, bit_of_col);
+	return rdr->iso14443a.transceive_acf(handle->rh, acf, bit_of_col);
 }
 
 /* Transmit a regular frame */
 static int 
-iso14443a_transcieve(struct rfid_layer2_handle *handle,
+iso14443a_transceive(struct rfid_layer2_handle *handle,
 			const unsigned char *tx_buf, unsigned int tx_len,
 			unsigned char *rx_buf, unsigned int *rx_len,
 			u_int64_t, unsigned int flags)
 {
-	return handle->rh->reader->transcieve(handle->rh, tx_buf, tx_len, 
+	return handle->rh->reader->transceive(handle->rh, tx_buf, tx_len, 
 						rx_buf, rx_len, timeout, flags);
 }
 
@@ -111,16 +111,16 @@ iso14443a_anticol(struct rfid_layer2_handle *handle)
 
 	if (first == 0) {
 	DEBUGP("Sending REQA\n");
-	ret = iso14443a_transcieve_sf(handle, ISO14443A_SF_CMD_REQA, &atqa);
+	ret = iso14443a_transceive_sf(handle, ISO14443A_SF_CMD_REQA, &atqa);
 	first = 1;
 	} else {
 	DEBUGP("Sending WUPA\n");
-	ret = iso14443a_transcieve_sf(handle, ISO14443A_SF_CMD_WUPA, &atqa);
+	ret = iso14443a_transceive_sf(handle, ISO14443A_SF_CMD_WUPA, &atqa);
 	}
 
 	if (ret < 0) {
 		handle->priv.iso14443a.state = ISO14443A_STATE_REQA_SENT;
-		DEBUGP("error during transcieve_sf: %d\n", ret);
+		DEBUGP("error during transceive_sf: %d\n", ret);
 		return ret;
 	}
 	handle->priv.iso14443a.state = ISO14443A_STATE_ATQA_RCVD;
@@ -148,7 +148,7 @@ iso14443a_anticol(struct rfid_layer2_handle *handle)
 cascade:
 	iso14443a_code_nvb_bits(&acf.nvb, 16);
 
-	ret = iso14443a_transcieve_acf(handle, &acf, &bit_of_col);
+	ret = iso14443a_transceive_acf(handle, &acf, &bit_of_col);
 	if (ret < 0)
 		return ret;
 	DEBUGP("bit_of_col = %u\n", bit_of_col);
@@ -156,14 +156,14 @@ cascade:
 	while (bit_of_col != ISO14443A_BITOFCOL_NONE) {
 		set_bit_in_field(&acf.uid_bits[0], bit_of_col-16);
 		iso14443a_code_nvb_bits(&acf.nvb, bit_of_col);
-		ret = iso14443a_transcieve_acf(handle, &acf, &bit_of_col);
+		ret = iso14443a_transceive_acf(handle, &acf, &bit_of_col);
 		DEBUGP("bit_of_col = %u\n", bit_of_col);
 		if (ret < 0)
 			return ret;
 	}
 
 	iso14443a_code_nvb_bits(&acf.nvb, 7*8);
-	ret = iso14443a_transcieve(handle, (unsigned char *)&acf, 7, 
+	ret = iso14443a_transceive(handle, (unsigned char *)&acf, 7, 
 				   (unsigned char *) &sak, &rx_len,
 				   TIMEOUT, 0);
 	if (ret < 0)
@@ -249,7 +249,7 @@ iso14443a_hlta(struct rfid_layer2_handle *handle)
 
 	return 0;
 
-	ret = iso14443a_transcieve(handle, tx_buf, sizeof(tx_buf),
+	ret = iso14443a_transceive(handle, tx_buf, sizeof(tx_buf),
 				   rx_buf, &rx_len, 1000 /* 1ms */, 0);
 	if (ret < 0) {
 		/* "error" case: we don't get somethng back from the card */
@@ -294,7 +294,7 @@ struct rfid_layer2 rfid_layer2_iso15693 = {
 	.fn	= {
 		.init 		= &iso15693_init,
 		//.open 		= &iso15693_anticol,
-		//.transcieve 	= &iso15693_transcieve,
+		//.transceive 	= &iso15693_transceive,
 		//.close 		= &iso14443a_hlta,
 		.fini 		= &iso15693_fini,
 	},

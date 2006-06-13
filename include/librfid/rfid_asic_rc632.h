@@ -35,7 +35,7 @@ struct rfid_asic_rc632 {
 		int (*power_down)(struct rfid_asic_handle *h);
 		int (*turn_on_rf)(struct rfid_asic_handle *h);
 		int (*turn_off_rf)(struct rfid_asic_handle *h);
-		int (*transcieve)(struct rfid_asic_handle *h,
+		int (*transceive)(struct rfid_asic_handle *h,
 				  enum rfid_frametype,
 				  const u_int32_t *tx_buf,
 				  unsigned int tx_len,
@@ -45,10 +45,10 @@ struct rfid_asic_rc632 {
 				  unsigned int flags);
 		struct {
 			int (*init)(struct rfid_asic_handle *h);
-			int (*transcieve_sf)(struct rfid_asic_handle *h,
+			int (*transceive_sf)(struct rfid_asic_handle *h,
 					     u_int32_t cmd,
 					     struct iso14443a_atqa *atqa);
-			int (*transcieve_acf)(struct rfid_asic_handle *h,
+			int (*transceive_acf)(struct rfid_asic_handle *h,
 					      struct iso14443a_anticol_cmd *cmd,
 					      unsigned int *bit_of_col);
 			int (*set_speed)(struct rfid_asic_handle *h,
@@ -132,7 +132,7 @@ rc632_transmit(struct rfid_asic_handle *handle,
 		u_int64_t timeout);
 
 int
-rc632_transcieve(struct rfid_asic_handle *handle,
+rc632_transceive(struct rfid_asic_handle *handle,
 		 const u_int32_t *tx_buf,
 		 u_int32_t tx_len,
 		 u_int32_t *rx_buf,
