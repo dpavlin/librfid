@@ -41,9 +41,9 @@
 /* FIXME */
 #include "rc632.h"
 
-//#define SENDBUF_LEN	40
-#define SENDBUF_LEN	100
-#define RECVBUF_LEN	40
+#define SENDBUF_LEN	256+7+10 /* 256bytes max FSD/FSC, plus 7 bytes header,
+				    plus 10 bytes reserve */
+#define RECVBUF_LEN	SENDBUF_LEN
 
 static
 int Write1ByteToReg(struct rfid_asic_transport_handle *rath,
