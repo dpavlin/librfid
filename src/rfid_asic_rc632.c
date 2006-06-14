@@ -482,7 +482,9 @@ rc632_open(struct rfid_asic_transport_handle *th)
 	h->asic = &rc632;
 	h->rath = th;
 	h->fc = h->asic->fc;
-	h->mtu = h->mru = 40; /* FIXME */
+	/* FIXME: this is only cm5121 specific, since the latency
+	 * down to the RC632 FIFO is too long to refill during TX/RX */
+	h->mtu = h->mru = 64;
 
 	if (rc632_init(h) < 0) {
 		free(h);
