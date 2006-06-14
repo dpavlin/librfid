@@ -191,7 +191,7 @@ rc632_wait_idle(struct rfid_asic_handle *handle, u_int64_t timeout)
 		}
 
 		/* Abort after some timeout */
-		if (cycles > timeout*10/USLEEP_PER_CYCLE) {
+		if (cycles > timeout*100/USLEEP_PER_CYCLE) {
 			return -ETIMEDOUT;
 		}
 
@@ -208,15 +208,36 @@ rc632_transmit(struct rfid_asic_handle *handle,
 		u_int8_t len,
 		u_int64_t timeout)
 {
-	int ret;
+	int ret, cur_len;
+	const u_int8_t *cur_buf = buf;
 
-	ret = rc632_fifo_write(handle, len, buf, 0x03);
-	if (ret < 0)
-		return ret;
+	if (len > 64)
+		cur_len = 64;
+	else
+		cur_len = len;
+	
+	do {
+		ret = rc632_fifo_write(handle, cur_len, cur_buf, 0x03);
+		if (ret < 0)
+			return ret;
 
-	ret = rc632_reg_write(handle, RC632_REG_COMMAND, RC632_CMD_TRANSMIT);
-	if (ret < 0)
-		return ret;
+		if (cur_buf == buf)  {
+			/* only start transmit first time */
+			ret = rc632_reg_write(handle, RC632_REG_COMMAND,
+					      RC632_CMD_TRANSMIT);
+			if (ret < 0)
+				return ret;
+		}
+
+		cur_buf += cur_len;
+		if (cur_buf < buf + len) {
+			cur_len = buf - cur_buf;
+			if (cur_len > 64)
+				cur_len = 64;
+		} else
+			cur_len = 0;
+
+	} while (cur_len);
 
 	return rc632_wait_idle(handle, timeout);
 }
@@ -237,15 +258,39 @@ rc632_transceive(struct rfid_asic_handle *handle,
 		 unsigned int timer,
 		 unsigned int toggle)
 {
-	int ret;
+	int ret, cur_tx_len;
+	const u_int8_t *cur_tx_buf = tx_buf;
 
-	ret = rc632_fifo_write(handle, tx_len, tx_buf, 0x03);
-	if (ret < 0)
-		return ret;
+	if (tx_len > 64)
+		cur_tx_len = 64;
+	else
+		cur_tx_len = tx_len;
 
-	ret = rc632_reg_write(handle, RC632_REG_COMMAND, RC632_CMD_TRANSCEIVE);
-	if (ret < 0)
-		return ret;
+	do {	
+		ret = rc632_fifo_write(handle, tx_len, tx_buf, 0x03);
+		if (ret < 0)
+			return ret;
+
+		if (cur_tx_buf == tx_buf) {
+			ret = rc632_reg_write(handle, RC632_REG_COMMAND,
+					      RC632_CMD_TRANSCEIVE);
+			if (ret < 0)
+				return ret;
+		}
+
+		cur_tx_buf += cur_tx_len;
+		if (cur_tx_buf < tx_buf + tx_len) {
+			u_int8_t fifo_fill;
+			ret = rc632_reg_read(handle, RC632_REG_FIFO_LENGTH,
+					     &fifo_fill);
+			if (ret < 0)
+				return ret;
+			cur_tx_len = 64 - fifo_fill;
+			printf("refilling tx fifo with %u bytes\n", cur_tx_len);
+		} else
+			cur_tx_len = 0;
+
+	} while (cur_tx_len);
 
 	if (toggle == 1)
 		tcl_toggle_pcb(handle);
