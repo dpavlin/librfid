@@ -267,7 +267,7 @@ rc632_transceive(struct rfid_asic_handle *handle,
 		cur_tx_len = tx_len;
 
 	do {	
-		ret = rc632_fifo_write(handle, tx_len, tx_buf, 0x03);
+		ret = rc632_fifo_write(handle, cur_tx_len, cur_tx_buf, 0x03);
 		if (ret < 0)
 			return ret;
 
@@ -285,6 +285,7 @@ rc632_transceive(struct rfid_asic_handle *handle,
 					     &fifo_fill);
 			if (ret < 0)
 				return ret;
+
 			cur_tx_len = 64 - fifo_fill;
 			printf("refilling tx fifo with %u bytes\n", cur_tx_len);
 		} else
