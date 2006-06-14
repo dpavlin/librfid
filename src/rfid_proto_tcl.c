@@ -517,11 +517,6 @@ tcl_transceive(struct rfid_protocol_handle *h,
 	unsigned char ack[10];
 	unsigned int ack_len;
 
-	if (tx_len > max_net_tx_framesize(th)) {
-		/* slow path: we need to use chaining */
-		return -1;
-	}
-
 	tx_buf = malloc(tcl_prlg_len(th) + tx_len);
 	if (!tx_buf) {
 		ret = -ENOMEM;
@@ -545,6 +540,12 @@ tcl_transceive(struct rfid_protocol_handle *h,
 	_timeout = th->fwt;
 	_rx_len = *rx_len;
 	*rx_len = 0;
+
+
+	if (_tx_len > max_net_tx_framesize(th)+prlg_len) {
+		/* slow path: we need to use chaining */
+		_tx_len = max_net_tx_framesize(th)+prlg_len;
+	}
 
 do_tx:
 	ret = rfid_layer2_transceive(h->l2h, l2_to_frame(h->l2h->l2->id),
