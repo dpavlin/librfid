@@ -127,6 +127,8 @@ tcl_parse_ats(struct rfid_protocol_handle *h,
 	cur = &ats[2];
 
 	iso14443_fsdi_to_fsd(&h->priv.tcl.fsc, t0 & 0x0f);
+	if (h->priv.tcl.fsc > h->l2h->rh->ah->mtu)
+		h->priv.tcl.fsc = h->l2h->rh->ah->mtu;
 
 	if (t0 & (1 << 4)) {
 		/* TA is transmitted */
