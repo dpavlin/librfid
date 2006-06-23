@@ -345,9 +345,8 @@ tcl_build_prologue2(struct tcl_handle *th,
 		prlg[*prlg_len] = th->cid & 0x0f;
 	}
 
-	/* nad only for I-block (0xc0 == 00) */
-	if ((th->flags & TCL_HANDLE_F_NAD_USED) &&
-	    ((pcb & 0xc0) == 0x00)) {
+	/* nad only for I-block */
+	if ((th->flags & TCL_HANDLE_F_NAD_USED) && is_i_block(pcb)) {
 		/* ISO 14443-4:2000(E) Section 7.1.1.3 */
 		/* FIXME: in case of chaining only for first frame */
 		*prlg |= TCL_PCB_NAD_FOLLOWING;
