@@ -11,7 +11,7 @@ enum rfid_frametype {
 	RFID_MIFARE_FRAME,
 };
 
-#if 0
+#if 1
 #define DEBUGP(x, args ...) fprintf(stderr, "%s(%d):%s: " x, __FILE__, __LINE__, __FUNCTION__, ## args)
 #define DEBUGPC(x, args ...) fprintf(stderr, x, ## args)
 #else

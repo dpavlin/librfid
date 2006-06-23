@@ -38,6 +38,10 @@
 
 #define RFID_MAX_FRAMELEN	256
 
+#define is_s_block(x) ((x & 0xc0) == 0xc0)
+#define is_r_block(x) ((x & 0xc0) == 0x80)
+#define is_i_block(x) ((x & 0xc0) == 0x00)
+
 static enum rfid_frametype l2_to_frame(unsigned int layer2)
 {
 	switch (layer2) {
@@ -319,13 +323,15 @@ tcl_build_prologue2(struct tcl_handle *th,
 
 	*prlg = pcb;
 
-	if (th->toggle) {
-		/* we've sent a toggle bit last time */
-		th->toggle = 0;
-	} else {
-		/* we've not sent a toggle last time: send one */
-		th->toggle = 1;
-		*prlg |= 0x01;
+	if (!is_s_block(pcb)) {
+		if (th->toggle) {
+			/* we've sent a toggle bit last time */
+			th->toggle = 0;
+		} else {
+			/* we've not sent a toggle last time: send one */
+			th->toggle = 1;
+			*prlg |= 0x01;
+		}
 	}
 
 	if (th->flags & TCL_HANDLE_F_CID_USED) {
@@ -496,10 +502,6 @@ tcl_deselect(struct rfid_protocol_handle *h)
 	return 0;
 }
 
-#define is_s_block(x) ((x & 0xc0) == 0xc0)
-#define is_r_block(x) ((x & 0xc0) == 0x80)
-#define is_i_block(x) ((x & 0xc0) == 0x00)
-
 struct fr_buff {
 	unsigned int frame_len;		/* length of frame */
 	unsigned int hdr_len;		/* length of header within frame */
@@ -634,13 +636,13 @@ do_tx:
 	if (ret < 0)
 		goto out;
 
-	if ((xcvb.rx.data[0] & 0x01) != h->priv.tcl.toggle) {
-		DEBUGP("response with wrong toggle bit\n");
-		goto out;
-	}
-
 	if (is_r_block(xcvb.rx.data[0])) {
 		DEBUGP("R-Block\n");
+
+		if ((xcvb.rx.data[0] & 0x01) != h->priv.tcl.toggle) {
+			DEBUGP("response with wrong toggle bit\n");
+			goto out;
+		}
 
 		/* Handle ACK frame in case of chaining */
 		if (!check_cid(th, &xcvb))
@@ -687,6 +689,12 @@ do_tx:
 		/* we're actually receiving payload data */
 
 		DEBUGP("I-Block: ");
+
+		if ((xcvb.rx.data[0] & 0x01) != h->priv.tcl.toggle) {
+			DEBUGP("response with wrong toggle bit\n");
+			goto out;
+		}
+
 		xcvb.rx.hdr_len = 1;
 
 		if (!check_cid(th, &xcvb))

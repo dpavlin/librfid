@@ -118,7 +118,7 @@ int pegoda_transceive(struct pegoda_handle *ph,
 
 	memcpy(rx, rxbuf+sizeof(*rxhdr), rc-sizeof(*rxhdr));
 
-	return 0;
+	return rxhdr->cmd;
 }
 
 struct pegoda_handle *pegoda_open(void)
@@ -253,6 +253,7 @@ int main(int argc, char **argv)
 	unsigned char rbuf[256];
 	unsigned int rlen = sizeof(rbuf);
 	struct pegoda_handle *ph;
+	int i;
 
 	ph = pegoda_open();
 	if (!ph)
@@ -284,9 +285,14 @@ int main(int argc, char **argv)
 	pegoda_transceive(ph, PEGODA_CMD_PICC_CASC_SELECT, 
 			  buf, 5, rbuf, &rlen);
 
-	pegoda_auth_key(ph, 0, "\xff\xff\xff\xff\xff\xff");
-	pegoda_read16(ph, 0, rbuf);
-	printf("read16 = %s\n", hexdump(rbuf, 16));
+	for (i = 0; i < 16; i++) {
+		int j;
+		pegoda_auth_key(ph, i, "\xff\xff\xff\xff\xff\xff");
+		for (j = 0; j < 4; j++) {
+			pegoda_read16(ph, (i*4)+j, rbuf);
+			printf("read16[%u:%u] = %s\n", i,j,hexdump(rbuf, 16));
+		}
+	}
 	
 	exit(0);
 }
