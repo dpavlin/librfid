@@ -150,10 +150,14 @@ tcl_parse_ats(struct rfid_protocol_handle *h,
 
 	if (t0 & (1 << 6)) {
 		/* TC is transmitted */
-		if (*cur & 0x01)
+		if (*cur & 0x01) {
 			h->priv.tcl.flags |= TCL_HANDLE_F_NAD_SUPPORTED;
-		if (*cur & 0x02)
+			DEBUGP("This PICC supports NAD\n");
+		}
+		if (*cur & 0x02) {
 			h->priv.tcl.flags |= TCL_HANDLE_F_CID_SUPPORTED;
+			DEBUGP("This PICC supports CID\n");
+		}
 		cur++;
 	}
 
