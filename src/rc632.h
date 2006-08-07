@@ -83,6 +83,16 @@ enum rc632_reg_command {
 	RC632_CMD_STARTUP		= 0x3f,
 };
 
+enum rc632_reg_interrupt {
+	RC632_INT_LOALERT		= 0x01,
+	RC632_INT_HIALERT		= 0x02,
+	RC632_INT_IDLE			= 0x04,
+	RC632_INT_RX			= 0x08,
+	RC632_INT_TX			= 0x10,
+	RC632_INT_TIMER			= 0x20,
+	RC632_INT_SET			= 0x80,
+};
+
 enum rc632_reg_control {
 	RC632_CONTROL_CRYPTO1_ON	= 0x08,
 	RC632_CONTROL_POWERDOWN		= 0x10,
