@@ -33,7 +33,7 @@ struct iso14443a_atqa {
 		 uid_size:2;
 	u_int8_t proprietary:4,
 		 rfu2:4;
-};
+} __attribute__((packed));
 
 #define ISO14443A_HLTA		0x5000
 
@@ -42,7 +42,7 @@ struct iso14443a_anticol_cmd {
 	unsigned char		sel_code;
 	unsigned char		nvb;
 	unsigned char		uid_bits[5];
-};
+} __attribute__((packed));
 
 enum iso14443a_anticol_sel_code {
 	ISO14443A_AC_SEL_CODE_CL1	= 0x93,
