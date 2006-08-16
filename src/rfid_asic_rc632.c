@@ -362,6 +362,7 @@ rc632_transceive(struct rfid_asic_handle *handle,
 		 unsigned int toggle)
 {
 	int ret, cur_tx_len;
+	u_int8_t rx_avail;
 	const u_int8_t *cur_tx_buf = tx_buf;
 
 	DEBUGP("timer = %u\n", timer);
@@ -414,11 +415,16 @@ rc632_transceive(struct rfid_asic_handle *handle,
 	if (ret < 0)
 		return ret;
 
-	ret = rc632_reg_read(handle, RC632_REG_FIFO_LENGTH, rx_len);
+	ret = rc632_reg_read(handle, RC632_REG_FIFO_LENGTH, &rx_avail);
 	if (ret < 0)
 		return ret;
 
-	if (*rx_len == 0) {
+	if (rx_avail > *rx_len)
+		printf("rx_avail(%d) > rx_len(%d), JFYI\n", rx_avail, *rx_len);
+	else if (*rx_len > rx_avail)
+		*rx_len = rx_avail;
+
+	if (rx_avail == 0) {
 		u_int8_t tmp;
 
 		DEBUGP("rx_len == 0\n");
@@ -430,6 +436,7 @@ rc632_transceive(struct rfid_asic_handle *handle,
 	}
 
 	return rc632_fifo_read(handle, *rx_len, rx_buf);
+	/* FIXME: discard addidional bytes in FIFO */
 }
 
 static int
@@ -807,8 +814,13 @@ rc632_iso14443ab_transceive(struct rfid_asic_handle *handle,
 			   u_int64_t timeout, unsigned int flags)
 {
 	int ret;
-	u_int8_t rxl = *rx_len & 0xff;
+	u_int8_t rxl;
 	u_int8_t channel_red;
+
+	if (*rx_len > 0xff)
+		rxl = 0xff;
+	else
+		rxl = *rx_len;
 
 	memset(rx_buf, 0, *rx_len);
 
