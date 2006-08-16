@@ -75,6 +75,14 @@ enum iso14443a_state {
 	ISO14443A_STATE_SELECTED,
 };
 
+/* Section 6.1.2 values in usec, rounded up to next usec */
+#define ISO14443A_FDT_ANTICOL_LAST1	92	/* 1236 / fc = 91.15 usec */
+#define ISO14443A_FDT_ANTICOL_LAST0	87	/* 1172 / fc = 86.43 usec */
+
+#define ISO14443_CARRIER_FREQ	13560000
+#define ISO14443A_FDT_OTHER_LAST1(n)	(((n*128+84)*1000000)/ISO14443_CARRIER_FREQ)
+
+
 #include <librfid/rfid_layer2.h>
 struct rfid_layer2 rfid_layer2_iso14443a;
 
