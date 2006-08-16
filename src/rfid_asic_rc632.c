@@ -164,7 +164,110 @@ rc632_power_down(struct rfid_asic_handle *handle)
 			      RC632_CONTROL_POWERDOWN);
 }
 
-/* Stupid RC623 implementations don't evaluate interrupts but poll the
+/* calculate best 8bit prescaler and divisor for given usec timeout */
+static int best_prescaler(u_int64_t timeout, u_int8_t *prescaler,
+			  u_int8_t *divisor)
+{
+	u_int8_t best_prescaler, best_divisor, i;
+	int64_t smallest_diff;
+
+	smallest_diff = 0x7fffffffffffffff;
+	best_prescaler = 0;
+
+	for (i = 0; i < 21; i++) {
+		u_int64_t clk, tmp_div, res;
+		int64_t diff;
+		clk = 13560000 / (1 << i);
+		tmp_div = (clk * timeout) / 1000000;
+		tmp_div++;
+
+		if ((tmp_div > 0xff) || (tmp_div > clk))
+			continue;
+
+		res = 1000000 / (clk / tmp_div);
+		diff = res - timeout;
+
+		if (diff < 0)
+			continue;
+
+		if (diff < smallest_diff) {
+			best_prescaler = i;
+			best_divisor = tmp_div;
+			smallest_diff = diff;
+		}
+	}
+
+	*prescaler = best_prescaler;
+	*divisor = best_divisor;
+
+	DEBUGP("timeout %u usec, prescaler = %u, divisor = %u\n",
+		timeout, best_prescaler, best_divisor);
+
+	return 0;
+}
+
+static int
+rc632_timer_set(struct rfid_asic_handle *handle,
+		u_int64_t timeout)
+{
+	int ret;
+	u_int8_t prescaler, divisor;
+
+	ret = best_prescaler(timeout, &prescaler, &divisor);
+
+	ret = rc632_reg_write(handle, RC632_REG_TIMER_CLOCK,
+			      prescaler & 0x1f);
+	if (ret < 0)
+		return ret;
+
+	ret = rc632_reg_write(handle, RC632_REG_TIMER_CONTROL,
+			      RC632_TMR_START_TX_END|RC632_TMR_STOP_RX_BEGIN);
+
+	/* clear timer irq bit */
+	ret = rc632_set_bits(handle, RC632_REG_INTERRUPT_RQ, RC632_IRQ_TIMER);
+
+	ret |= rc632_reg_write(handle, RC632_REG_TIMER_RELOAD, divisor);
+
+	return ret;
+}
+
+/* Wait until RC632 is idle or TIMER IRQ has happened */
+static rc632_wait_idle_timer(struct rfid_asic_handle *handle)
+{
+	int ret;
+	u_int8_t irq, cmd;
+
+	while (1) {
+		rc632_reg_read(handle, RC632_REG_PRIMARY_STATUS, &irq);
+		rc632_reg_read(handle, RC632_REG_ERROR_FLAG, &irq);
+		ret = rc632_reg_read(handle, RC632_REG_INTERRUPT_RQ, &irq);
+		if (ret < 0)
+			return ret;
+
+		/* FIXME: currently we're lazy:  If we actually received
+		 * something even after the timer expired, we accept it */
+		if (irq & RC632_IRQ_TIMER && !(irq & RC632_IRQ_RX)) {
+			u_int8_t foo;
+			rc632_reg_read(handle, RC632_REG_PRIMARY_STATUS, &foo);
+			if (foo & 0x04)
+				rc632_reg_read(handle, RC632_REG_ERROR_FLAG, &foo);
+
+			return -110;
+		}
+
+		ret = rc632_reg_read(handle, RC632_REG_COMMAND, &cmd);
+		if (ret < 0)
+			return ret;
+
+		if (cmd == 0)
+			return 0;
+
+		/* poll every millisecond */
+		usleep(1000);
+	}
+}
+
+/* Stupid RC632 implementations don't evaluate interrupts but poll the
  * command register for "status idle" */
 static int
 rc632_wait_idle(struct rfid_asic_handle *handle, u_int64_t timeout)
@@ -255,16 +358,26 @@ rc632_transceive(struct rfid_asic_handle *handle,
 		 u_int8_t tx_len,
 		 u_int8_t *rx_buf,
 		 u_int8_t *rx_len,
-		 unsigned int timer,
+		 u_int64_t timer,
 		 unsigned int toggle)
 {
 	int ret, cur_tx_len;
 	const u_int8_t *cur_tx_buf = tx_buf;
 
+	DEBUGP("timer = %u\n", timer);
+
 	if (tx_len > 64)
 		cur_tx_len = 64;
 	else
 		cur_tx_len = tx_len;
+
+	ret = rc632_timer_set(handle, timer*10);
+	if (ret < 0)
+		return ret;
+	
+	ret = rc632_reg_write(handle, RC632_REG_COMMAND, 0x00);
+	/* clear all interrupts */
+	ret = rc632_reg_write(handle, RC632_REG_INTERRUPT_RQ, 0x7f);
 
 	do {	
 		ret = rc632_fifo_write(handle, cur_tx_len, cur_tx_buf, 0x03);
@@ -296,6 +409,7 @@ rc632_transceive(struct rfid_asic_handle *handle,
 	if (toggle == 1)
 		tcl_toggle_pcb(handle);
 
+	//ret = rc632_wait_idle_timer(handle);
 	ret = rc632_wait_idle(handle, timer);
 	if (ret < 0)
 		return ret;
@@ -664,7 +778,8 @@ rc632_iso14443a_transceive_sf(struct rfid_asic_handle *handle,
 		return ret;
 
 	ret = rc632_transceive(handle, tx_buf, sizeof(tx_buf),
-				(u_int8_t *)atqa, &rx_len, 0x32, 0);
+				(u_int8_t *)atqa, &rx_len,
+				ISO14443A_FDT_ANTICOL_LAST1, 0);
 	if (ret < 0) {
 		DEBUGP("error during rc632_transceive()\n");
 		return ret;
@@ -721,7 +836,7 @@ rc632_iso14443ab_transceive(struct rfid_asic_handle *handle,
 	if (ret < 0)
 		return ret;
 
-	ret = rc632_transceive(handle, tx_buf, tx_len, rx_buf, &rxl, 0x32, 0);
+	ret = rc632_transceive(handle, tx_buf, tx_len, rx_buf, &rxl, timeout, 0);
 	*rx_len = rxl;
 	if (ret < 0)
 		return ret;
