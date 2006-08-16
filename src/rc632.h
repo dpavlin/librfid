@@ -218,4 +218,20 @@ enum rc632_reg_channel_redundancy {
 	RC632_CR_CRC3309		= 0x20,
 };
 
+enum rc632_reg_timer_control {
+	RC632_TMR_START_TX_BEGIN	= 0x01,
+	RC632_TMR_START_TX_END		= 0x02,
+	RC632_TMR_STOP_RX_BEGIN		= 0x04,
+	RC632_TMR_STOP_RX_END		= 0x08,
+};
+ 
+enum rc632_reg_timer_irq {
+	RC632_IRQ_LO_ALERT		= 0x01,
+	RC632_IRQ_HI_ALERT		= 0x02,
+	RC632_IRQ_IDLE			= 0x04,
+	RC632_IRQ_RX			= 0x08,
+	RC632_IRQ_TX			= 0x10,
+	RC632_IRQ_TIMER			= 0x20,
 
+	RC632_IRQ_SET			= 0x80,
+};
