@@ -259,7 +259,9 @@ tcl_do_pps(struct rfid_protocol_handle *h)
 {
 	int ret;
 	unsigned char ppss[3];
-	unsigned char pps_response[1];
+	/* FIXME: this stinks like hell. IF we reduce pps_response size to one,
+	   we'll get stack corruption! */
+	unsigned char pps_response[10];
 	unsigned int rx_len = 1;
 	unsigned char Dr, Ds, DrI, DsI;
 	unsigned int speed;
