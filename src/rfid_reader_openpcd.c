@@ -110,13 +110,7 @@ static int openpcd_reg_write(struct rfid_asic_transport_handle *rath,
 
 	ret = openpcd_send_command(OPENPCD_CMD_WRITE_REG, reg, value, 0, NULL);
 	if (ret < 0)
-		DEBUGPC("ERROR\n");
-	else
-		DEBUGPC("OK\n");
-
-	ret = openpcd_recv_reply();
-	if (ret < 0)
-		DEBUGPC("ERROR\n");
+		DEBUGPC("ERROR sending command\n");
 	else
 		DEBUGPC("OK\n");
 
@@ -133,13 +127,13 @@ static int openpcd_reg_read(struct rfid_asic_transport_handle *rath,
 
 	ret = openpcd_send_command(OPENPCD_CMD_READ_REG, reg, 0, 0, NULL);
 	if (ret < 0) {
-		DEBUGPC("ERROR\n");
+		DEBUGPC("ERROR sending command\n");
 		return ret;
 	}
 
 	ret = openpcd_recv_reply();
 	if (ret < 0) {
-		DEBUGPC("ERROR\n");
+		DEBUGPC("ERROR receiving reply\n");
 		return ret;
 	}
 
@@ -159,17 +153,19 @@ static int openpcd_fifo_read(struct rfid_asic_transport_handle *rath,
 
 	ret = openpcd_send_command(OPENPCD_CMD_READ_FIFO, 0x00, num_bytes, 0, NULL);
 	if (ret < 0) {
-		DEBUGPC("ERROR\n");
+		DEBUGPC("ERROR sending command\n");
 		return ret;
 	}
 
 	ret = openpcd_recv_reply();
 	if (ret < 0) {
-		DEBUGPC("ERROR\n");
+		DEBUGPC("ERROR receiving reply\n");
 		return ret;
 	}
 
 	memcpy(buf, rcv_hdr->data, rcv_hdr->len);
+	DEBUGPC("len=%u val=%s: OK\n", rcv_hdr->len,
+		rfid_hexdump(rcv_hdr->data, rcv_hdr->len));
 
 	return ret;
 }
@@ -181,6 +177,7 @@ static int openpcd_fifo_write(struct rfid_asic_transport_handle *rath,
 {
 	int ret;
 
+	DEBUGP("len=%u, data=%s\n", len, rfid_hexdump(bytes, len));
 	ret = openpcd_send_command(OPENPCD_CMD_WRITE_FIFO, 0, 0, len, bytes);
 
 	return ret;
@@ -352,11 +349,11 @@ openpcd_close(struct rfid_reader_handle *rh)
 {
 	struct rfid_asic_transport_handle *rath = rh->ah->rath;
 
-	usb_close(hdl);
-
 	rc632_close(rh->ah);
 	free(rath);
 	free(rh);
+
+	usb_close(hdl);
 }
 
 struct rfid_reader rfid_reader_openpcd = {
