@@ -1,4 +1,4 @@
-/* OpenPC specific RC632 transport layer 
+/* OpenPCD specific RC632 transport layer 
  *
  * (C) 2006 by Harald Welte <laforge@gnumonks.org>
  *
@@ -24,6 +24,8 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+//#define DEBUG
+
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
@@ -41,7 +43,7 @@
 #include "rc632.h"
 
 
-#define SENDBUF_LEN	(256+7+10) /* 256bytes max FSD/FSC, plus 7 bytes header,
+#define SENDBUF_LEN	(256+4+10) /* 256bytes max FSD/FSC, plus 4 bytes header,
 				    plus 10 bytes reserve */
 #define RECVBUF_LEN	SENDBUF_LEN
 
@@ -63,7 +65,7 @@ static int openpcd_send_command(u_int8_t cmd, u_int8_t reg, u_int8_t val,
 	snd_hdr->cmd = cmd;
 	snd_hdr->reg = reg;
 	snd_hdr->val = val;
-	snd_hdr->len = len;
+	snd_hdr->flags = OPENPCD_FLAG_RESPOND;
 	if (data && len)
 		memcpy(snd_hdr->data, data, len);
 
@@ -80,6 +82,20 @@ static int openpcd_recv_reply(void)
 
 	return ret;
 }
+
+static int openpcd_xcv(u_int8_t cmd, u_int8_t reg, u_int8_t val,
+			u_int16_t len, const unsigned char *data)
+{
+	int ret;
+	
+	ret = openpcd_send_command(cmd, reg, val, len, data);
+	if (ret < 0)
+		return ret;
+	if (ret < sizeof(sizeof(struct openpcd_hdr)))
+		return -EINVAL;
+
+	return openpcd_recv_reply();
+}
 	
 static struct usb_device *find_opcd_device(void)
 {
@@ -93,7 +109,6 @@ static struct usb_device *find_opcd_device(void)
 			    && dev->descriptor.iManufacturer == 0
 			    && dev->descriptor.iProduct == 0
 			    && dev->descriptor.bNumConfigurations == 1
-			    && dev->config->bNumInterfaces == 1
 			    && dev->config->iConfiguration == 0)
 				return dev;
 		}
@@ -108,7 +123,7 @@ static int openpcd_reg_write(struct rfid_asic_transport_handle *rath,
 
 	DEBUGP("reg=0x%02x, val=%02x: ", reg, value);
 
-	ret = openpcd_send_command(OPENPCD_CMD_WRITE_REG, reg, value, 0, NULL);
+	ret = openpcd_xcv(OPENPCD_CMD_WRITE_REG, reg, value, 0, NULL);
 	if (ret < 0)
 		DEBUGPC("ERROR sending command\n");
 	else
@@ -125,15 +140,14 @@ static int openpcd_reg_read(struct rfid_asic_transport_handle *rath,
 
 	DEBUGP("reg=0x%02x, ", reg);
 
-	ret = openpcd_send_command(OPENPCD_CMD_READ_REG, reg, 0, 0, NULL);
+	ret = openpcd_xcv(OPENPCD_CMD_READ_REG, reg, 0, 0, NULL);
 	if (ret < 0) {
 		DEBUGPC("ERROR sending command\n");
 		return ret;
 	}
 
-	ret = openpcd_recv_reply();
-	if (ret < 0) {
-		DEBUGPC("ERROR receiving reply\n");
+	if (ret < sizeof(struct openpcd_hdr)) {
+		DEBUGPC("ERROR: short packet\n");
 		return ret;
 	}
 
@@ -151,21 +165,16 @@ static int openpcd_fifo_read(struct rfid_asic_transport_handle *rath,
 
 	DEBUGP(" ");
 
-	ret = openpcd_send_command(OPENPCD_CMD_READ_FIFO, 0x00, num_bytes, 0, NULL);
+	ret = openpcd_xcv(OPENPCD_CMD_READ_FIFO, 0x00, num_bytes, 0, NULL);
 	if (ret < 0) {
 		DEBUGPC("ERROR sending command\n");
 		return ret;
 	}
+	DEBUGPC("ret = %d\n", ret);
 
-	ret = openpcd_recv_reply();
-	if (ret < 0) {
-		DEBUGPC("ERROR receiving reply\n");
-		return ret;
-	}
-
-	memcpy(buf, rcv_hdr->data, rcv_hdr->len);
-	DEBUGPC("len=%u val=%s: OK\n", rcv_hdr->len,
-		rfid_hexdump(rcv_hdr->data, rcv_hdr->len));
+	memcpy(buf, rcv_hdr->data, ret - sizeof(struct openpcd_hdr));
+	DEBUGPC("len=%d val=%s: OK\n", ret - sizeof(struct openpcd_hdr),
+		rfid_hexdump(rcv_hdr->data, ret - sizeof(struct openpcd_hdr)));
 
 	return ret;
 }
@@ -178,7 +187,7 @@ static int openpcd_fifo_write(struct rfid_asic_transport_handle *rath,
 	int ret;
 
 	DEBUGP("len=%u, data=%s\n", len, rfid_hexdump(bytes, len));
-	ret = openpcd_send_command(OPENPCD_CMD_WRITE_FIFO, 0, 0, len, bytes);
+	ret = openpcd_xcv(OPENPCD_CMD_WRITE_FIFO, 0, 0, len, bytes);
 
 	return ret;
 }
@@ -304,14 +313,19 @@ openpcd_open(void *data)
 		return NULL;
 	
 	dev = find_opcd_device();
-	if (!dev)
+	if (!dev) {
+		DEBUGP("No matching USB device found\n");
 		return NULL;
+	}
 
 	hdl = usb_open(dev);
-	if (!hdl)
+	if (!hdl) {
+		DEBUGP("Can't open USB device\n");
 		return NULL;
+	}
 
 	if (usb_claim_interface(hdl, 0) < 0) {
+		DEBUGP("Can't claim interface\n");
 		usb_close(hdl);
 		return NULL;
 	}
@@ -378,5 +392,3 @@ struct rfid_reader rfid_reader_openpcd = {
 		.auth = &openpcd_mifare_auth,
 	},
 };
-
-
