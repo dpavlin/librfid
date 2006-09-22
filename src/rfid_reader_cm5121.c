@@ -45,6 +45,16 @@
 				    plus 10 bytes reserve */
 #define RECVBUF_LEN	SENDBUF_LEN
 
+//#define DEBUG_REGISTER
+
+#ifdef DEBUG_REGISTER
+#define DEBUGRC DEBUGPC
+#define DEBUGR DEBUGP
+#else
+#define DEBUGRC(x, args ...)	do {} while(0)
+#define DEBUGR(x, args ...)	do {} while(0)
+#endif
+
 static
 int Write1ByteToReg(struct rfid_asic_transport_handle *rath,
 		    unsigned char reg, unsigned char value)
@@ -62,15 +72,15 @@ int Write1ByteToReg(struct rfid_asic_transport_handle *rath,
 	sndbuf[6] = reg;
 	sndbuf[7] = value;
 
-	DEBUGP("reg=0x%02x, val=%02x: ", reg, value);
+	DEBUGR("reg=0x%02x, val=%02x: ", reg, value);
 
 	if (PC_to_RDR_Escape(rath->data, sndbuf, 8, rcvbuf, 
 			     &retlen) == 0) {
-		DEBUGPC("OK\n");
+		DEBUGRC("OK\n");
 		return 0;
 	}
 
-	DEBUGPC("ERROR\n");
+	DEBUGRC("ERROR\n");
 	return -1;
 }
 
@@ -93,12 +103,12 @@ static int Read1ByteFromReg(struct rfid_asic_transport_handle *rath,
 	if (PC_to_RDR_Escape(rath->data, sndbuf, 7, recvbuf, 
 			     &retlen) == 0) {
 		*value = recvbuf[1];
-		DEBUGP("reg=0x%02x, val=%02x: ", reg, *value);
-		DEBUGPC("OK\n");
+		DEBUGR("reg=0x%02x, val=%02x: ", reg, *value);
+		DEBUGRC("OK\n");
 		return 0;
 	}
 
-	DEBUGPC("ERROR\n");
+	DEBUGRC("ERROR\n");
 	return -1;
 }
 
@@ -118,15 +128,15 @@ static int ReadNBytesFromFIFO(struct rfid_asic_transport_handle *rath,
 	sndbuf[5] = 0x00;
 	sndbuf[6] = 0x02;
 
-	DEBUGP("num_bytes=%u: ", num_bytes);
+	DEBUGR("num_bytes=%u: ", num_bytes);
 	if (PC_to_RDR_Escape(rath->data, sndbuf, 7, recvbuf, &retlen) == 0) {
-		DEBUGPC("%u [%s]\n", retlen,
+		DEBUGRC("%u [%s]\n", retlen,
 			rfid_hexdump(recvbuf+1, num_bytes));
 		memcpy(buf, recvbuf+1, num_bytes); // len == 0x7f
 		return 0;
 	}
 
-	DEBUGPC("ERROR\n");
+	DEBUGRC("ERROR\n");
 	return -1;
 }
 
@@ -147,16 +157,16 @@ static int WriteNBytesToFIFO(struct rfid_asic_transport_handle *rath,
 	sndbuf[5] = flags;
 	sndbuf[6] = 0x02;
 
-	DEBUGP("%u [%s]: ", len, rfid_hexdump(bytes, len));
+	DEBUGR("%u [%s]: ", len, rfid_hexdump(bytes, len));
 
 	memcpy(sndbuf+7, bytes, len);
 
 	if (PC_to_RDR_Escape(rath->data, sndbuf, len+7, recvbuf, &retlen) == 0) {
-		DEBUGPC("OK (%u [%s])\n", retlen, rfid_hexdump(recvbuf, retlen));
+		DEBUGRC("OK (%u [%s])\n", retlen, rfid_hexdump(recvbuf, retlen));
 		return 0;
 	}
 
-	DEBUGPC("ERROR\n");
+	DEBUGRC("ERROR\n");
 	return -1;
 }
 
@@ -236,6 +246,7 @@ cm5121_14443a_set_speed(struct rfid_reader_handle *rh,
 		DEBUGPC("848K\n");
 		break;
 	default:
+		DEBUGPC("invalid\n");
 		return -EINVAL;
 		break;
 	}
