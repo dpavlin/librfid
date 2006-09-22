@@ -140,6 +140,7 @@ iso14443a_anticol(struct rfid_layer2_handle *handle)
 	h->level = ISO14443A_LEVEL_CL1;
 
 cascade:
+	rx_len = sizeof(sak);
 	iso14443a_code_nvb_bits(&acf.nvb, 16);
 
 	ret = iso14443a_transceive_acf(handle, &acf, &bit_of_col);
