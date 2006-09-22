@@ -758,7 +758,7 @@ rc632_iso14443a_transceive_sf(struct rfid_asic_handle *handle,
 	u_int8_t tx_buf[1];
 	u_int8_t rx_len = 2;
 
-	memset(atqa, 0, sizeof(atqa));
+	memset(atqa, 0, sizeof(*atqa));
 
 	tx_buf[0] = cmd;
 
