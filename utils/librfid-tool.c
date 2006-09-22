@@ -64,8 +64,12 @@ static int init()
 	printf("opening reader handle\n");
 	rh = rfid_reader_open(NULL, RFID_READER_CM5121);
 	if (!rh) {
-		fprintf(stderr, "error, no cm5121 handle\n");
-		return -1;
+		fprintf(stderr, "No Omnikey Cardman 5121 found\n");
+		rh = rfid_reader_open(NULL, RFID_READER_OPENPCD);
+		if (!rh) {
+			fprintf(stderr, "No OpenPCD found either\n");
+			return -1;
+		}
 	}
 
 	printf("opening layer2 handle\n");
