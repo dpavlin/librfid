@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <librfid/rfid_reader.h>
 #include <librfid/rfid_reader_cm5121.h>
 #include <librfid/rfid_reader_openpcd.h>
 #include <librfid/rfid_protocol.h>

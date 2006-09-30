@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <limits.h>
 #include <sys/types.h>
 
 #include <librfid/rfid.h>
@@ -171,7 +172,7 @@ static int best_prescaler(u_int64_t timeout, u_int8_t *prescaler,
 	u_int8_t best_prescaler, best_divisor, i;
 	int64_t smallest_diff;
 
-	smallest_diff = 0x7fffffffffffffff;
+	smallest_diff = LLONG_MAX;
 	best_prescaler = 0;
 
 	for (i = 0; i < 21; i++) {
@@ -232,7 +233,7 @@ rc632_timer_set(struct rfid_asic_handle *handle,
 }
 
 /* Wait until RC632 is idle or TIMER IRQ has happened */
-static rc632_wait_idle_timer(struct rfid_asic_handle *handle)
+static int rc632_wait_idle_timer(struct rfid_asic_handle *handle)
 {
 	int ret;
 	u_int8_t irq, cmd;
@@ -1002,8 +1003,7 @@ static struct tx_config tx_configs[] = {
 };
 
 static int rc632_iso14443a_set_speed(struct rfid_asic_handle *handle,
-				     unsigned int tx,
-				     u_int8_t rate)
+				     unsigned int tx, unsigned int rate)
 {
 	int rc;
 	u_int8_t reg;
