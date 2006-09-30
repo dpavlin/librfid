@@ -37,16 +37,16 @@ struct rfid_asic_rc632 {
 		int (*turn_off_rf)(struct rfid_asic_handle *h);
 		int (*transceive)(struct rfid_asic_handle *h,
 				  enum rfid_frametype,
-				  const u_int32_t *tx_buf,
+				  const u_int8_t *tx_buf,
 				  unsigned int tx_len,
-				  u_int32_t *rx_buf,
+				  u_int8_t *rx_buf,
 				  unsigned int *rx_len,
 				  u_int64_t timeout,
 				  unsigned int flags);
 		struct {
 			int (*init)(struct rfid_asic_handle *h);
 			int (*transceive_sf)(struct rfid_asic_handle *h,
-					     u_int32_t cmd,
+					     u_int8_t cmd,
 					     struct iso14443a_atqa *atqa);
 			int (*transceive_acf)(struct rfid_asic_handle *h,
 					      struct iso14443a_anticol_cmd *cmd,
@@ -151,10 +151,11 @@ int
 rc632_register_dump(struct rfid_asic_handle *handle, u_int32_t *buf);
 
 
-struct rfid_asic_handle * rc632_open(struct rfid_asic_transport_handle *th);
-
 
 extern struct rfid_asic rc632;
 #endif
+
+extern struct rfid_asic_handle * rc632_open(struct rfid_asic_transport_handle *th);
+extern void rc632_close(struct rfid_asic_handle *h);
 
 #endif

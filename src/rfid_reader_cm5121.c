@@ -38,6 +38,8 @@
 #include <librfid/rfid_asic_rc632.h>
 #include <librfid/rfid_reader_cm5121.h>
 
+#include "cm5121_source.h"
+
 /* FIXME */
 #include "rc632.h"
 

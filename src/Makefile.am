@@ -1,6 +1,8 @@
 LIBVERSION= 0:0:0
 INCLUDES = $(all_includes) -I$(top_srcdir)/include -D__LIBRFID__
 
+AM_CFLAGS = -std=gnu99
+
 lib_LTLIBRARIES = librfid.la
 
 CORE=rfid.c rfid_layer2.c rfid_protocol.c rfid_reader.c
