@@ -3,7 +3,8 @@
  * (C) 2006 by Harald Welte <laforge@gnumonks.org>
  *
  * The OpenPCD is an Atmel AT91SAM7Sxx based USB RFID reader.
- * It's CL RC632 is connected via SPI.
+ * It's CL RC632 is connected via SPI.  OpenPCD has multiple firmware
+ * images.  This driver is for the "main_dumbreader" firmware.
  *
  * TODO:
  * - put hdl from static variable into asic transport or reader handle 
@@ -71,7 +72,7 @@ static int openpcd_send_command(u_int8_t cmd, u_int8_t reg, u_int8_t val,
 
 	cur = sizeof(*snd_hdr) + len;
 
-	return usb_bulk_write(hdl, OPENPCD_OUT_EP, snd_hdr, cur, 0);
+	return usb_bulk_write(hdl, OPENPCD_OUT_EP, (char *)snd_hdr, cur, 0);
 }
 
 static int openpcd_recv_reply(void)
@@ -96,7 +97,17 @@ static int openpcd_xcv(u_int8_t cmd, u_int8_t reg, u_int8_t val,
 
 	return openpcd_recv_reply();
 }
-	
+
+struct usb_id {
+	u_int16_t vid;
+	u_int16_t pid;
+};
+
+static const struct usb_id opcd_usb_ids[] = {
+	{ .vid = 0x2342, .pid = 0x0001 },	/* prototypes */
+	{ .vid = 0x16c0, .pid = 0x076b },	/* first official device id */
+};
+
 static struct usb_device *find_opcd_device(void)
 {
 	struct usb_bus *bus;
@@ -104,13 +115,15 @@ static struct usb_device *find_opcd_device(void)
 	for (bus = usb_busses; bus; bus = bus->next) {
 		struct usb_device *dev;
 		for (dev = bus->devices; dev; dev = dev->next) {
-			if (dev->descriptor.idVendor == OPENPCD_VENDOR_ID
-			    && dev->descriptor.idProduct == OPENPCD_PRODUCT_ID
-			    && dev->descriptor.iManufacturer == 0
-			    && dev->descriptor.iProduct == 0
-			    && dev->descriptor.bNumConfigurations == 1
-			    && dev->config->iConfiguration == 0)
-				return dev;
+			int i;
+			for (i = 0; i < ARRAY_SIZE(opcd_usb_ids); i++) {
+				const struct usb_id *id = &opcd_usb_ids[i];
+				if (dev->descriptor.idVendor == id->vid &&
+				    dev->descriptor.idProduct == id->pid &&
+				    dev->descriptor.bNumConfigurations == 1 &&
+				    dev->config->iConfiguration == 0)
+					return dev;
+			}
 		}
 	}
 	return NULL;
@@ -199,8 +212,9 @@ static int openpcd_transceive(struct rfid_reader_handle *rh,
 			     u_int64_t timeout, unsigned int flags)
 {
 	return rh->ah->asic->priv.rc632.fn.transceive(rh->ah, frametype,
-						tx_data, tx_len, rx_data,
-						rx_len, timeout, flags);
+						      tx_data, tx_len, 
+						      rx_data, rx_len,
+						      timeout, flags);
 }
 
 static int openpcd_transceive_sf(struct rfid_reader_handle *rh,
