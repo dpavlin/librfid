@@ -116,12 +116,13 @@ static struct usb_device *find_opcd_device(void)
 		struct usb_device *dev;
 		for (dev = bus->devices; dev; dev = dev->next) {
 			int i;
+			printf("usb: %4x:%4x\n", dev->descriptor.idVendor,
+				dev->descriptor.idProduct);
 			for (i = 0; i < ARRAY_SIZE(opcd_usb_ids); i++) {
 				const struct usb_id *id = &opcd_usb_ids[i];
+				printf("%x:%x\n", id->vid, id->pid);
 				if (dev->descriptor.idVendor == id->vid &&
-				    dev->descriptor.idProduct == id->pid &&
-				    dev->descriptor.bNumConfigurations == 1 &&
-				    dev->config->iConfiguration == 0)
+				    dev->descriptor.idProduct == id->pid)
 					return dev;
 			}
 		}
@@ -321,9 +322,9 @@ openpcd_open(void *data)
 	rcv_hdr = (struct openpcd_hdr *)rcv_buf;
 
 	usb_init();
-	if (!usb_find_busses())
+	if (usb_find_busses() < 0)
 		return NULL;
-	if (!usb_find_devices())
+	if (usb_find_devices() < 0) 
 		return NULL;
 	
 	dev = find_opcd_device();
