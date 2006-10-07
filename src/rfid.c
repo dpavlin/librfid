@@ -1,4 +1,6 @@
-/*
+/* librfid core 
+ *  (C) 2005-2006 by Harald Welte <laforge@gnumonks.org>
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2 
  *  as published by the Free Software Foundation
@@ -39,6 +41,54 @@ rfid_hexdump(const void *data, unsigned int len)
 	}
 	return string;
 }
+
+#if 0
+int rfid_setopt(struct rfid_handle *rh, unsigned int level,
+		unsigned int optname,
+		const void *opt, unsigned int *optlen)
+{
+	switch (level) {
+	case RFID_LEVEL_ASIC:
+	case RFID_LEVEL_READER:
+		return -EINVAL;
+		break;
+	case RFID_LEVEL_LAYER2:
+		return rfid_layer2_setopt(optname, opt, optlen);
+		break;
+	case RFID_LEVEL_LAYER3:
+		return rfid_layer3_setopt(optname, opt, optlen);
+		break;
+	default:
+		return -EINVAL;
+		break;
+	}
+
+	return 0;
+}
+
+int rfid_getopt(struct rfid_handle *rh, unsigned int level,
+		unsigned int optname,
+		void *opt, unsigned int *optlen)
+{
+	switch (level) {
+	case RFID_LEVEL_ASIC:
+	case RFID_LEVEL_READER:
+		return -EINVAL;
+		break;
+	case RFID_LEVEL_LAYER2:
+		return rfid_layer2_getopt(optname, opt, optlen);
+		break;
+	case RFID_LEVEL_LAYER3:
+		return rfid_layer3_getopt(optname, opt, optlen);
+		break;
+	default:
+		return -EINVAL;
+		break;
+	}
+
+	return 0;
+}
+#endif
 
 int rfid_init()
 {

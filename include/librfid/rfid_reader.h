@@ -9,6 +9,9 @@ struct rfid_reader_handle;
 struct rfid_reader {
 	char *name;
 	unsigned int id;
+	unsigned int l2_supported;
+	unsigned int proto_supported;
+
 	int (*transceive)(struct rfid_reader_handle *h,
 			  enum rfid_frametype frametype,
 			  const unsigned char *tx_buf, unsigned int tx_len,

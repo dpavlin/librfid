@@ -14,6 +14,12 @@ enum rfid_layer2_id {
 	RFID_LAYER2_ISO15693,
 };
 
+/* 0...0xffff = global options, 0x10000...0x1ffff = private options */
+#define RFID_OPT_L2_PRIV		0x00010000
+enum rfid_layer2_opt {
+	RFID_OPT_LAYER2_UID		= 0x0001,
+};
+
 struct rfid_layer2_handle *rfid_layer2_init(struct rfid_reader_handle *rh,
 					    unsigned int id);
 int rfid_layer2_open(struct rfid_layer2_handle *l2h);
@@ -63,6 +69,7 @@ struct rfid_layer2_handle {
 	struct rfid_reader_handle *rh;
 	unsigned char uid[10];	/* triple size 14443a id is 10 bytes */
 	unsigned int uid_len;
+	unsigned int proto_supported;
 	union {
 		struct iso14443a_handle iso14443a;
 		struct iso14443b_handle iso14443b;

@@ -39,6 +39,8 @@
 #include <librfid/rfid_asic.h>
 #include <librfid/rfid_asic_rc632.h>
 #include <librfid/rfid_reader_openpcd.h>
+#include <librfid/rfid_layer2.h>
+#include <librfid/rfid_protocol.h>
 
 /* FIXME */
 #include "rc632.h"
@@ -391,6 +393,12 @@ struct rfid_reader rfid_reader_openpcd = {
 	.open = &openpcd_open,
 	.close = &openpcd_close,
 	.transceive = &openpcd_transceive,
+	.l2_supported = (1 << RFID_LAYER2_ISO14443A) |
+			(1 << RFID_LAYER2_ISO14443B) |
+			(1 << RFID_LAYER2_ISO15693),
+	.proto_supported = (1 << RFID_PROTOCOL_TCL) |
+			(1 << RFID_PROTOCOL_MIFARE_UL) |
+			(1 << RFID_PROTOCOL_MIFARE_CLASSIC),
 	.iso14443a = {
 		.init = &openpcd_14443a_init,
 		.transceive_sf = &openpcd_transceive_sf,

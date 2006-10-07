@@ -11,7 +11,9 @@ enum rfid_frametype {
 	RFID_MIFARE_FRAME,
 };
 
-#if 1
+//#define DEBUG
+
+#ifdef DEBUG
 #define DEBUGP(x, args ...) fprintf(stderr, "%s(%d):%s: " x, __FILE__, __LINE__, __FUNCTION__, ## args)
 #define DEBUGPC(x, args ...) fprintf(stderr, x, ## args)
 #else
@@ -28,5 +30,12 @@ extern const char *rfid_hexdump(const void *data, unsigned int len);
 #endif /* __LIBRFID__ */
 
 int rfid_init();
+
+enum rfid_opt_level {
+	RFID_LEVEL_ASIC,
+	RFID_LEVEL_READER,
+	RFID_LEVEL_LAYER2,
+	RFID_LEVEL_LAYER3,
+};
 
 #endif /* _RFID_H */

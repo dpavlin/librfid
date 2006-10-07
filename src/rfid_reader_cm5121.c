@@ -1,6 +1,6 @@
 /* Omnikey CardMan 5121 specific RC632 transport layer 
  *
- * (C) 2005 by Harald Welte <laforge@gnumonks.org>
+ * (C) 2005-2006 by Harald Welte <laforge@gnumonks.org>
  *
  * The 5121 is an Atmel AT89C5122 based USB CCID reader (probably the same
  * design like the 3121).  It's CL RC632 is connected via address/data bus,
@@ -37,6 +37,8 @@
 #include <librfid/rfid_asic.h>
 #include <librfid/rfid_asic_rc632.h>
 #include <librfid/rfid_reader_cm5121.h>
+#include <librfid/rfid_layer2.h>
+#include <librfid/rfid_protocol.h>
 
 #include "cm5121_source.h"
 
@@ -360,6 +362,12 @@ struct rfid_reader rfid_reader_cm5121 = {
 	.open = &cm5121_open,
 	.close = &cm5121_close,
 	.transceive = &cm5121_transceive,
+	.l2_supported = (1 << RFID_LAYER2_ISO14443A) |
+			(1 << RFID_LAYER2_ISO14443B) |
+			(1 << RFID_LAYER2_ISO15693),
+	.proto_supported = (1 << RFID_PROTOCOL_TCL) |
+			(1 << RFID_PROTOCOL_MIFARE_UL) |
+			(1 << RFID_PROTOCOL_MIFARE_CLASSIC),
 	.iso14443a = {
 		.init = &cm5121_14443a_init,
 		.transceive_sf = &cm5121_transceive_sf,
