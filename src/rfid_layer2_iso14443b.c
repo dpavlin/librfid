@@ -1,6 +1,6 @@
 /* ISO 14443-3 B anticollision implementation
  *
- * (C) 2005 by Harald Welte <laforge@gnumonks.org>
+ * (C) 2005-2006 by Harald Welte <laforge@gnumonks.org>
  *
  */
 
@@ -22,16 +22,21 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <errno.h>
 
 #include <librfid/rfid.h>
 #include <librfid/rfid_layer2.h>
 #include <librfid/rfid_reader.h>
 #include <librfid/rfid_layer2_iso14443b.h>
+#include <librfid/rfid_protocol.h>
 
 #include "rfid_iso14443_common.h"
 
 #define ATQB_TIMEOUT 	((256*10e6/ISO14443_FREQ_SUBCARRIER)		\
 			 +(200*10e6/ISO14443_FREQ_SUBCARRIER))
+
+#undef ATQB_TIMEOUT
+#define ATQB_TIMEOUT	1
 
 static inline int
 fwi_to_fwt(struct rfid_layer2_handle *h, unsigned int *fwt, unsigned int fwi)
@@ -79,9 +84,11 @@ parse_atqb(struct rfid_layer2_handle *h, struct iso14443b_atqb *atqb)
 	if (atqb->protocol_info.protocol_type == 0x1) {
 		DEBUGP("we have a T=CL compliant PICC\n");
 		h->priv.iso14443b.tcl_capable = 1;
+		h->proto_supported = (1 << RFID_PROTOCOL_TCL);
 	} else {
 		DEBUGP("we have a T!=CL PICC\n");
 		h->priv.iso14443b.tcl_capable = 0;
+		/* FIXME: what protocols do we support? */
 	}
 
 	iso14443_fsdi_to_fsd(&h->priv.iso14443b.fsc, 
@@ -199,6 +206,8 @@ transceive_attrib(struct rfid_layer2_handle *h, const unsigned char *inf,
 	if (h->priv.iso14443b.tcl_capable == 1)
 		attrib->param3.protocol_type = 0x1;
 
+	attrib->param4.cid = h->priv.iso14443b.cid & 0xf;
+
 	*rx_len = *rx_len + 1;
 	ret = h->rh->reader->transceive(h->rh, RFID_14443B_FRAME_REGULAR,
 					(unsigned char *) attrib,
@@ -212,8 +221,8 @@ transceive_attrib(struct rfid_layer2_handle *h, const unsigned char *inf,
 	}
 
 	if ((rx_buf[0] & 0x0f) != h->priv.iso14443b.cid) {
-		DEBUGP("ATTRIB response with invalid CID %u\n",
-			rx_buf[0] & 0x0f);
+		DEBUGP("ATTRIB response with invalid CID %u (should be %u)\n",
+			rx_buf[0] & 0x0f, h->priv.iso14443b.cid);
 		ret = -1;
 		goto out_rx;
 	}
@@ -294,6 +303,10 @@ iso14443b_init(struct rfid_reader_handle *rh)
 	h->rh = rh;
 	h->priv.iso14443b.state = ISO14443B_STATE_NONE;
 
+	/* FIXME: if we want to support multiple PICC's, we need some
+	 * fancy allocation scheme for CID's */
+	h->priv.iso14443b.cid = 0;
+
 	h->priv.iso14443b.fsd = iso14443_fsd_approx(rh->ah->mru);
 	DEBUGP("fsd is %u\n", h->priv.iso14443b.fsd);
 
@@ -331,6 +344,56 @@ iso14443b_transceive(struct rfid_layer2_handle *handle,
 					      rx_buf, rx_len, timeout, flags);
 }
 
+static int
+iso14443b_getopt(struct rfid_layer2_handle *handle,
+		 int optname, void *optval, unsigned int optlen)
+{
+	unsigned int *opt_ui = optval;
+
+	switch (optname) {
+	case RFID_OPT_14443B_CID:
+		*opt_ui = handle->priv.iso14443b.cid;
+		break;
+	case RFID_OPT_14443B_FSC:
+		*opt_ui = handle->priv.iso14443b.fsc;
+		break;
+	case RFID_OPT_14443B_FSD:
+		*opt_ui = handle->priv.iso14443b.fsd;
+		break;
+	case RFID_OPT_14443B_FWT:
+		*opt_ui = handle->priv.iso14443b.fwt;
+		break;
+	case RFID_OPT_14443B_TR0:
+		*opt_ui = handle->priv.iso14443b.tr0;
+		break;
+	case RFID_OPT_14443B_TR1:
+		*opt_ui = handle->priv.iso14443b.tr1;
+		break;
+	default:
+		return -EINVAL;
+		break;
+	}
+	return 0;
+}
+
+static int
+iso14443b_setopt(struct rfid_layer2_handle *handle,
+		 int optname, const void *optval, unsigned int optlen)
+{
+	const unsigned int *opt_ui = optval;
+
+	switch (optname) {
+	case RFID_OPT_14443B_CID:
+		handle->priv.iso14443b.cid = (*opt_ui & 0xf);
+		break;
+	defaukt:
+		return -EINVAL;
+		break;
+	}
+	return 0;
+}
+
+
 struct rfid_layer2 rfid_layer2_iso14443b = {
 	.id	= RFID_LAYER2_ISO14443B,
 	.name 	= "ISO 14443-3 B",
@@ -340,5 +403,7 @@ struct rfid_layer2 rfid_layer2_iso14443b = {
 		.transceive 	= &iso14443b_transceive,
 		.close 		= &iso14443b_hltb,
 		.fini 		= &iso14443b_fini,
+		.getopt		= &iso14443b_getopt,
+		.setopt		= &iso14443b_setopt,
 	},
 };

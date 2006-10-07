@@ -1,6 +1,6 @@
 /* ISO 14443-3 A anticollision implementation
  *
- * (C) 2005 by Harald Welte <laforge@gnumonks.org>
+ * (C) 2005-2006 by Harald Welte <laforge@gnumonks.org>
  *
  */
 
@@ -28,6 +28,7 @@
 #include <librfid/rfid_layer2.h>
 #include <librfid/rfid_reader.h>
 #include <librfid/rfid_layer2_iso14443a.h>
+#include <librfid/rfid_protocol.h>
 
 #define TIMEOUT 1236
 
@@ -225,9 +226,12 @@ cascade:
 
 	if (sak[0] & 0x20) {
 		DEBUGP("we have a T=CL compliant PICC\n");
+		handle->proto_supported = 1 << RFID_PROTOCOL_TCL;
 		h->tcl_capable = 1;
 	} else {
 		DEBUGP("we have a T!=CL PICC\n");
+		handle->proto_supported = (1 << RFID_PROTOCOL_MIFARE_UL)|
+					  (1 << RFID_PROTOCOL_MIFARE_CLASSIC);
 		h->tcl_capable = 0;
 	}
 

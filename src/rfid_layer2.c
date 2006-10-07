@@ -1,5 +1,5 @@
 /* librfid - layer 2 protocol handler 
- * (C) 2005 by Harald Welte <laforge@gnumonks.org>
+ * (C) 2005-2006 by Harald Welte <laforge@gnumonks.org>
  */
 
 /*
@@ -92,18 +92,43 @@ int
 rfid_layer2_getopt(struct rfid_layer2_handle *ph, int optname,
 		   void *optval, unsigned int *optlen)
 {
-	if (!ph->l2->fn.getopt)
-		return -EINVAL;
+	if (optname >> 16 == 0) {
+		unsigned char *optchar = optval;
 
-	return ph->l2->fn.getopt(ph, optname, optval, optlen);
+		switch (optname) {
+		case RFID_OPT_LAYER2_UID:
+			if (ph->uid_len < *optlen)
+				*optlen = ph->uid_len;
+			memcpy(optchar, ph->uid, *optlen);
+			break;
+		default:
+			return -EINVAL;
+			break;
+		}
+	} else {
+		if (!ph->l2->fn.getopt)
+			return -EINVAL;
+
+		return ph->l2->fn.getopt(ph, optname, optval, optlen);
+	}
+	return 0;
 }
 
 int
 rfid_layer2_setopt(struct rfid_layer2_handle *ph, int optname,
 		   const void *optval, unsigned int optlen)
 {
-	if (!ph->l2->fn.setopt)
-		return -EINVAL;
+	if (optname >> 16 == 0) {
+		switch (optname) {
+		default:
+			return -EINVAL;
+			break;
+		}
+	} else {
+		if (!ph->l2->fn.setopt)
+			return -EINVAL;
 
-	return ph->l2->fn.setopt(ph, optname, optval, optlen);
+		return ph->l2->fn.setopt(ph, optname, optval, optlen);
+	}
+	return 0;
 }

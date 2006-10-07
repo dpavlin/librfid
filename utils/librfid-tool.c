@@ -1,4 +1,7 @@
-/*
+/* librfid-tool - a small command-line tool for librfid testing
+ *
+ * (C) 2005-2006 by Harald Welte <laforge@gnumonks.org>
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2 
  *  as published by the Free Software Foundation
@@ -23,6 +26,7 @@
 #include <getopt.h>
 
 #include <librfid/rfid.h>
+#include <librfid/rfid_scan.h>
 #include <librfid/rfid_reader.h>
 #include <librfid/rfid_layer2.h>
 #include <librfid/rfid_protocol.h>
@@ -53,14 +57,7 @@ static struct rfid_reader_handle *rh;
 static struct rfid_layer2_handle *l2h;
 static struct rfid_protocol_handle *ph;
 
-static int init()
-{
-	unsigned char buf[0x3f];
-	int rc;
-
-	printf("initializing librfid\n");
-	rfid_init();
-
+static int reader() {
 	printf("opening reader handle\n");
 	rh = rfid_reader_open(NULL, RFID_READER_CM5121);
 	if (!rh) {
@@ -71,10 +68,16 @@ static int init()
 			return -1;
 		}
 	}
+	return 0;
+}
+static int init(int layer2)
+{
+	unsigned char buf[0x3f];
+	int rc;
+
 
 	printf("opening layer2 handle\n");
-	l2h = rfid_layer2_init(rh, RFID_LAYER2_ISO14443A);
-	//l2h = rfid_layer2_init(rh, RFID_LAYER2_ISO14443B);
+	l2h = rfid_layer2_init(rh, layer2);
 	if (!l2h) {
 		fprintf(stderr, "error during iso14443a_init\n");
 		return -1;
@@ -308,13 +311,36 @@ static int proto_by_name(const char *name)
 	return -1;
 }
 
+static char *l2_names[] = {
+	[RFID_LAYER2_ISO14443A] = "iso14443a",
+	[RFID_LAYER2_ISO14443B] = "iso14443b",
+	[RFID_LAYER2_ISO15693] = "iso15693",
+};
+
+static int l2_by_name(const char *name)
+{
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(l2_names); i++) {
+		if (l2_names[i] == NULL)
+			continue;
+		if (!strcasecmp(name, l2_names[i]))
+			return i;
+	}
+	return -1;
+}
+
 static void help(void)
 {
-	printf(" -p	--protocol {tcl,mifare-ultralight,mifare-classic}\n");
+	printf( " -s	--scan\n"
+		" -p	--protocol {tcl,mifare-ultralight,mifare-classic}\n"
+		" -l	--layer2   {iso14443a,iso14443b,iso15693}\n"
+		" -h	--help\n");
 }
 
 static struct option opts[] = {
 	{ "help", 0, 0, 'h' },
+	{ "layer2", 1, 0, 'l' },
 	{ "protocol", 1, 0, 'p' },
 	{0, 0, 0, 0}
 };
@@ -323,22 +349,42 @@ int main(int argc, char **argv)
 {
 	int rc;
 	char buf[0x40];
-	int i, protocol = -1;
+	int i, protocol = -1, layer2 = -1;
 	
 	printf("librfid_tool - (C) 2006 by Harald Welte\n"
-	       "This program is Free Software and has ABSOLUTELY NO WARRANTY\n\n");
+	       "This program is Free Software and has "
+	       "ABSOLUTELY NO WARRANTY\n\n");
+
+	printf("initializing librfid\n");
+	rfid_init();
 
 	while (1) {
 		int c, option_index = 0;
-		c = getopt_long(argc, argv, "hp:", opts, &option_index);
+		c = getopt_long(argc, argv, "hp:l:s", opts, &option_index);
 		if (c == -1)
 			break;
 
 		switch (c) {
+		case 's':
+			if (reader() < 0)
+				exit(1);
+			printf("scanning for RFID token...\n");
+			i = rfid_scan(rh, &l2h, &ph);
+			exit(0);
+			break;
 		case 'p':
 			protocol = proto_by_name(optarg);
 			if (protocol < 0) {
-				fprintf(stderr, "unknown protocol `%s'\n", optarg);
+				fprintf(stderr, "unknown protocol `%s'\n", 
+					optarg);
+				exit(2);
+			}
+			break;
+		case 'l':
+			layer2 = l2_by_name(optarg);
+			if (layer2 < 0) {
+				fprintf(stderr, "unknown layer2 `%s'\n",
+					optarg);
 				exit(2);
 			}
 			break;
@@ -349,12 +395,25 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if (protocol < 0) {
+	switch (protocol) {
+	case RFID_PROTOCOL_MIFARE_UL:
+	case RFID_PROTOCOL_MIFARE_CLASSIC:
+		layer2 = RFID_LAYER2_ISO14443A;
+		break;
+	case -1:
 		fprintf(stderr, "you have to specify --protocol\n");
 		exit(2);
 	}
 
-	if (init() < 0)
+	if (layer2 < 0) {
+		fprintf(stderr, "you have to specify --layer2\n");
+		exit(2);
+	}
+	
+	if (reader() < 0)
+		exit(1);
+
+	if (init(layer2) < 0)
 		exit(1);
 
 	if (l3(protocol) < 0)
