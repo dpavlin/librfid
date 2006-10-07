@@ -1,5 +1,5 @@
 librfid - low-level RFID access library
-(C) 2005 by Harald Welte <laforge@gnumonks.org>
+(C) 2005-2006 by Harald Welte <laforge@gnumonks.org>
 ======================================================================
 
 This library intends to provide a reader- and (as much as possible)
@@ -9,12 +9,14 @@ PICC / tag independent API for RFID applications.
 
 At this early stage of implementaition, it offers only ISO 14443-2, ISO 14443-3
 A and B as well as ISO 14443-4 (T=CL) support.  Other protocols, both open
-(such as ISO 15693) and proprietary are to be added as soon as I find some more
-time.
+(such as ISO 15693) and proprietary are to be added as soon as I find some
+more time.
 
 2. Supported Readers:
 
-At this time only the Omnikey Cardman 5121 reader is supported. 
+At this time, the Omnikey Cardman 5121 and the OpenPCD readers are supported. 
+
+2.1 Omnikey Cardman 5121 RFID (http://www.omnikey.de/)
 
 The cm5121 is a relatively stupid piece of hardware.  Basically a contact-based
 cm3121 that was enhanced by putting a Philips CL RC632 reader ASIC next to it.
@@ -22,9 +24,24 @@ There is no RFID protocol implementation on the cm5121, everything is done on
 the host (PC) software.  Four primitives (read/write byte/fifo) are provided
 via simple PC_to_RDR_Escape CCID messages.
 
+2.2 OpenPCD (http://www.openpcd.org/)
+
+The OpenPCD reader is completely free.  You get the full schematics, the PCB
+design, the source code to the device firmware (written in C, to be compiled
+with the free GNU toolchain).
+
+Also, it has various headers for access to the intermediate signal processing
+steps.
+
 This makes it the ideal device to learn and play with RFID, since you don't
 have any (proprietary) software interfere and puts you in full control of
 everything.
+
+2.3 Philips Pegoda
+
+This reader is not yet supported.
+
+2.x Further Readers
 
 Support for more devices shouldn't be too difficult to add, provided the
 devices are stupid enough.  More sophisticated readers like Integrated
@@ -33,9 +50,9 @@ Microcontroller.  This makes them (at least till now) faster, but also of
 limited use, especially in education and research.
 
 So if you happen to run into any other dumb RFID readers, especially those
-based on Philips CL RC531 and RC632, adding support should be very
-straightforward.  If you want to contract me for implementing a driver backend,
-don't hesitate to contact me.
+based on Philips CL RC622, RC531 and RC632, adding support should be very
+straightforward.  If you want to contract me for implementing a driver
+backend, don't hesitate to contact me.
 
 3. Installation
 
@@ -48,9 +65,9 @@ If you add the '--with-ccid' option to the './configure' command, then the new
 native CCID driver (courtesy of Werner Koch) will be linked into the library.
 This requires a working libusb with development headers.  
 
-In order to use the reader, you will need to set the permissions of the respective
-/proc/bus/usb or /sys/bus/usb files (or run the application as root, if you
-trust my code, which you shouldn't).
+In order to use the reader, you will need to set the permissions of the
+respective /proc/bus/usb or /sys/bus/usb files (or run the application as
+root, if you trust my code, which you shouldn't).
 
 If you run udev, just use the 'etc/udev/librfid.rules' udev rulefile, which should
 change the group of the usb device to 'users'.
@@ -72,8 +89,9 @@ transponders.
 
 In the 'utils' directory, you will get a 'librfid-tool' binary.  It is very
 minimalistic, and mainly an example on how to use the librfid api. For an ICAO
-compliant passport, you may try "--protocol tcl".  For a mifare ultralight transponder,
-"--protocol mifare-ultralight" will give you a full dump of the transponder.
+compliant passport, you may try "--layer2 iso14443a --protocol tcl".  For a
+mifare ultralight transponder, "--layer2 iso14443a --protocol
+mifare-ultralight" will give you a full dump of the transponder.
 
 -- Harald Welte <laforge@gnumonks.org>
 
