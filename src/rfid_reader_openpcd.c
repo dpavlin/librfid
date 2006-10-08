@@ -118,11 +118,8 @@ static struct usb_device *find_opcd_device(void)
 		struct usb_device *dev;
 		for (dev = bus->devices; dev; dev = dev->next) {
 			int i;
-			printf("usb: %4x:%4x\n", dev->descriptor.idVendor,
-				dev->descriptor.idProduct);
 			for (i = 0; i < ARRAY_SIZE(opcd_usb_ids); i++) {
 				const struct usb_id *id = &opcd_usb_ids[i];
-				printf("%x:%x\n", id->vid, id->pid);
 				if (dev->descriptor.idVendor == id->vid &&
 				    dev->descriptor.idProduct == id->pid)
 					return dev;
