@@ -51,6 +51,7 @@ rfid_layer2_scan(struct rfid_reader_handle *rh)
 
 #define RFID_LAYER2_MAX 16
 	for (i = 0; i < RFID_LAYER2_MAX; i++) {
+		DEBUGP("testing l2 %u\n", i);
 		l2h = rfid_layer2_scan1(rh, i);
 		if (l2h)
 			return l2h;
@@ -87,6 +88,7 @@ rfid_protocol_scan(struct rfid_layer2_handle *l2h)
 
 #define RFID_PROTOCOL_MAX 16
 	for (i = 0; i < RFID_PROTOCOL_MAX; i++) {
+		DEBUGP("testing proto %u\n", i);
 		ph = rfid_protocol_scan1(l2h, i);
 		if (ph)
 			return ph;
@@ -105,9 +107,9 @@ int rfid_scan(struct rfid_reader_handle *rh,
 	if (!*l2h)
 		return 0;
 	
-	*ph = rfid_protocol_scan(l2h);
+	*ph = rfid_protocol_scan(*l2h);
 	if (!*ph)
 		return 2;
-	
+
 	return 3;
 }

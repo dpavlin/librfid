@@ -132,3 +132,8 @@ rfid_layer2_setopt(struct rfid_layer2_handle *ph, int optname,
 	}
 	return 0;
 }
+
+char *rfid_layer2_name(struct rfid_layer2_handle *l2h)
+{
+	return l2h->l2->name;
+}

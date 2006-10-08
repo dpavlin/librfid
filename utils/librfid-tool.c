@@ -330,6 +330,24 @@ static int l2_by_name(const char *name)
 	return -1;
 }
 
+static void do_scan(void)
+{
+	int rc;
+	printf("scanning for RFID token...\n");
+	rc = rfid_scan(rh, &l2h, &ph);
+	if (rc >= 2) {
+		unsigned char uid_buf[16];
+		unsigned int uid_len = sizeof(uid_buf);
+		rfid_layer2_getopt(l2h, RFID_OPT_LAYER2_UID, &uid_buf,
+				   &uid_len);
+		printf("Layer 2 success (%s): %s\n", rfid_layer2_name(l2h),
+			hexdump(uid_buf, uid_len));
+	}
+	if (rc >= 3) {
+		printf("Protocol success (%s)\n", rfid_protocol_name(ph));
+	}
+}
+
 static void help(void)
 {
 	printf( " -s	--scan\n"
@@ -368,8 +386,7 @@ int main(int argc, char **argv)
 		case 's':
 			if (reader() < 0)
 				exit(1);
-			printf("scanning for RFID token...\n");
-			i = rfid_scan(rh, &l2h, &ph);
+			do_scan();
 			exit(0);
 			break;
 		case 'p':
