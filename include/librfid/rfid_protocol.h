@@ -27,6 +27,8 @@ rfid_protocol_write(struct rfid_protocol_handle *ph,
 int rfid_protocol_fini(struct rfid_protocol_handle *ph);
 int rfid_protocol_close(struct rfid_protocol_handle *ph);
 
+char *rfid_protocol_name(struct rfid_protocol_handle *ph);
+
 enum rfid_protocol_id {
 	RFID_PROTOCOL_UNKNOWN,
 	RFID_PROTOCOL_TCL,

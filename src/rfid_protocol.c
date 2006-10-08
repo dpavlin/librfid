@@ -111,3 +111,8 @@ rfid_protocol_register(struct rfid_protocol *p)
 
 	return 0;
 }
+
+char *rfid_protocol_name(struct rfid_protocol_handle *ph)
+{
+	return ph->proto->name;
+}

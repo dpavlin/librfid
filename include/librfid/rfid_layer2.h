@@ -34,7 +34,7 @@ int rfid_layer2_getopt(struct rfid_layer2_handle *ph, int optname,
 			void *optval, unsigned int *optlen);
 int rfid_layer2_setopt(struct rfid_layer2_handle *ph, int optname,
 			const void *optval, unsigned int optlen);
-
+char *rfid_layer2_name(struct rfid_layer2_handle *l2h);
 #ifdef __LIBRFID__
 
 #include <librfid/rfid_layer2_iso14443a.h>
