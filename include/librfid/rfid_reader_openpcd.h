@@ -92,6 +92,6 @@ enum openpcd_cmd_class {
 #define OPENPCD_IN_EP		0x82
 #define OPENPCD_IRQ_EP		0x83
 
-extern struct rfid_reader rfid_reader_openpcd;
+extern const struct rfid_reader rfid_reader_openpcd;
 
 #endif

@@ -24,19 +24,24 @@
 #include <librfid/rfid.h>
 #include <librfid/rfid_layer2.h>
 
-static struct rfid_layer2 *rfid_layer2_list;
+static const struct rfid_layer2 *rfid_layer2s[] = {
+	[RFID_LAYER2_ISO14443A]	= &rfid_layer2_iso14443a,
+	[RFID_LAYER2_ISO14443B]	= &rfid_layer2_iso14443b,
+	[RFID_LAYER2_ISO15693]	= &rfid_layer2_iso15693,
+};
 
 struct rfid_layer2_handle *
 rfid_layer2_init(struct rfid_reader_handle *rh, unsigned int id)
 {
 	struct rfid_layer2 *p;
 
-	for (p = rfid_layer2_list; p; p = p->next)
-		if (p->id == id)
-			return p->fn.init(rh);
+	if (id >= ARRAY_SIZE(rfid_layer2s)) {
+		DEBUGP("unable to find matching layer2 protocol\n");
+		return NULL;
+	}
 
-	DEBUGP("unable to find matching layer2 protocol\n");
-	return NULL;
+	p = rfid_layer2s[id];
+	return p->fn.init(rh);
 }
 
 int
@@ -77,15 +82,6 @@ rfid_layer2_close(struct rfid_layer2_handle *ph)
 		return 0;
 
 	return ph->l2->fn.close(ph);
-}
-
-int
-rfid_layer2_register(struct rfid_layer2 *p)
-{
-	p->next = rfid_layer2_list;
-	rfid_layer2_list = p;
-
-	return 0;
 }
 
 int

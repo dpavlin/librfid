@@ -27,6 +27,8 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#ifndef LIBRFID_FIRMWARE
+
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
@@ -314,12 +316,12 @@ cm5121_open(void *data)
 	struct rfid_reader_handle *rh;
 	struct rfid_asic_transport_handle *rath;
 
-	rh = malloc(sizeof(*rh));
+	rh = malloc_reader_handle(sizeof(*rh));
 	if (!rh)
 		return NULL;
 	memset(rh, 0, sizeof(*rh));
 
-	rath = malloc(sizeof(*rath));
+	rath = malloc_rat_handle(sizeof(*rath));
 	if (!rath)
 		goto out_rh;
 	memset(rath, 0, sizeof(*rath));
@@ -341,9 +343,9 @@ cm5121_open(void *data)
 	return rh;
 
 out_rath:
-	free(rath);
+	free_rat_handle(rath);
 out_rh:
-	free(rh);
+	free_reader_handle(rh);
 
 	return NULL;
 }
@@ -353,11 +355,11 @@ cm5121_close(struct rfid_reader_handle *rh)
 {
 	struct rfid_asic_transport_handle *rath = rh->ah->rath;
 	rc632_close(rh->ah);
-	free(rath);
-	free(rh);
+	free_rat_handle(rath);
+	free_reader_handle(rh);
 }
 
-struct rfid_reader rfid_reader_cm5121 = {
+const struct rfid_reader rfid_reader_cm5121 = {
 	.name 	= "Omnikey CardMan 5121 RFID",
 	.open = &cm5121_open,
 	.close = &cm5121_close,
@@ -385,4 +387,4 @@ struct rfid_reader rfid_reader_cm5121 = {
 	},
 };
 
-
+#endif /* LIBRFID_FIRMWARE */

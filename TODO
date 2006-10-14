@@ -16,7 +16,6 @@ iso15693:
 - implement all the rest
 
 mifare_clasic:
-- figure out why authentication doensn't work, even though it is exactly like in other drivers
 
 tcl:
 - implement pps for asymmetric (rx/tx) speeds
@@ -28,3 +27,12 @@ openct:
 other:
 - implementation of code for various passive tags
 - documentation
+
+firmware compilation:
+- add configure '--firmware-mode'
+	- define LIBRFID_FIRMWARE
+	- don't link with libusb
+	- don't include CCID code
+	- specify include path for reader firmware system include files
+	- get rid of remaining malloc()s in 14443b and tcl
+	- fix 'mru' allocation size problem in tcl

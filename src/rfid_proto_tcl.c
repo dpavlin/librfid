@@ -1,6 +1,6 @@
 /* ISO 14443-4 (T=CL) implementation, PCD side.
  *
- * (C) 2005 by Harald Welte <laforge@gnumonks.org>
+ * (C) 2005-2006 by Harald Welte <laforge@gnumonks.org>
  *
  */
 
@@ -737,13 +737,13 @@ tcl_init(struct rfid_layer2_handle *l2h)
 	struct rfid_protocol_handle *th;
 	unsigned int mru = l2h->rh->ah->mru;
 
-	th = malloc(sizeof(struct rfid_protocol_handle) + mru);
+	th = malloc_protocol_handle(sizeof(struct rfid_protocol_handle));
 	if (!th)
 		return NULL;
 
 	/* FIXME: mru should be attribute of layer2 (in case it adds/removes
 	 * some overhead */
-	memset(th, 0, sizeof(struct rfid_protocol_handle) + mru);
+	memset(th, 0, sizeof(struct rfid_protocol_handle));
 
 	/* maximum received ats length equals mru of asic/reader */
 	th->priv.tcl.state = TCL_STATE_INITIAL;
@@ -758,11 +758,11 @@ tcl_init(struct rfid_layer2_handle *l2h)
 static int
 tcl_fini(struct rfid_protocol_handle *ph)
 {
-	free(ph);
+	free_protocol_handle(ph);
 	return 0;
 }
 
-struct rfid_protocol rfid_protocol_tcl = {
+const struct rfid_protocol rfid_protocol_tcl = {
 	.id	= RFID_PROTOCOL_TCL,
 	.name	= "ISO 14443-4 / T=CL",
 	.fn	= {

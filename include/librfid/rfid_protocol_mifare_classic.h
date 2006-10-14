@@ -1,5 +1,7 @@
 #ifndef _MIFARE_CLASSIC_H
 
+#include <librfid/rfid_protocol.h>
+
 #define MIFARE_CL_KEYA_DEFAULT	"\xa0\xa1\xa2\xa3\xa4\xa5"
 #define MIFARE_CL_KEYB_DEFAULT	"\xb0\xb1\xb2\xb3\xb4\xb5"
 
@@ -13,7 +15,7 @@
 
 #ifdef __LIBRFID__
 
-extern struct rfid_protocol rfid_protocol_mfcl;
+extern const struct rfid_protocol rfid_protocol_mfcl;
 
 
 #define MIFARE_CL_CMD_WRITE16	0xA0

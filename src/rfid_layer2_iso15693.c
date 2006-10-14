@@ -1,6 +1,6 @@
 /* ISO 15693 anticollision implementation
  *
- * (C) 2005 by Harald Welte <laforge@gnumonks.org>
+ * (C) 2005-2006 by Harald Welte <laforge@gnumonks.org>
  *
  */
 
@@ -263,7 +263,7 @@ static struct rfid_layer2_handle *
 iso15693_init(struct rfid_reader_handle *rh)
 {
 	int ret;
-	struct rfid_layer2_handle *h = malloc(sizeof(*h));
+	struct rfid_layer2_handle *h = malloc_layer2_handle(sizeof(*h));
 	if (!h)
 		return NULL;
 
@@ -273,7 +273,7 @@ iso15693_init(struct rfid_reader_handle *rh)
 
 	ret = h->rh->reader->iso15693.init(h->rh);
 	if (ret < 0) {
-		free(h);
+		free_layer2_handle(h);
 		return NULL;
 	}
 
@@ -283,12 +283,12 @@ iso15693_init(struct rfid_reader_handle *rh)
 static int
 iso15693_fini(struct rfid_layer2_handle *handle)
 {
-	free(handle);
+	free_layer2_handle(handle);
 	return 0;
 }
 
 
-struct rfid_layer2 rfid_layer2_iso15693 = {
+const struct rfid_layer2 rfid_layer2_iso15693 = {
 	.id	= RFID_LAYER2_ISO15693,
 	.name 	= "ISO 15693",
 	.fn	= {

@@ -45,7 +45,6 @@
 /* FIXME */
 #include "rc632.h"
 
-
 #define SENDBUF_LEN	(256+4+10) /* 256bytes max FSD/FSC, plus 4 bytes header,
 				    plus 10 bytes reserve */
 #define RECVBUF_LEN	SENDBUF_LEN
@@ -55,6 +54,8 @@ static char rcv_buf[RECVBUF_LEN];
 static struct openpcd_hdr *snd_hdr;
 static struct openpcd_hdr *rcv_hdr;
 
+
+#ifndef LIBRFID_FIRMWARE
 
 static struct usb_device *dev;
 static struct usb_dev_handle *hdl;
@@ -128,6 +129,8 @@ static struct usb_device *find_opcd_device(void)
 	}
 	return NULL;
 }
+
+/* RC632 access primitives for librfid inside reader firmware */
 
 static int openpcd_reg_write(struct rfid_asic_transport_handle *rath,
 			     unsigned char reg, unsigned char value)
@@ -204,6 +207,60 @@ static int openpcd_fifo_write(struct rfid_asic_transport_handle *rath,
 
 	return ret;
 }
+
+const struct rfid_asic_transport openpcd_rat = {
+	.name = "OpenPCD Dumb USB Protocol",
+	.priv.rc632 = {
+		.fn = {
+			.reg_write 	= &openpcd_reg_write,
+			.reg_read 	= &openpcd_reg_read,
+			.fifo_write	= &openpcd_fifo_write,
+			.fifo_read	= &openpcd_fifo_read,
+		},
+	},
+};
+
+#else
+/* RC632 access primitives for librfid inside reader firmware */
+
+static int openpcd_reg_write(struct rfid_asic_transport_handle *rath,
+			     unsigned char reg, unsigned char value)
+{
+}
+
+static int openpcd_reg_read(struct rfid_asic_transport_handle *rath,
+			    unsigned char reg,
+			    unsigned char *value)
+{
+}
+
+
+static int openpcd_fifo_read(struct rfid_asic_transport_handle *rath,
+			     unsigned char num_bytes,
+			     unsigned char *buf)
+{
+}
+
+static int openpcd_fifo_write(struct rfid_asic_transport_handle *rath,
+			     unsigned char len,
+			     const unsigned char *bytes,
+			     unsigned char flags)
+{
+}
+
+const struct rfid_asic_transport openpcd_rat = {
+	.name = "OpenPCD Firmware RC632 Access",
+	.priv.rc632 = {
+		.fn = {
+			.reg_write 	= &openpcd_reg_write,
+			.reg_read 	= &openpcd_reg_read,
+			.fifo_write	= &openpcd_fifo_write,
+			.fifo_read	= &openpcd_fifo_read,
+		},
+	},
+};
+
+#endif /* LIBRFID_FIRMWARE */
 
 static int openpcd_transceive(struct rfid_reader_handle *rh,
 			     enum rfid_frametype frametype,
@@ -299,18 +356,6 @@ openpcd_mifare_auth(struct rfid_reader_handle *rh, u_int8_t cmd,
 							cmd, serno, block);
 }
 
-struct rfid_asic_transport openpcd_ccid = {
-	.name = "OpenPCD Dumb USB Protocol",
-	.priv.rc632 = {
-		.fn = {
-			.reg_write 	= &openpcd_reg_write,
-			.reg_read 	= &openpcd_reg_read,
-			.fifo_write	= &openpcd_fifo_write,
-			.fifo_read	= &openpcd_fifo_read,
-		},
-	},
-};
-
 static struct rfid_reader_handle *
 openpcd_open(void *data)
 {
@@ -344,17 +389,17 @@ openpcd_open(void *data)
 		return NULL;
 	}
 
-	rh = malloc(sizeof(*rh));
+	rh = malloc_reader_handle(sizeof(*rh));
 	if (!rh)
 		return NULL;
 	memset(rh, 0, sizeof(*rh));
 
-	rath = malloc(sizeof(*rath));
+	rath = malloc_rat_handle(sizeof(*rath));
 	if (!rath)
 		goto out_rh;
 	memset(rath, 0, sizeof(*rath));
 
-	rath->rat = &openpcd_ccid;
+	rath->rat = &openpcd_rat;
 	rh->reader = &rfid_reader_openpcd;
 
 	rh->ah = rc632_open(rath);
@@ -365,9 +410,9 @@ openpcd_open(void *data)
 	return rh;
 
 out_rath:
-	free(rath);
+	free_rat_handle(rath);
 out_rh:
-	free(rh);
+	free_reader_handle(rh);
 
 	return NULL;
 }
@@ -378,13 +423,13 @@ openpcd_close(struct rfid_reader_handle *rh)
 	struct rfid_asic_transport_handle *rath = rh->ah->rath;
 
 	rc632_close(rh->ah);
-	free(rath);
-	free(rh);
+	free_rat_handle(rath);
+	free_reader_handle(rh);
 
 	usb_close(hdl);
 }
 
-struct rfid_reader rfid_reader_openpcd = {
+const struct rfid_reader rfid_reader_openpcd = {
 	.name 	= "OpenPCD RFID Reader",
 	.id = RFID_READER_OPENPCD,
 	.open = &openpcd_open,

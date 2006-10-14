@@ -1,5 +1,5 @@
 /* librfid - core reader handling
- * (C) 2005 by Harald Welte <laforge@gnumonks.org>
+ * (C) 2005-2006 by Harald Welte <laforge@gnumonks.org>
  */
 
 /*
@@ -22,20 +22,29 @@
 
 #include <librfid/rfid.h>
 #include <librfid/rfid_reader.h>
+#include <librfid/rfid_reader_cm5121.h>
+#include <librfid/rfid_reader_openpcd.h>
 
-static struct rfid_reader *rfid_reader_list;
+static const struct rfid_reader *rfid_readers[] = {
+#ifndef LIBRFID_FIRMWARE
+	[RFID_READER_CM5121]	= &rfid_reader_cm5121,
+#endif
+	[RFID_READER_OPENPCD]	= &rfid_reader_openpcd,
+};
 
 struct rfid_reader_handle *
 rfid_reader_open(void *data, unsigned int id)
 {
-	struct rfid_reader *p;
+	const struct rfid_reader *p;
 
-	for (p = rfid_reader_list; p; p = p->next)
-		if (p->id == id)
-			return p->open(data);
+	if (id >= ARRAY_SIZE(rfid_readers)) {
+		DEBUGP("unable to find matching reader\n");
+		return NULL;
+	}
 
-	DEBUGP("unable to find matching reader\n");
-	return NULL;
+	p = rfid_readers[id];
+
+	return p->open(data);
 }
 
 int
@@ -53,13 +62,4 @@ void
 rfid_reader_close(struct rfid_reader_handle *rh)
 {
 	rh->reader->close(rh);
-}
-
-int
-rfid_reader_register(struct rfid_reader *r)
-{
-	r->next = rfid_reader_list;
-	rfid_reader_list = r;
-
-	return 0;
 }
