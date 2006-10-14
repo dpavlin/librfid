@@ -39,18 +39,13 @@ int cm5121_source_init(struct rfid_asic_transport_handle *rath)
 	if (!h)
 		return -1;
 
-	printf("acquiring card lock\n");
 	rc = ct_card_lock(h, slot, IFD_LOCK_EXCLUSIVE, &lock);
-	if (rc < 0) {
-		fprintf(stderr, "error, no card lock\n");
+	if (rc < 0)
 		return -1;
-	}
 
 	rc = ct_card_reset(h, slot, atr, sizeof(atr));
-	if (rc < 0) {
-		fprintf(stderr, "error, can't reset virtual card\n");
+	if (rc < 0)
 		return -1;
-	}
 
 	rath->data = h;
 

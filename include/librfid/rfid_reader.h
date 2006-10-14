@@ -63,9 +63,6 @@ struct rfid_reader_handle {
 	struct rfid_reader *reader;
 };
 
-
-extern int rfid_reader_register(struct rfid_reader *r);
-
 extern struct rfid_reader_handle *
 rfid_reader_open(void *data, unsigned int id);
 

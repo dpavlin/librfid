@@ -68,8 +68,6 @@ struct rfid_protocol {
 	} fn;
 };
 
-int rfid_protocol_register(struct rfid_protocol *p);
-
 #include <librfid/rfid_protocol_tcl.h>
 #include <librfid/rfid_protocol_mifare_ul.h>
 #include <librfid/rfid_protocol_mifare_classic.h>

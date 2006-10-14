@@ -173,10 +173,8 @@ transceive_attrib(struct rfid_layer2_handle *h, const unsigned char *inf,
 	int ret = 0;
 	
 	DEBUGP("fsd is %u\n", h->priv.iso14443b.fsd);
-	if (rx_len >= rx_len-1) {
-		perror("rx_len too large\n");
-		goto out_attrib;
-	}
+	if (rx_len >= rx_len-1)
+		return -EINVAL;
 
 	/* initialize attrib frame */
 	memset(&_attrib_buf, 0, sizeof(_attrib_buf));
@@ -230,7 +228,6 @@ transceive_attrib(struct rfid_layer2_handle *h, const unsigned char *inf,
 	memcpy(rx_data, rx_buf+1, *rx_len);
 
 out_rx:
-	free(rx_buf);
 out_attrib:
 
 	return ret;

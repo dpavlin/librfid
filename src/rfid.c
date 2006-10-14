@@ -31,6 +31,7 @@ struct rfid_asic_transport_handle rfid_ath;
 struct rfid_reader_handle rfid_rh;
 #endif
 
+#ifndef LIBRFID_FIRMWARE
 const char *
 rfid_hexdump(const void *data, unsigned int len)
 {
@@ -47,6 +48,9 @@ rfid_hexdump(const void *data, unsigned int len)
 	}
 	return string;
 }
+#else
+#define rfid_hexdump(x, y) hexdump(x, y)
+#endif
 
 #if 0
 int rfid_setopt(struct rfid_handle *rh, unsigned int level,
@@ -98,16 +102,6 @@ int rfid_getopt(struct rfid_handle *rh, unsigned int level,
 
 int rfid_init()
 {
-#if 0
-	rfid_reader_register(&rfid_reader_cm5121);
-	rfid_reader_register(&rfid_reader_openpcd);
-	rfid_layer2_register(&rfid_layer2_iso14443a);
-	rfid_layer2_register(&rfid_layer2_iso14443b);
-	rfid_protocol_register(&rfid_protocol_tcl);
-	rfid_protocol_register(&rfid_protocol_mful);
-	rfid_protocol_register(&rfid_protocol_mfcl);
-#endif
-
 	return 0;
 }
 
