@@ -11,13 +11,40 @@ AC_EXEEXT
 AM_PROG_LIBTOOL
 AC_SUBST(LIBTOOL_DEPS)
 
-AC_ARG_WITH(ccid,
-	[  --with-ccid		Include internal CCID driver],
+AC_ARG_ENABLE(ccid,
+	[  --enable-ccid        Include internal CCID driver for CM5121],
 	[MY_CCID=1], [MY_CCID=0])
-
 # AC_SUBST(MY_CCID)
-AM_CONDITIONAL(MY_CCID, test "$MY_CCID" == "1")
+AM_CONDITIONAL(ENABLE_CCID, test "$MY_CCID" == "1")
 
+AC_ARG_WITH(openct,
+	[  --with-openct	Use (patched) OpenCT for CM5121 CCID access],
+	[OPENCT_PATH="$withval"], [OPENCT_PATH=""])
+AC_SUBST(OPENCT_PATH)
+AM_CONDITIONAL(ENABLE_OPENCT, test "$OPENCT_PATH" != "")
+
+AC_ARG_WITH(firmware,
+	[  --with-firmware=PATH	Compile for running inside firmware],
+	[FIRMWARE_PATH="$withval"], [FIRMWARE_PATH=""])
+AC_SUBST(FIRMWARE_PATH)
+
+AC_ARG_ENABLE(static,
+	[  --enable-static	Don't use dynamic allocations at all],
+	[ENABLE_STATIC=1], [ENABLE_STATIC=0]) 
+AM_CONDITIONAL(ENABLE_STATIC, test "$ENABLE_STATIC" == "1")
+
+AC_ARG_ENABLE(firmware,
+	[  --enable-firmware	Don't use dynamic allocations at all],
+	[ENABLE_FIRMWARE=1], [ENABLE_FIRMWARE=0]) 
+AM_CONDITIONAL(ENABLE_FIRMWARE, test "$ENABLE_FIRMWARE" == "1")
+
+AC_ARG_ENABLE(reader-cm5x21,
+	[  --enable-reader-cm5x21 Support for Omnikey Cardman 5121/5321],
+	[ENABLE_CM5121=1], [ENABLE_CM5121=0])
+AM_CONDITIONAL(ENABLE_CM5121, test "$ENABLE_CM5121" == "1")
+
+
+AC_ARG_WITH()
 #AC_CHECK_HEADERS(usb.h, [have_libusb="yes"], [ AC_MSG_WARN([usb.h not found, use --enable-libusb=PATH. Otherwise, INDI will compile without Apogee USB support.]) ])
 
 AC_CHECK_LIB(usb, usb_close,,)

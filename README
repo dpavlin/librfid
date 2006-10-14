@@ -41,6 +41,7 @@ everything.
 
 This reader is not yet supported.
 
+
 2.x Further Readers
 
 Support for more devices shouldn't be too difficult to add, provided the
@@ -54,14 +55,19 @@ based on Philips CL RC622, RC531 and RC632, adding support should be very
 straightforward.  If you want to contract me for implementing a driver
 backend, don't hesitate to contact me.
 
-3. Installation
 
-In order to run librfid, you need a reader transport backend that provides a
-PC_to_RDR_Escape function.  The current version of this library offers two backends
+3. Building / Installing
+
+In the default configuration, librfid only includes the driver for the OpenPCD
+dumbreader firmware.
+
+If you want support for Omnikey Cardman 5121/5321, you have to add
+'--enable-reader-cm5x21' to the './configure' comannd, _and_ choose the backend
+you want to use, either:
 
 3.1 (new) native CCID backend
 
-If you add the '--with-ccid' option to the './configure' command, then the new
+If you add the '--enable-ccid' option to the './configure' command, then the new
 native CCID driver (courtesy of Werner Koch) will be linked into the library.
 This requires a working libusb with development headers.  
 
@@ -84,6 +90,10 @@ Please note that while librfid in this configuration _uses_ OpenCT as a
 lower-layer transport interface, it doesn't actually provide a virtual reader
 interface to it, i.e. you can't use CT-API/OpenCT/PCSC API's to access RFID
 transponders.
+
+In order to use this backend, you need to use the
+'--with-openct=/path/to/openct' option.
+
 
 4. Testing
 

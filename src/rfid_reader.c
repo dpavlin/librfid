@@ -26,7 +26,7 @@
 #include <librfid/rfid_reader_openpcd.h>
 
 static const struct rfid_reader *rfid_readers[] = {
-#ifndef LIBRFID_FIRMWARE
+#ifdef ENABLE_CM5121
 	[RFID_READER_CM5121]	= &rfid_reader_cm5121,
 #endif
 	[RFID_READER_OPENPCD]	= &rfid_reader_openpcd,

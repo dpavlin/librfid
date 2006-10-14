@@ -32,7 +32,6 @@
 #include <string.h>
 #include <errno.h>
 
-#include <usb.h>
 
 #include <librfid/rfid.h>
 #include <librfid/rfid_reader.h>
@@ -57,6 +56,7 @@ static struct openpcd_hdr *rcv_hdr;
 
 #ifndef LIBRFID_FIRMWARE
 
+#include <usb.h>
 static struct usb_device *dev;
 static struct usb_dev_handle *hdl;
 
