@@ -23,7 +23,7 @@
 #include <librfid/rfid_protocol_mifare_ul.h>
 #include <librfid/rfid_protocol_mifare_classic.h>
 
-#ifdef LIBRFID_FIRMWARE
+#ifdef LIBRFID_STATIC
 struct rfid_asic_handle rfid_ah;
 struct rfid_layer2_handle rfid_l2h;
 struct rfid_protocol_handle rfid_ph;

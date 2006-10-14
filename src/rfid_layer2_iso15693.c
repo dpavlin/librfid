@@ -259,6 +259,13 @@ iso14443a_hlta(struct rfid_layer2_handle *handle)
 }
 #endif
 
+
+static int
+iso15693_anticol(struct rfid_layer2_handle *handle)
+{
+	return -1;
+}
+
 static struct rfid_layer2_handle *
 iso15693_init(struct rfid_reader_handle *rh)
 {
@@ -270,7 +277,6 @@ iso15693_init(struct rfid_reader_handle *rh)
 	h->l2 = &rfid_layer2_iso15693;
 	h->rh = rh;
 	h->priv.iso15693.state = ISO15693_STATE_NONE;
-
 	ret = h->rh->reader->iso15693.init(h->rh);
 	if (ret < 0) {
 		free_layer2_handle(h);
@@ -293,7 +299,7 @@ const struct rfid_layer2 rfid_layer2_iso15693 = {
 	.name 	= "ISO 15693",
 	.fn	= {
 		.init 		= &iso15693_init,
-		//.open 		= &iso15693_anticol,
+		.open 		= &iso15693_anticol,
 		//.transceive 	= &iso15693_transceive,
 		//.close 		= &iso14443a_hlta,
 		.fini 		= &iso15693_fini,
