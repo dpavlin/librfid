@@ -226,14 +226,14 @@ const struct rfid_asic_transport openpcd_rat = {
 static int openpcd_reg_write(struct rfid_asic_transport_handle *rath,
 			     unsigned char reg, unsigned char value)
 {
-	return rc632_reg_write(rath, reg, value);
+	return opcd_rc632_reg_write(rath, reg, value);
 }
 
 static int openpcd_reg_read(struct rfid_asic_transport_handle *rath,
 			    unsigned char reg,
 			    unsigned char *value)
 {
-	return rc632_reg_read(rath, reg, value);
+	return opcd_rc632_reg_read(rath, reg, value);
 }
 
 
@@ -241,7 +241,7 @@ static int openpcd_fifo_read(struct rfid_asic_transport_handle *rath,
 			     unsigned char num_bytes,
 			     unsigned char *buf)
 {
-	return rc632_fifo_read(rath, num_bytes, buf);
+	return opcd_rc632_fifo_read(rath, num_bytes, buf);
 }
 
 static int openpcd_fifo_write(struct rfid_asic_transport_handle *rath,
@@ -249,7 +249,7 @@ static int openpcd_fifo_write(struct rfid_asic_transport_handle *rath,
 			     const unsigned char *bytes,
 			     unsigned char flags)
 {
-	return rc632_fifo_write(rath, len, bytes, flags);
+	return opcd_rc632_fifo_write(rath, len, bytes, flags);
 }
 
 const struct rfid_asic_transport openpcd_rat = {
