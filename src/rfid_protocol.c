@@ -1,5 +1,5 @@
 /* librfid - layer 3 protocol handler 
- * (C) 2005 by Harald Welte <laforge@gnumonks.org>
+ * (C) 2005-2006 by Harald Welte <laforge@gnumonks.org>
  */
 
 /*
@@ -24,7 +24,11 @@
 #include <librfid/rfid_layer2.h>
 #include <librfid/rfid_protocol.h>
 
-static struct rfid_protocol *rfid_protocol_list;
+static const struct rfid_protocol *rfid_protocols[] = {
+	[RFID_PROTOCOL_MIFARE_CLASSIC]	= &rfid_protocol_mfcl,
+	[RFID_PROTOCOL_MIFARE_UL] 	= &rfid_protocol_mful,
+	[RFID_PROTOCOL_TCL]		= &rfid_protocol_tcl,
+};
 
 struct rfid_protocol_handle *
 rfid_protocol_init(struct rfid_layer2_handle *l2h, unsigned int id)
@@ -32,13 +36,12 @@ rfid_protocol_init(struct rfid_layer2_handle *l2h, unsigned int id)
 	struct rfid_protocol *p;
 	struct rfid_protocol_handle *ph = NULL;
 
-	for (p = rfid_protocol_list; p; p = p->next) {
-		if (p->id == id) {
-			ph = p->fn.init(l2h);
-			break;
-		}
-	}
+	if (id >= ARRAY_SIZE(rfid_protocols))
+		return NULL;
 
+	p = rfid_protocols[id];
+
+	ph = p->fn.init(l2h);
 	if (!ph)
 		return NULL;
 
@@ -100,15 +103,6 @@ rfid_protocol_close(struct rfid_protocol_handle *ph)
 {
 	if (ph->proto->fn.close)
 		return ph->proto->fn.close(ph);
-	return 0;
-}
-
-int
-rfid_protocol_register(struct rfid_protocol *p)
-{
-	p->next = rfid_protocol_list;
-	rfid_protocol_list = p;
-
 	return 0;
 }
 

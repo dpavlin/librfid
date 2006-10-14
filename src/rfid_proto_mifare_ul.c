@@ -1,7 +1,7 @@
 
 /* Mifare Ultralight implementation, PCD side.
  *
- * (C) 2005 by Harald Welte <laforge@gnumonks.org>
+ * (C) 2005-2006 by Harald Welte <laforge@gnumonks.org>
  *
  */
 
@@ -112,17 +112,17 @@ static struct rfid_protocol_handle *
 mful_init(struct rfid_layer2_handle *l2h)
 {
 	struct rfid_protocol_handle *ph;
-	ph = malloc(sizeof(struct rfid_protocol_handle));
+	ph = malloc_protocol_handle(sizeof(struct rfid_protocol_handle));
 	return ph;
 }
 
 static int mful_fini(struct rfid_protocol_handle *ph)
 {
-	free(ph);
+	free_protocol_handle(ph);
 	return 0;
 }
 
-struct rfid_protocol rfid_protocol_mful = {
+const struct rfid_protocol rfid_protocol_mful = {
 	.id	= RFID_PROTOCOL_MIFARE_UL,
 	.name	= "Mifare Ultralight",
 	.fn	= {

@@ -50,6 +50,6 @@ enum iso15693_state {
 };
 
 #include <librfid/rfid_layer2.h>
-extern struct rfid_layer2 rfid_layer2_iso15693;
+extern const struct rfid_layer2 rfid_layer2_iso15693;
 
 #endif /* _ISO15693_H */

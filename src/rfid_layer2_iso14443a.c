@@ -287,7 +287,7 @@ static struct rfid_layer2_handle *
 iso14443a_init(struct rfid_reader_handle *rh)
 {
 	int ret;
-	struct rfid_layer2_handle *h = malloc(sizeof(*h));
+	struct rfid_layer2_handle *h = malloc_layer2_handle(sizeof(*h));
 	if (!h)
 		return NULL;
 
@@ -298,7 +298,7 @@ iso14443a_init(struct rfid_reader_handle *rh)
 
 	ret = h->rh->reader->iso14443a.init(h->rh);
 	if (ret < 0) {
-		free(h);
+		free_layer2_handle(h);
 		return NULL;
 	}
 
@@ -308,12 +308,12 @@ iso14443a_init(struct rfid_reader_handle *rh)
 static int
 iso14443a_fini(struct rfid_layer2_handle *handle)
 {
-	free(handle);
+	free_layer2_handle(handle);
 	return 0;
 }
 
 
-struct rfid_layer2 rfid_layer2_iso14443a = {
+const struct rfid_layer2 rfid_layer2_iso14443a = {
 	.id	= RFID_LAYER2_ISO14443A,
 	.name 	= "ISO 14443-3 A",
 	.fn	= {

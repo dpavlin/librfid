@@ -84,7 +84,7 @@ enum iso14443a_state {
 
 
 #include <librfid/rfid_layer2.h>
-struct rfid_layer2 rfid_layer2_iso14443a;
+extern const struct rfid_layer2 rfid_layer2_iso14443a;
 
 #endif /* __LIBRFID__ */
 

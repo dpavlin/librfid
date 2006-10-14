@@ -18,12 +18,18 @@
 #include <string.h>
 
 #include <librfid/rfid_reader.h>
-#include <librfid/rfid_reader_cm5121.h>
-#include <librfid/rfid_reader_openpcd.h>
 #include <librfid/rfid_protocol.h>
 #include <librfid/rfid_protocol_tcl.h>
 #include <librfid/rfid_protocol_mifare_ul.h>
 #include <librfid/rfid_protocol_mifare_classic.h>
+
+#ifdef LIBRFID_FIRMWARE
+struct rfid_asic_handle rfid_ah;
+struct rfid_layer2_handle rfid_l2h;
+struct rfid_protocol_handle rfid_ph;
+struct rfid_asic_transport_handle rfid_ath;
+struct rfid_reader_handle rfid_rh;
+#endif
 
 const char *
 rfid_hexdump(const void *data, unsigned int len)
@@ -92,6 +98,7 @@ int rfid_getopt(struct rfid_handle *rh, unsigned int level,
 
 int rfid_init()
 {
+#if 0
 	rfid_reader_register(&rfid_reader_cm5121);
 	rfid_reader_register(&rfid_reader_openpcd);
 	rfid_layer2_register(&rfid_layer2_iso14443a);
@@ -99,6 +106,7 @@ int rfid_init()
 	rfid_protocol_register(&rfid_protocol_tcl);
 	rfid_protocol_register(&rfid_protocol_mful);
 	rfid_protocol_register(&rfid_protocol_mfcl);
+#endif
 
 	return 0;
 }

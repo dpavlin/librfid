@@ -5,6 +5,8 @@
 
 #ifdef __LIBRFID__
 
+#include <librfid/rfid_system.h>
+
 enum rfid_frametype {
 	RFID_14443A_FRAME_REGULAR,
 	RFID_14443B_FRAME_REGULAR,

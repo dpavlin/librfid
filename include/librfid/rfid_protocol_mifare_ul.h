@@ -17,7 +17,7 @@ int rfid_mful_lock_otp(struct rfid_protocol_handle *ph);
 #define MIFARE_UL_PAGE_LOCK	2
 #define MIFARE_UL_PAGE_OTP	3
 
-extern struct rfid_protocol rfid_protocol_mful;
+extern const struct rfid_protocol rfid_protocol_mful;
 
 #endif /* __LIBRFID__ */
 

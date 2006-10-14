@@ -162,29 +162,24 @@ static int
 transceive_attrib(struct rfid_layer2_handle *h, const unsigned char *inf,
 	    unsigned int inf_len, unsigned char *rx_data, unsigned int *rx_len)
 {
-	struct iso14443b_attrib_hdr *attrib;
-	unsigned int attrib_size = sizeof(*attrib) + inf_len;
-	unsigned char *rx_buf;
+	struct {
+		struct iso14443b_attrib_hdr attrib;
+		char buf[256-3];
+	} _attrib_buf;
+
+	struct iso14443b_attrib_hdr *attrib = &_attrib_buf.attrib;
+	unsigned char rx_buf[256];
 	unsigned char fsdi;
 	int ret = 0;
 	
 	DEBUGP("fsd is %u\n", h->priv.iso14443b.fsd);
-	attrib = malloc(attrib_size);
-	if (!attrib) {
-		perror("attrib_alloc");
-		return -1;
-	}
-
-	DEBUGP("fsd is %u\n", h->priv.iso14443b.fsd);
-	rx_buf = malloc(*rx_len+1);
-	if (!rx_buf) {
-		perror("rx_buf malloc");
-		ret = -1;
+	if (rx_len >= rx_len-1) {
+		perror("rx_len too large\n");
 		goto out_attrib;
 	}
 
 	/* initialize attrib frame */
-	memset(attrib, 0, attrib_size);
+	memset(&_attrib_buf, 0, sizeof(_attrib_buf));
 	if (inf_len)
 		memcpy((unsigned char *)attrib+sizeof(*attrib), inf, inf_len);
 
@@ -237,7 +232,6 @@ transceive_attrib(struct rfid_layer2_handle *h, const unsigned char *inf,
 out_rx:
 	free(rx_buf);
 out_attrib:
-	free(attrib);
 
 	return ret;
 }
@@ -295,7 +289,7 @@ static struct rfid_layer2_handle *
 iso14443b_init(struct rfid_reader_handle *rh)
 {
 	int ret;
-	struct rfid_layer2_handle *h = malloc(sizeof(*h));
+	struct rfid_layer2_handle *h = malloc_layer2_handle(sizeof(*h));
 	if (!h)
 		return NULL;
 
@@ -317,7 +311,7 @@ iso14443b_init(struct rfid_reader_handle *rh)
 	ret = h->rh->reader->iso14443b.init(h->rh);
 	if (ret < 0) {
 		DEBUGP("error during reader 14443b init\n");
-		free(h);
+		free_layer2_handle(h);
 		return NULL;
 	}
 
@@ -327,7 +321,7 @@ iso14443b_init(struct rfid_reader_handle *rh)
 static int
 iso14443b_fini(struct rfid_layer2_handle *handle)
 {
-	free(handle);
+	free_layer2_handle(handle);
 	return 0;
 }
 
@@ -394,7 +388,7 @@ iso14443b_setopt(struct rfid_layer2_handle *handle,
 }
 
 
-struct rfid_layer2 rfid_layer2_iso14443b = {
+const struct rfid_layer2 rfid_layer2_iso14443b = {
 	.id	= RFID_LAYER2_ISO14443B,
 	.name 	= "ISO 14443-3 B",
 	.fn	= {

@@ -36,7 +36,8 @@ struct tcl_handle {
 	unsigned int toggle;	/* send toggle with next frame */
 
 	unsigned int ats_len;
-	unsigned char ats[0];
+	unsigned char ats[256];	/* ATS cannot be bigger than FSD-2 bytes,
+				   according to ISO 14443-4 5.2.2 */
 };
 
 enum tcl_handle_flags {
@@ -63,7 +64,7 @@ enum tcl_pcd_state {
 	TCL_STATE_DESELECTED,		/* card deselected or HLTA'd */
 };
 
-struct rfid_protocol rfid_protocol_tcl;
+extern const struct rfid_protocol rfid_protocol_tcl;
 
 #endif /* __LIBRFID__ */
 

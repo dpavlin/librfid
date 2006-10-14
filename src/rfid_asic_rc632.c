@@ -1,6 +1,6 @@
 /* Generic Philips CL RC632 Routines
  *
- * (C) Harald Welte <laforge@gnumonks.org>
+ * (C) 2005-2006 Harald Welte <laforge@gnumonks.org>
  *
  */
 
@@ -41,7 +41,7 @@
 #define RC632_TMO_AUTH1	14000
 
 #define ENTER()		DEBUGP("entering\n")
-struct rfid_asic rc632;
+const struct rfid_asic rc632;
 
 /* Register and FIFO Access functions */
 static int 
@@ -596,7 +596,7 @@ rc632_open(struct rfid_asic_transport_handle *th)
 {
 	struct rfid_asic_handle *h;
 
-	h = malloc(sizeof(*h));
+	h = malloc_asic_handle(sizeof(*h));
 	if (!h)
 		return NULL;
 	memset(h, 0, sizeof(*h));
@@ -609,7 +609,7 @@ rc632_open(struct rfid_asic_transport_handle *th)
 	h->mtu = h->mru = 64;
 
 	if (rc632_init(h) < 0) {
-		free(h);
+		free_asic_handle(h);
 		return NULL;
 	}
 
@@ -620,14 +620,14 @@ void
 rc632_close(struct rfid_asic_handle *h)
 {
 	rc632_fini(h);
-	free(h);
+	free_asic_handle(h);
 }
 
 
 /* 
  * Philips CL RC632 primitives for ISO 14443-A compliant PICC's
  *
- * (C) 2005 by Harald Welte <laforge@gnumonks.org>
+ * (C) 2005-2006 by Harald Welte <laforge@gnumonks.org>
  *
  */
 
@@ -1581,7 +1581,7 @@ rc632_mifare_transceive(struct rfid_asic_handle *handle,
 	return 0; 
 }
 
-struct rfid_asic rc632 = {
+const struct rfid_asic rc632 = {
 	.name 	= "Philips CL RC632",
 	.fc 	= ISO14443_FREQ_CARRIER,
 	.priv.rc632 = {
