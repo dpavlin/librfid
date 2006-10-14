@@ -26,15 +26,15 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-
-#ifndef LIBRFID_FIRMWARE
-
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
 
 #include <librfid/rfid.h>
+
+#ifndef LIBRFID_FIRMWARE
+
 #include <librfid/rfid_reader.h>
 #include <librfid/rfid_asic.h>
 #include <librfid/rfid_asic_rc632.h>
@@ -380,6 +380,9 @@ const struct rfid_reader rfid_reader_cm5121 = {
 	},
 	.iso14443b = {
 		.init = &cm5121_14443b_init,
+	},
+	.iso15693 = {
+		.init = &cm5121_15693_init,
 	},
 	.mifare_classic = {
 		.setkey = &cm5121_mifare_setkey,

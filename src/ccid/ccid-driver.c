@@ -71,6 +71,10 @@
    level exchange and does fully automatic initialization.
 */
 
+#include <librfid/rfid.h>
+
+#ifndef LIBRFID_FIRMWARE
+
 #ifdef HAVE_CONFIG_H
 # include <config.h>
 #endif
@@ -2446,3 +2450,5 @@ main (int argc, char **argv)
  */
 #endif /*TEST*/
 #endif /*HAVE_LIBUSB*/
+
+#endif /* LIBRFID_FIRMWARE */

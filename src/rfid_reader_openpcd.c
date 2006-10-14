@@ -226,12 +226,14 @@ const struct rfid_asic_transport openpcd_rat = {
 static int openpcd_reg_write(struct rfid_asic_transport_handle *rath,
 			     unsigned char reg, unsigned char value)
 {
+	return rc632_reg_write(rath, reg, value);
 }
 
 static int openpcd_reg_read(struct rfid_asic_transport_handle *rath,
 			    unsigned char reg,
 			    unsigned char *value)
 {
+	return rc632_reg_write(rath, reg, value);
 }
 
 
@@ -239,6 +241,7 @@ static int openpcd_fifo_read(struct rfid_asic_transport_handle *rath,
 			     unsigned char num_bytes,
 			     unsigned char *buf)
 {
+	return rc632_reg_write(rath, num_bytes, buf);
 }
 
 static int openpcd_fifo_write(struct rfid_asic_transport_handle *rath,
@@ -246,6 +249,7 @@ static int openpcd_fifo_write(struct rfid_asic_transport_handle *rath,
 			     const unsigned char *bytes,
 			     unsigned char flags)
 {
+	return rc632_fifo_write(rath, len, bytes, flags);
 }
 
 const struct rfid_asic_transport openpcd_rat = {
@@ -365,6 +369,7 @@ openpcd_open(void *data)
 	snd_hdr = (struct openpcd_hdr *)snd_buf;
 	rcv_hdr = (struct openpcd_hdr *)rcv_buf;
 
+#ifndef LIBRFID_FIRMWARE
 	usb_init();
 	if (usb_find_busses() < 0)
 		return NULL;
@@ -388,6 +393,7 @@ openpcd_open(void *data)
 		usb_close(hdl);
 		return NULL;
 	}
+#endif
 
 	rh = malloc_reader_handle(sizeof(*rh));
 	if (!rh)
@@ -426,7 +432,9 @@ openpcd_close(struct rfid_reader_handle *rh)
 	free_rat_handle(rath);
 	free_reader_handle(rh);
 
+#ifndef LIBRFID_FIRMWARE
 	usb_close(hdl);
+#endif
 }
 
 const struct rfid_reader rfid_reader_openpcd = {
@@ -451,6 +459,9 @@ const struct rfid_reader rfid_reader_openpcd = {
 	},
 	.iso14443b = {
 		.init = &openpcd_14443b_init,
+	},
+	.iso15693 = {
+		.init = &openpcd_15693_init,
 	},
 	.mifare_classic = {
 		.setkey = &openpcd_mifare_setkey,

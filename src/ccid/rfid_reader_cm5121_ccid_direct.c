@@ -3,6 +3,10 @@
 #include <unistd.h>
 #include <stdio.h>
 
+#include <librfid/rfid.h>
+
+#ifndef LIBRFID_FIRMWARE
+
 #include <librfid/rfid_asic.h>
 
 #include "ccid-driver.h"
@@ -34,3 +38,5 @@ int cm5121_source_init(struct rfid_asic_transport_handle *rath)
         }
 	return 0;
 }
+
+#endif /* LIBRFID_FIRMWARE */

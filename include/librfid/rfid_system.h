@@ -1,10 +1,14 @@
 /* system / environment specific defines */
 
+/* build for openpcd firmware */
 //#define LIBRFID_FIRMWARE
+
+/* build without dynamic allocations */
+#define LIBRFID_STATIC
 
 #ifdef __LIBRFID__
 
-#ifndef LIBRFID_FIRMWARE
+#ifndef LIBRFID_STATIC
 /* If we're not doing a firmware compile, then we just use the regular
  * malloc()/free() functions as expected */
 
@@ -48,6 +52,6 @@ extern struct rfid_reader_handle rfid_rh;
 #define malloc_reader_handle(x)	&rfid_rh
 #define free_reader_handle(x)	EMPTY_STATEMENT
 
-#endif /* LIBRFID_FIRMWARE */
+#endif /* LIBRFID_STATIC */
 
 #endif /* __LIBRFID__ */
