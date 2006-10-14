@@ -402,7 +402,7 @@ rc632_transceive(struct rfid_asic_handle *handle,
 				return ret;
 
 			cur_tx_len = 64 - fifo_fill;
-			printf("refilling tx fifo with %u bytes\n", cur_tx_len);
+			//printf("refilling tx fifo with %u bytes\n", cur_tx_len);
 		} else
 			cur_tx_len = 0;
 
@@ -420,9 +420,9 @@ rc632_transceive(struct rfid_asic_handle *handle,
 	if (ret < 0)
 		return ret;
 
-	if (rx_avail > *rx_len)
-		printf("rx_avail(%d) > rx_len(%d), JFYI\n", rx_avail, *rx_len);
-	else if (*rx_len > rx_avail)
+	if (rx_avail > *rx_len) {
+		//printf("rx_avail(%d) > rx_len(%d), JFYI\n", rx_avail, *rx_len);
+	} else if (*rx_len > rx_avail)
 		*rx_len = rx_avail;
 
 	if (rx_avail == 0) {

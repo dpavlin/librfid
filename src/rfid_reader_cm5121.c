@@ -305,7 +305,6 @@ static int cm5121_enable_rc632(struct rfid_asic_transport_handle *rath)
 	unsigned int rx_len = sizeof(rx_buf);
 
 	PC_to_RDR_Escape(rath->data, tx_buf, 1, rx_buf, &rx_len);
-	printf("received %u bytes from 01 command\n", rx_len);
 
 	return 0;
 }

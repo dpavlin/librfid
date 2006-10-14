@@ -1,10 +1,14 @@
 /* system / environment specific defines */
 
 /* build for openpcd firmware */
-//#define LIBRFID_FIRMWARE
+#define LIBRFID_FIRMWARE
 
 /* build without dynamic allocations */
+//#define LIBRFID_STATIC
+//
+#ifdef LIBRFID_FIRMWARE
 #define LIBRFID_STATIC
+#endif
 
 #ifdef __LIBRFID__
 
