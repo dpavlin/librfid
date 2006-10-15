@@ -112,7 +112,10 @@ iso14443a_anticol(struct rfid_layer2_handle *handle)
 	memset(&atqa, 0, sizeof(atqa));
 	memset(&acf, 0, sizeof(acf));
 
-	ret = iso14443a_transceive_sf(handle, ISO14443A_SF_CMD_REQA, &atqa);
+	if (handle->flags & RFID_OPT_LAYER2_WUP)
+		ret = iso14443a_transceive_sf(handle, ISO14443A_SF_CMD_WUPA, &atqa);
+	else
+		ret = iso14443a_transceive_sf(handle, ISO14443A_SF_CMD_REQA, &atqa);
 	if (ret < 0) {
 		h->state = ISO14443A_STATE_REQA_SENT;
 		DEBUGP("error during transceive_sf: %d\n", ret);
@@ -290,6 +293,8 @@ iso14443a_init(struct rfid_reader_handle *rh)
 	struct rfid_layer2_handle *h = malloc_layer2_handle(sizeof(*h));
 	if (!h)
 		return NULL;
+
+	memset(h, 0, sizeof(*h));
 
 	h->l2 = &rfid_layer2_iso14443a;
 	h->rh = rh;

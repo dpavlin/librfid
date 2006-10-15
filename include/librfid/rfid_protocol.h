@@ -27,6 +27,12 @@ rfid_protocol_write(struct rfid_protocol_handle *ph,
 int rfid_protocol_fini(struct rfid_protocol_handle *ph);
 int rfid_protocol_close(struct rfid_protocol_handle *ph);
 
+int rfid_protocol_getopt(struct rfid_protocol_handle *ph, int optname,
+			 void *optval, unsigned int *optlen);
+
+int rfid_protocol_setopt(struct rfid_protocol_handle *ph, int optname,
+			 const void *optval, unsigned int optlen);
+
 char *rfid_protocol_name(struct rfid_protocol_handle *ph);
 
 enum rfid_protocol_id {
@@ -36,6 +42,9 @@ enum rfid_protocol_id {
 	RFID_PROTOCOL_MIFARE_CLASSIC,
 };
 
+enum rfid_protocol_opt {
+	RFID_OPT_PROTO_ID,
+};
 
 #ifdef __LIBRFID__
 
@@ -65,6 +74,11 @@ struct rfid_protocol {
 			     unsigned int page,
 			     unsigned char *tx_data,
 			     unsigned int tx_len);
+		int (*getopt)(struct rfid_protocol_handle *h,
+			      int optname, void *optval, unsigned int *optlen);
+		int (*setopt)(struct rfid_protocol_handle *h,
+			      int optname, const void *optval,
+			      unsigned int optlen);
 	} fn;
 };
 

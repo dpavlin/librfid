@@ -1,4 +1,5 @@
 #ifndef _MIFARE_CLASSIC_H
+#define _MIFARE_CLASSIC_H
 
 #include <librfid/rfid_protocol.h>
 
