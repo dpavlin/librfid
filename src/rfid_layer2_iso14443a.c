@@ -33,7 +33,7 @@
 #define TIMEOUT 1236
 
 /* Transceive a 7-bit short frame */
-static int
+int
 iso14443a_transceive_sf(struct rfid_layer2_handle *handle,
 			 unsigned char cmd,
 			 struct iso14443a_atqa *atqa)
