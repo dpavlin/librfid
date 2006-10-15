@@ -43,7 +43,7 @@ rfid_layer2_scan1(struct rfid_reader_handle *rh, int l2)
 	return NULL;
 }
 
-static struct rfid_layer2_handle *
+struct rfid_layer2_handle *
 rfid_layer2_scan(struct rfid_reader_handle *rh)
 {
 	struct rfid_layer2_handle *l2h;
@@ -80,7 +80,7 @@ rfid_protocol_scan1(struct rfid_layer2_handle *l2h, int proto)
 	return NULL;
 }
 
-static struct rfid_protocol_handle *
+struct rfid_protocol_handle *
 rfid_protocol_scan(struct rfid_layer2_handle *l2h)
 {
 	struct rfid_protocol_handle *ph;

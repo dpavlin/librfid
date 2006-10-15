@@ -1,4 +1,4 @@
-/* librfid - layer 3 protocol handler 
+/* librfid - layer 4 protocol handler 
  * (C) 2005-2006 by Harald Welte <laforge@gnumonks.org>
  */
 
@@ -103,6 +103,47 @@ rfid_protocol_close(struct rfid_protocol_handle *ph)
 {
 	if (ph->proto->fn.close)
 		return ph->proto->fn.close(ph);
+	return 0;
+}
+
+int
+rfid_protocol_getopt(struct rfid_protocol_handle *ph, int optname,
+		     void *optval, unsigned int *optlen)
+{
+	if (optname >> 16 == 0) {
+		unsigned char *optchar = optval;
+
+		switch (optname) {
+			break;
+		default:
+			return -EINVAL;
+			break;
+		}
+	} else {
+		if (!ph->proto->fn.getopt)
+			return -EINVAL;
+
+		return ph->proto->fn.getopt(ph, optname, optval, optlen);
+	}
+	return 0;
+}
+
+int
+rfid_protocol_setopt(struct rfid_protocol_handle *ph, int optname,
+		     const void *optval, unsigned int optlen)
+{
+	if (optname >> 16 == 0) {
+		switch (optname) {
+		default:
+			return -EINVAL;
+			break;
+		}
+	} else {
+		if (!ph->proto->fn.setopt)
+			return -EINVAL;
+
+		return ph->proto->fn.setopt(ph, optname, optval, optlen);
+	}
 	return 0;
 }
 

@@ -1,6 +1,11 @@
 #ifndef _RFID_PROTOCOL_TCL_H
 #define _RFID_PROTOCOL_TCL_H
 
+enum rfid_proto_tcl_opt {
+	RFID_OPT_P_TCL_ATS	=	0x00010001,
+	RFID_OPT_P_TCL_ATS_LEN	=	0x00010002,
+};
+
 #ifdef __LIBRFID__
 
 enum tcl_transport_rate {

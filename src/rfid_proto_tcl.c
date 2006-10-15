@@ -122,7 +122,8 @@ tcl_parse_ats(struct rfid_protocol_handle *h,
 		} else {
 			/* Section 7.2: fwi for type B is always in ATQB */
 			/* Value is assigned in tcl_connect() */
-			/* This function is never called for Type B, since it has no (R)ATS */
+			/* This function is never called for Type B, 
+			 * since Type B has no (R)ATS */
 		}
 		return 0;
 	}
@@ -762,6 +763,43 @@ tcl_fini(struct rfid_protocol_handle *ph)
 	return 0;
 }
 
+int 
+tcl_getopt(struct rfid_protocol_handle *h, int optname, void *optval,
+	   unsigned int *optlen)
+{
+	u_int8_t *opt_str = optval;
+
+	switch (optname) {
+	case RFID_OPT_P_TCL_ATS:
+		if (h->priv.tcl.ats_len < *optlen)
+			*optlen = h->priv.tcl.ats_len;
+		memcpy(opt_str, h->priv.tcl.ats, *optlen);
+		break;
+	case RFID_OPT_P_TCL_ATS_LEN:
+		if (*optlen < sizeof(u_int8_t))
+			return -E2BIG;
+		*optlen = sizeof(u_int8_t);
+		*opt_str = h->priv.tcl.ats_len & 0xff;
+		break;
+	}
+
+	return 0;
+}
+
+int
+tcl_setopt(struct rfid_protocol_handle *h, int optname, const void *optval,
+	   unsigned int optlen)
+{
+	int ret = -EINVAL;
+
+	switch (optname) {
+	default:
+		break;
+	}
+
+	return ret;
+}
+
 const struct rfid_protocol rfid_protocol_tcl = {
 	.id	= RFID_PROTOCOL_TCL,
 	.name	= "ISO 14443-4 / T=CL",
@@ -771,5 +809,7 @@ const struct rfid_protocol rfid_protocol_tcl = {
 		.transceive = &tcl_transceive,
 		.close = &tcl_deselect,
 		.fini = &tcl_fini,
+		.getopt = &tcl_getopt,
+		.setopt = &tcl_setopt,
 	},
 };
