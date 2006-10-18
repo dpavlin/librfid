@@ -64,7 +64,6 @@ struct rfid_layer2 {
 			      int optname, const void *optval,
 			      unsigned int optlen);
 	} fn;
-	struct rfid_layer2 *next;
 };
 
 struct rfid_layer2_handle {

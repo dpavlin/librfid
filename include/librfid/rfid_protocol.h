@@ -49,7 +49,6 @@ enum rfid_protocol_opt {
 #ifdef __LIBRFID__
 
 struct rfid_protocol {
-	struct rfid_protocol *next;
 	unsigned int id;
 	char *name;
 	struct {

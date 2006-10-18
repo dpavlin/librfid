@@ -45,7 +45,6 @@ struct rfid_reader {
 		int (*auth)(struct rfid_reader_handle *h, u_int8_t cmd,
 			    u_int32_t serno, u_int8_t block);
 	} mifare_classic;
-	struct rfid_reader *next;
 };
 
 enum rfid_reader_id {
