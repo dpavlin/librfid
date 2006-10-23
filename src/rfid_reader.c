@@ -43,6 +43,8 @@ rfid_reader_open(void *data, unsigned int id)
 	}
 
 	p = rfid_readers[id];
+	if (!p)
+		return NULL;
 
 	return p->open(data);
 }
