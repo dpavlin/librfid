@@ -1,5 +1,7 @@
 rc632:
 - fix handling of timeout (program timer of RC632)
+- add a timeout tolerance factor that can be user-specified
+- make sure interrupt mode for timer wait works
 
 cm5121:
 - fix handling of TX or RX > 0x7f [buffer length in atmel chip?]
@@ -16,10 +18,12 @@ iso15693:
 - implement all the rest
 
 mifare_clasic:
+- test 
+- try to auto-detect 1k/4k
+- try to distinguish mifare ultralight and mifare classic in/after anticol
 
 tcl:
 - implement pps for asymmetric (rx/tx) speeds
-- test pps
 
 openct:
 - add ifdhandler driver
@@ -27,4 +31,18 @@ openct:
 other:
 - implementation of code for various passive tags
 - documentation
-
+- add notion of 'asic implementation' for specifying reader-specific
+  initialization values such as mod_conductance
+- abstract a read single block / read multiple block API where l2/proto
+  layer can provide multi-block function (e.g. iso15693), which will be
+  emulated in case there only is a single-block function
+- switch over to use of rfid_buf structure, similar to linux skb.  upper
+  layers have sufficient headroom in order to have lower layers add protocol
+  headers in front of a packet
+- implement software checksumming support.  The reader should be able to
+  indicate whether it supports hardware checksum generation / verification.
+- application software should be able to override hardware csumming on request
+- implement some auto-calibration mode where the user is requested to leave a
+  single PICC/VICC on the reader and the software iterates through various
+  mod_conductance and bitphase values to see whether it can calibrate to a given
+  [new] card. The resulting calibration values are printed by the program.
