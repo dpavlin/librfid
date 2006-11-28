@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <libgen.h>
 
 #define _GNU_SOURCE
 #include <getopt.h>
@@ -34,84 +35,8 @@
 #include <librfid/rfid_protocol_mifare_classic.h>
 #include <librfid/rfid_protocol_mifare_ul.h>
 
-#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
+#include "librfid-tool.h"
 
-static const char *
-hexdump(const void *data, unsigned int len)
-{
-	static char string[1024];
-	unsigned char *d = (unsigned char *) data;
-	unsigned int i, left;
-
-	string[0] = '\0';
-	left = sizeof(string);
-	for (i = 0; len--; i += 3) {
-		if (i >= sizeof(string) -4)
-			break;
-		snprintf(string+i, 4, " %02x", *d++);
-	}
-	return string;
-}
-
-static struct rfid_reader_handle *rh;
-static struct rfid_layer2_handle *l2h;
-static struct rfid_protocol_handle *ph;
-
-static int reader() {
-	printf("opening reader handle\n");
-	rh = rfid_reader_open(NULL, RFID_READER_CM5121);
-	if (!rh) {
-		fprintf(stderr, "No Omnikey Cardman 5121 found\n");
-		rh = rfid_reader_open(NULL, RFID_READER_OPENPCD);
-		if (!rh) {
-			fprintf(stderr, "No OpenPCD found either\n");
-			return -1;
-		}
-	}
-	return 0;
-}
-static int init(int layer2)
-{
-	unsigned char buf[0x3f];
-	int rc;
-
-
-	printf("opening layer2 handle\n");
-	l2h = rfid_layer2_init(rh, layer2);
-	if (!l2h) {
-		fprintf(stderr, "error during iso14443a_init\n");
-		return -1;
-	}
-
-	//rc632_register_dump(rh->ah, buf);
-
-	printf("running layer2 anticol\n");
-	rc = rfid_layer2_open(l2h);
-	if (rc < 0) {
-		fprintf(stderr, "error during layer2_open\n");
-		return rc;
-	}
-
-	return 0;
-}
-
-static int l3(int protocol)
-{
-	printf("running layer3 (ats)\n");
-	ph = rfid_protocol_init(l2h, protocol);
-	if (!ph) {
-		fprintf(stderr, "error during protocol_init\n");
-		return -1;
-	}
-	if (rfid_protocol_open(ph) < 0) {
-		fprintf(stderr, "error during protocol_open\n");
-		return -1;
-	}
-
-	printf("we now have layer3 up and running\n");
-
-	return 0;
-}
 
 static int select_mf(void)
 {
@@ -277,15 +202,17 @@ mifare_classic_read_sector(struct rfid_protocol_handle *ph, int sector)
 	int block;
 
 	/* FIXME: make this work for sectors > 31 */
-	printf("reading sector %u\n", sector);
+	printf("Reading sector %u\n", sector);
 
 	for (block = sector*4; block < sector*4+4; block++) {
-		printf("reading block %u\n", block);
+		printf("Reading block %u: ", block);
 		ret = rfid_protocol_read(ph, block, buf, &len);
 		if(ret == -ETIMEDOUT)
 			fprintf(stderr, "TIMEOUT\n");
-		if (ret < 0)
+		if (ret < 0) {
+			printf("Error %d reading\n", ret);
 			return ret;
+		}
 
 		printf("Page 0x%x: %s\n", block, hexdump(buf, len));
 	}
@@ -348,45 +275,124 @@ static void do_scan(void)
 	}
 }
 
-static void help(void)
-{
-	printf( " -s	--scan\n"
-		" -p	--protocol {tcl,mifare-ultralight,mifare-classic}\n"
-		" -l	--layer2   {iso14443a,iso14443b,iso15693}\n"
-		" -h	--help\n");
-}
+#define OPTION_OFFSET 256
 
-static struct option opts[] = {
+static struct option original_opts[] = {
 	{ "help", 0, 0, 'h' },
 	{ "layer2", 1, 0, 'l' },
 	{ "protocol", 1, 0, 'p' },
+	{ "scan", 0, 0, 's' },
+	{ "scan-loop", 0, 0, 'S' },
 	{0, 0, 0, 0}
 };
+
+/* module / option merging code */
+static struct option *opts = original_opts;
+static unsigned int global_option_offset = 0;
+
+static char *program_name;
+static char *program_version = LIBRFID_TOOL_VERSION;
+
+static void free_opts(int reset_offset)
+{
+	if (opts != original_opts) {
+		free(opts);
+		opts = original_opts;
+		if (reset_offset)
+			global_option_offset = 0;
+	}
+}
+
+static struct option *
+merge_options(struct option *oldopts, const struct option *newopts,
+	      unsigned int *option_offset)
+{
+	unsigned int num_old, num_new, i;
+	struct option *merge;
+
+	for (num_old = 0; oldopts[num_old].name; num_old++);
+	for (num_new = 0; oldopts[num_new].name; num_new++);
+
+	global_option_offset += OPTION_OFFSET;
+	*option_offset = global_option_offset;
+
+	merge = malloc(sizeof(struct option) * (num_new + num_old + 1));
+	memcpy(merge, oldopts, num_old * sizeof(struct option));
+	free_opts(0); /* Release previous options merged if any */
+	for (i = 0; i < num_new; i++) {
+		merge[num_old + i] = newopts[i];
+		merge[num_old + i].val += *option_offset;
+	}
+	memset(merge + num_old + num_new, 0, sizeof(struct option));
+
+	return merge;
+}
+
+struct rfidtool_module *find_module(const char *name)
+{
+	return NULL;
+}
+
+void register_module(struct rfidtool_module *me)
+{
+	struct rfidtool_module *old;
+
+	if (strcmp(me->version, program_version) != 0) {
+		fprintf(stderr, "%s: target `%s' v%s (I'm v%s).\n",
+			program_name, me->name, me->version, program_version);
+		exit(1);
+	}
+
+	old = find_module(me->name);
+	if (old) {
+		fprintf(stderr, "%s: target `%s' already registere.\n",
+			program_name, me->name);
+		exit(1);
+	}
+}
+
+static void help(void)
+{
+	printf( " -s	--scan		scan until first RFID tag is found\n"
+		" -S	--scan-loop	endless scanning loop\n" 
+		" -p	--protocol	{tcl,mifare-ultralight,mifare-classic}\n"
+		" -l	--layer2	{iso14443a,iso14443b,iso15693}\n"
+		" -h	--help\n");
+}
 
 int main(int argc, char **argv)
 {
 	int rc;
 	char buf[0x40];
 	int i, protocol = -1, layer2 = -1;
+
+	program_name = basename(argv[0]);
 	
-	printf("librfid_tool - (C) 2006 by Harald Welte\n"
+	printf("%s - (C) 2006 by Harald Welte\n"
 	       "This program is Free Software and has "
-	       "ABSOLUTELY NO WARRANTY\n\n");
+	       "ABSOLUTELY NO WARRANTY\n\n", program_name);
 
 	printf("initializing librfid\n");
 	rfid_init();
 
 	while (1) {
 		int c, option_index = 0;
-		c = getopt_long(argc, argv, "hp:l:s", opts, &option_index);
+		c = getopt_long(argc, argv, "hp:l:sS", opts, &option_index);
 		if (c == -1)
 			break;
 
 		switch (c) {
 		case 's':
-			if (reader() < 0)
+			if (reader_init() < 0)
 				exit(1);
 			do_scan();
+			exit(0);
+			break;
+		case 'S':
+			if (reader_init() < 0)
+				exit(1);
+			while (1) 
+				do_scan();
 			exit(0);
 			break;
 		case 'p':
@@ -427,13 +433,13 @@ int main(int argc, char **argv)
 		exit(2);
 	}
 	
-	if (reader() < 0)
+	if (reader_init() < 0)
 		exit(1);
 
-	if (init(layer2) < 0)
+	if (l2_init(layer2) < 0)
 		exit(1);
 
-	if (l3(protocol) < 0)
+	if (l3_init(protocol) < 0)
 		exit(1);
 
 	switch (protocol) {
@@ -506,7 +512,9 @@ int main(int argc, char **argv)
 		printf("Protocol Mifare Classic\n");
 		{
 			int sector;
-			for (sector = 1; sector < 31; sector++) {
+			for (sector = 0; sector < 31; sector++) {
+				printf("Authenticating sector %u: ", sector);
+				fflush(stdout);
 				rc = mfcl_set_key(ph, MIFARE_CL_KEYA_DEFAULT_INFINEON);
 				if (rc < 0) {
 					printf("key format error\n");
@@ -517,7 +525,7 @@ int main(int argc, char **argv)
 					printf("mifare auth error\n");
 					exit(1);
 				} else 
-					printf("mifare authe succeeded!\n");
+					printf("mifare auth succeeded!\n");
 
 				mifare_classic_read_sector(ph, sector);
 			}

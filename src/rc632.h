@@ -94,8 +94,12 @@ enum rc632_reg_interrupt {
 };
 
 enum rc632_reg_control {
+	RC632_CONTROL_FIFO_FLUSH	= 0x01,
+	RC632_CONTROL_TIMER_START	= 0x02,
+	RC632_CONTROL_TIMER_STOP	= 0x04,
 	RC632_CONTROL_CRYPTO1_ON	= 0x08,
 	RC632_CONTROL_POWERDOWN		= 0x10,
+	RC632_CONTROL_STANDBY		= 0x20,
 };
 
 enum rc632_reg_error_flag {
@@ -234,4 +238,10 @@ enum rc632_reg_timer_irq {
 	RC632_IRQ_TIMER			= 0x20,
 
 	RC632_IRQ_SET			= 0x80,
+};
+
+enum rc632_reg_secondary_status {
+	RC632_SEC_ST_TMR_RUNNING	= 0x80,
+	RC632_SEC_ST_E2_READY		= 0x40,
+	RC632_SEC_ST_CRC_READY		= 0x20,
 };

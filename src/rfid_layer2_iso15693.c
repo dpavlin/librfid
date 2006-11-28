@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <errno.h>
 
 #include <librfid/rfid.h>
 #include <librfid/rfid_layer2.h>
@@ -92,6 +93,42 @@ iso15693_anticol(struct rfid_layer2_handle *handle)
 	return -1;
 }
 
+static int
+iso15693_getopt(struct rfid_layer2_handle *handle,
+		int optname, void *optval, unsigned int optlen)
+{
+	switch (optname) {
+	case RFID_OPT_15693_MOD_DEPTH:
+	case RFID_OPT_15693_VCD_CODING:
+	case RFID_OPT_15693_VICC_SUBC:
+	case RFID_OPT_15693_VICC_SPEED:
+	default:
+		return -EINVAL;
+		break;
+	}
+	return 0;
+}
+
+static int
+iso15693_setopt(struct rfid_layer2_handle *handle, int optname,
+	        const void *optval, unsigned int optlen)
+{
+	switch (optname) {
+	case RFID_OPT_15693_MOD_DEPTH:
+	case RFID_OPT_15693_VCD_CODING:
+	case RFID_OPT_15693_VICC_SUBC:
+	case RFID_OPT_15693_VICC_SPEED:
+	default:
+		return -EINVAL;
+		break;
+	}
+	return 0;
+}
+
+static int transceive_inventory(struct rfid_layer2_handle *l2h)
+{
+}
+
 static struct rfid_layer2_handle *
 iso15693_init(struct rfid_reader_handle *rh)
 {
@@ -129,6 +166,8 @@ const struct rfid_layer2 rfid_layer2_iso15693 = {
 		//.transceive 	= &iso15693_transceive,
 		//.close 		= &iso14443a_hlta,
 		.fini 		= &iso15693_fini,
+		.setopt		= &iso15693_setopt,
+		.getopt		= &iso15693_getopt,
 	},
 };
 
