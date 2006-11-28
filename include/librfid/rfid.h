@@ -13,7 +13,7 @@ enum rfid_frametype {
 	RFID_MIFARE_FRAME,
 };
 
-#define DEBUG_LIBRFID
+//#define DEBUG_LIBRFID
 
 #ifdef DEBUG_LIBRFID
 
