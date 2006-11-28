@@ -9,7 +9,10 @@
 #define MIFARE_CL_KEYA_DEFAULT_INFINEON	"\xff\xff\xff\xff\xff\xff"
 #define MIFARE_CL_KEYB_DEFAULT_INFINEON MIFARE_CL_KEYA_DEFAULT_INFINEON
 
+#define MIFARE_CL_KEY_LEN	(sizeof(MIFARE_CL_KEYA_DEFAULT)-1)
+
 #define MIFARE_CL_PAGE_MAX	0xff
+#define MIFARE_CL_PAGE_SIZE	20
 
 #define RFID_CMD_MIFARE_AUTH1A	0x60
 #define RFID_CMD_MIFARE_AUTH1B	0x61
@@ -20,6 +23,7 @@ extern const struct rfid_protocol rfid_protocol_mfcl;
 
 
 #define MIFARE_CL_CMD_WRITE16	0xA0
+#define MIFARE_CL_CMD_WRITE4	0xA2
 #define MIFARE_CL_CMD_READ	0x30
 
 #define MIFARE_CL_RESP_ACK	0x0a

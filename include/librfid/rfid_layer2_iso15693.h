@@ -12,9 +12,10 @@
 
 /* protocol definitions */
 
-struct iso15693_handle;
+#if 0
+struct rfid_15693_handle;
 
-struct iso15693_transport {
+struct rfid_layer2_15693t {
 	unsigned char	*name;
 
 	struct {
@@ -39,14 +40,44 @@ struct iso15693_transport {
 	union {
 	} priv;
 };
+#endif
 
 struct iso15693_handle {
 	unsigned int state;
+	unsigned int ask100:1,
+		     out256:1;
 };
 
-enum iso15693_state {
+enum rfid_15693_state {
 	ISO15693_STATE_ERROR,
 	ISO15693_STATE_NONE,
+};
+
+enum rfid_15693_opt {
+	RFID_OPT_15693_MOD_DEPTH	= 0x00010001,
+	RFID_OPT_15693_VCD_CODING	= 0x00010002,
+	RFID_OPT_15693_VICC_SUBC	= 0x00010003,
+	RFID_OPT_15693_VICC_SPEED	= 0x00010004,
+};
+
+enum rfid_15693_opt_mod_depth {
+	RFID_15693_MOD_10ASK	= 0x01,
+	RFID_15693_MOD_100ASK	= 0x02,
+};
+
+enum rfid_15693_opt_vcd_coding {
+	RFID_15693_VCD_CODING_1OUT256	= 0x01,
+	RFID_15693_VCD_CODING_1OUT4	= 0x02,
+};
+
+enum rfid_15693_opt_vicc_subc {
+	RFID_15693_VICC_SUBC_SINGLE	= 0x01,
+	RFID_15693_VICC_SUBC_DUAL	= 0x02,
+};
+
+enum rfid_15693_opt_vicc_speed {
+	RFID_15693_VICC_SPEED_SLOW	= 0x01,
+	RFID_15693_VICC_SPEED_FAST	= 0x02,
 };
 
 #ifdef __LIBRFID__
@@ -82,8 +113,6 @@ struct iso15693_request {
 	u_int8_t command;
 	u_int8_t data[0];
 } __attribute__ ((packed));
-
-
 
 /* ISO 15693, Ch. 7.3 Table 6 */
 enum iso15693_response_flags {
@@ -129,8 +158,14 @@ enum iso15693_commands {
 	ISO15693_CMD_WRITE_DSFID	= 0x29,
 	ISO15693_CMD_LOCK_DSFID		= 0x2a,
 	ISO15693_CMD_GET_SYSINFO	= 0x2b,
-	ISO15693_CMD_GET_BLOCK_SECURITY	= 0x2c
+	ISO15693_CMD_GET_BLOCK_SECURITY	= 0x2c,
 	/* Custom 0xa0 .. 0xdf */
+	ICODE_CMD_INVENTORY_READ	= 0xa0,
+	ICODE_CMD_FAST_INVENTORY_READ	= 0xa1,
+	ICODE_CMD_EAS_SET		= 0xa2,
+	ICODE_CMD_EAS_RESET		= 0xa3,
+	ICODE_CMD_EAS_LOCK		= 0xa4,
+	ICODE_CMD_EAS_ALARM		= 0xa5,
 	/* Proprietary 0xe0 .. 0xff */
 };
 

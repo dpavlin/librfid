@@ -15,6 +15,7 @@ L2=rfid_layer2_iso14443a.c rfid_layer2_iso14443b.c rfid_layer2_iso15693.c rfid_i
 PROTO=rfid_proto_tcl.c rfid_proto_mifare_ul.c rfid_proto_mifare_classic.c
 ASIC=rfid_asic_rc632.c
 READER=rfid_reader_openpcd.c
+MISC=rfid_access_mifare_classic.c
 
 if ENABLE_CM5121
 READER_CM5121=rfid_reader_cm5121.c
@@ -37,7 +38,7 @@ AM_CFLAGS = -std=gnu99 -D__LIBRFID__ $(AM_CFLAGS_FIRMWARE) $(AM_CFLAGS_STATIC) \
 
 lib_LTLIBRARIES = librfid.la
 librfid_la_LDFLAGS = -Wc,-nostartfiles -version-info $(LIBVERSION) -lopenct
-librfid_la_SOURCES = $(CORE) $(L2) $(PROTO) $(ASIC) \
+librfid_la_SOURCES = $(CORE) $(L2) $(PROTO) $(ASIC) $(MISC) \
 		     $(READER) \
 		     $(READER_CM5121) $(READER_LOW_CCID) $(READER_LOW_OPENCT)
 

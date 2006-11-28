@@ -38,7 +38,7 @@
 //#include "rc632_14443a.h"
 
 
-#define RC632_TMO_AUTH1	14000
+#define RC632_TMO_AUTH1	140
 
 #define ENTER()		DEBUGP("entering\n")
 const struct rfid_asic rc632;
@@ -566,6 +566,13 @@ rc632_init(struct rfid_asic_handle *ah)
 	if (ret < 0)
 		return ret;
 
+	/* switch off rf */
+	ret = rc632_turn_off_rf(ah);
+	if (ret < 0)
+		return ret;
+
+	usleep(100000);
+
 	/* switch on rf */
 	ret = rc632_turn_on_rf(ah);
 	if (ret < 0)
@@ -639,7 +646,8 @@ rc632_iso14443a_init(struct rfid_asic_handle *handle)
 	// FIXME: some fifo work (drain fifo?)
 	
 	/* flush fifo (our way) */
-	ret = rc632_reg_write(handle, RC632_REG_CONTROL, 0x01);
+	ret = rc632_reg_write(handle, RC632_REG_CONTROL,
+			      RC632_CONTROL_FIFO_FLUSH);
 
 	ret = rc632_reg_write(handle, RC632_REG_TX_CONTROL,
 			(RC632_TXCTRL_TX1_RF_EN |
@@ -1065,7 +1073,8 @@ static int rc632_iso14443b_init(struct rfid_asic_handle *handle)
 	// FIXME: some FIFO work
 	
 	/* flush fifo (our way) */
-	ret = rc632_reg_write(handle, RC632_REG_CONTROL, 0x01);
+	ret = rc632_reg_write(handle, RC632_REG_CONTROL,
+			      RC632_CONTROL_FIFO_FLUSH);
 	if (ret < 0)
 		return ret;
 
@@ -1453,11 +1462,16 @@ rc632_mifare_set_key(struct rfid_asic_handle *h, const u_int8_t *key)
 	if (ret < 0)
 		return ret;
 
-	ret = rc632_fifo_write(h, RFID_MIFARE_KEY_CODED_LEN, coded_key, 0x03);
+	/* Terminate probably running command */
+	ret = rc632_reg_write(h, RC632_REG_COMMAND, RC632_CMD_IDLE);	
 	if (ret < 0)
 		return ret;
 
 	ret = rc632_reg_write(h, RC632_REG_COMMAND, RC632_CMD_LOAD_KEY);
+	if (ret < 0)
+		return ret;
+
+	ret = rc632_fifo_write(h, RFID_MIFARE_KEY_CODED_LEN, coded_key, 0x03);
 	if (ret < 0)
 		return ret;
 
@@ -1483,8 +1497,10 @@ rc632_mifare_auth(struct rfid_asic_handle *h, u_int8_t cmd, u_int32_t serno,
 	struct mifare_authcmd acmd;
 	u_int8_t reg;
 
-	if (cmd != RFID_CMD_MIFARE_AUTH1A && cmd != RFID_CMD_MIFARE_AUTH1B)
+	if (cmd != RFID_CMD_MIFARE_AUTH1A && cmd != RFID_CMD_MIFARE_AUTH1B) {
+		DEBUGP("invalid auth command\n");
 		return -EINVAL;
+	}
 
 	/* Initialize acmd */
 	acmd.block_address = block & 0xff;
@@ -1492,9 +1508,16 @@ rc632_mifare_auth(struct rfid_asic_handle *h, u_int8_t cmd, u_int32_t serno,
 	//acmd.serno = htonl(serno);
 	acmd.serno = serno;
 
+#if 1
 	/* Clear Rx CRC */
 	ret = rc632_clear_bits(h, RC632_REG_CHANNEL_REDUNDANCY,
 				RC632_CR_RX_CRC_ENABLE);
+#else
+	/* Clear Rx CRC, Set Tx CRC and Odd Parity */
+	ret = rc632_reg_write(h, RC632_REG_CHANNEL_REDUNDANCY,
+				RC632_CR_TX_CRC_ENABLE | RC632_CR_PARITY_ODD |
+				RC632_CR_PARITY_ENABLE);
+#endif
 	if (ret < 0)
 		return ret;
 
@@ -1504,8 +1527,10 @@ rc632_mifare_auth(struct rfid_asic_handle *h, u_int8_t cmd, u_int32_t serno,
 		return ret;
 
 	ret = rc632_reg_write(h, RC632_REG_COMMAND, RC632_CMD_AUTHENT1);
-	if (ret < 0)
+	if (ret < 0) {
+		DEBUGP("error during AUTHENT1");
 		return ret;
+	}
 
 	/* Wait until transmitter is idle */
 	ret = rc632_wait_idle(h, RC632_TMO_AUTH1);
@@ -1515,8 +1540,10 @@ rc632_mifare_auth(struct rfid_asic_handle *h, u_int8_t cmd, u_int32_t serno,
 	ret = rc632_reg_read(h, RC632_REG_SECONDARY_STATUS, &reg);
 	if (ret < 0)
 		return ret;
-	if (reg & 0x07)
+	if (reg & 0x07) {
+		DEBUGP("bitframe?");
 		return -EIO;
+	}
 
 	/* Clear Tx CRC */
 	ret = rc632_clear_bits(h, RC632_REG_CHANNEL_REDUNDANCY,
@@ -1539,11 +1566,12 @@ rc632_mifare_auth(struct rfid_asic_handle *h, u_int8_t cmd, u_int32_t serno,
 	if (ret < 0)
 		return ret;
 
-	if (!(reg & RC632_CONTROL_CRYPTO1_ON))
+	if (!(reg & RC632_CONTROL_CRYPTO1_ON)) {
+		DEBUGP("authentication not successful");
 		return -EACCES;
+	}
 
 	return 0;
-
 }
 
 /* transceive regular frame */

@@ -112,6 +112,14 @@ static struct rfid_protocol_handle *
 mful_init(struct rfid_layer2_handle *l2h)
 {
 	struct rfid_protocol_handle *ph;
+
+	if (l2h->l2->id != RFID_LAYER2_ISO14443A)
+		return NULL;
+	
+	/* according to "Functional Specification Rev. 3.0 */
+	if (l2h->uid_len != 7)
+		return NULL;
+
 	ph = malloc_protocol_handle(sizeof(struct rfid_protocol_handle));
 	return ph;
 }

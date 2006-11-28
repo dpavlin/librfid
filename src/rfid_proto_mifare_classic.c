@@ -85,23 +85,57 @@ mfcl_write(struct rfid_protocol_handle *ph, unsigned int page,
 	unsigned int rx_len;
 	int ret;
 
-	if (tx_len != 16 || page > MIFARE_CL_PAGE_MAX)
+	if (page > MIFARE_CL_PAGE_MAX)
 		return -EINVAL;
 
-	tx[0] = MIFARE_CL_CMD_WRITE16;
-	tx[1] = page & 0xff;
+	if (tx_len != 16 && tx_len != 4)
+		return -EINVAL;
+	
+	if (tx_len == 16) {
+		tx[0] = MIFARE_CL_CMD_WRITE16;
+		tx[1] = page & 0xff;
 
-	memcpy(tx+2, tx_data, 16);
+		ret = rfid_layer2_transceive(ph->l2h, RFID_MIFARE_FRAME, tx,
+					     2, rx, &rx_len, 
+					     MIFARE_CL_WRITE_FWT, 0);
+		if (ret < 0)
+			return ret;
 
-	ret = rfid_layer2_transceive(ph->l2h, RFID_MIFARE_FRAME, tx,
-				     sizeof(tx), rx, &rx_len, 
-				     MIFARE_CL_WRITE_FWT, 0);
-					
-	if (ret < 0)
-		return ret;
+		ret = rfid_layer2_transceive(ph->l2h, RFID_MIFARE_FRAME, tx_data,
+					     tx_len, rx, &rx_len,
+					     MIFARE_CL_WRITE_FWT, 0);
+		if (ret < 0)
+			return ret;
 
-	if (rx[0] != MIFARE_UL_RESP_ACK)
-		return -EIO;
+		if (rx[0] != MIFARE_UL_RESP_ACK)
+			return -EIO;
+
+		ret = rfid_layer2_transceive(ph->l2h, RFID_MIFARE_FRAME, tx,
+					     sizeof(tx), rx, &rx_len, 
+					     MIFARE_CL_WRITE_FWT, 0);
+		if (ret < 0)
+			return ret;
+
+		if (rx[0] != MIFARE_UL_RESP_ACK)
+			return -EIO;
+
+	} else if (tx_len == 4) {
+
+		tx[0] = MIFARE_CL_CMD_WRITE4;
+		tx[1] = page & 0xff;
+
+		memcpy(tx+2, tx_data, 4);
+
+		ret = rfid_layer2_transceive(ph->l2h, RFID_MIFARE_FRAME, tx,
+					     2+4, rx, &rx_len, 
+					     MIFARE_CL_WRITE_FWT, 0);
+		if (ret < 0)
+			return ret;
+
+		if (rx[0] != MIFARE_UL_RESP_ACK)
+			return -EIO;
+
+	}
 
 	return ret;
 }
@@ -110,6 +144,13 @@ static struct rfid_protocol_handle *
 mfcl_init(struct rfid_layer2_handle *l2h)
 {
 	struct rfid_protocol_handle *ph;
+
+	if (l2h->l2->id != RFID_LAYER2_ISO14443A)
+		return NULL;
+
+	if (l2h->uid_len != 4)
+		return NULL;
+
 	ph = malloc_protocol_handle(sizeof(struct rfid_protocol_handle));
 	return ph;
 }

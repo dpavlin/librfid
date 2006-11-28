@@ -40,6 +40,7 @@ enum rfid_protocol_id {
 	RFID_PROTOCOL_TCL,
 	RFID_PROTOCOL_MIFARE_UL,
 	RFID_PROTOCOL_MIFARE_CLASSIC,
+	NUM_RFID_PROTOCOLS
 };
 
 enum rfid_protocol_opt {

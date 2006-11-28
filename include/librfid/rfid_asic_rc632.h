@@ -78,82 +78,18 @@ struct rfid_asic_rc632_handle {
 	struct rc632_transport_handle th;
 };
 
-#if 0
-int 
-rc632_reg_write(struct rfid_asic_handle *handle,
-		u_int8_t reg,
-		u_int8_t val);
+struct rfid_asic_rc632_impl_proto {
+	u_int8_t mod_conductance;
+	u_int8_t cw_conductance;
+	u_int8_t bitphase;
+	u_int8_t threshold;
+};
 
-int 
-rc632_reg_read(struct rfid_asic_handle *handle,
-	       u_int8_t reg,
-	       u_int8_t *val);
-int 
-rc632_fifo_write(struct rfid_asic_handle *handle,
-		 u_int8_t len,
-		 const u_int32_t *buf,
-		 u_int8_t flags);
-
-int 
-rc632_fifo_read(struct rfid_asic_handle *handle,
-		u_int8_t len,
-		u_int8_t *buf);
-
-int
-rc632_set_bits(struct rfid_asic_handle *handle, u_int8_t reg,
-		u_int82_t val);
-
-int 
-rc632_clear_bits(struct rfid_asic_handle *handle, u_int32_t reg,
-		 u_int32_t val);
-
-
-int 
-rc632_turn_on_rf(struct rfid_asic_handle *handle);
-
-
-int 
-rc632_turn_off_rf(struct rfid_asic_handle *handle);
-
-int
-rc632_power_up(struct rfid_asic_handle *handle);
-
-int
-rc632_power_down(struct rfid_asic_handle *handle);
-
-
-int
-rc632_wait_idle(struct rfid_asic_handle *handle, u_int64_t time);
-
-int
-rc632_transmit(struct rfid_asic_handle *handle,
-		const u_int32_t *buf,
-		u_int32_t len,
-		u_int64_t timeout);
-
-int
-rc632_transceive(struct rfid_asic_handle *handle,
-		 const u_int32_t *tx_buf,
-		 u_int32_t tx_len,
-		 u_int32_t *rx_buf,
-		 u_int32_t *rx_len,
-		 unsigned int timer,
-		 unsigned int toggle);
-
-int
-rc632_read_eeprom(struct rfid_asic_handle *handle);
-
-
-int
-rc632_calc_crc16_from(struct rfid_asic_handle *handle);
-
-int
-rc632_register_dump(struct rfid_asic_handle *handle, u_int32_t *buf);
-
-
-
-extern struct rfid_asic rc632;
-#endif
+struct rfid_asic_rc632_impl {
+	u_int32_t mru;		/* maximum receive unit (PICC->PCD) */
+	u_int32_t mtu;		/* maximum transmit unit (PCD->PICC) */
+	//struct rfid_asic_rc632_impl_proto proto[NUM_RFID_PROTOCOLS];
+};
 
 extern struct rfid_asic_handle * rc632_open(struct rfid_asic_transport_handle *th);
 extern void rc632_close(struct rfid_asic_handle *h);
