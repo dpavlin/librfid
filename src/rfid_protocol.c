@@ -114,7 +114,6 @@ rfid_protocol_getopt(struct rfid_protocol_handle *ph, int optname,
 		unsigned char *optchar = optval;
 
 		switch (optname) {
-			break;
 		default:
 			return -EINVAL;
 			break;

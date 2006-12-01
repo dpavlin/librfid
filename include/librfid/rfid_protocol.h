@@ -45,6 +45,7 @@ enum rfid_protocol_id {
 
 enum rfid_protocol_opt {
 	RFID_OPT_PROTO_ID,
+	RFID_OPT_PROTO_SIZE	= 0x10000001,
 };
 
 #ifdef __LIBRFID__

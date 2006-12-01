@@ -260,6 +260,9 @@ static int l2_by_name(const char *name)
 static void do_scan(void)
 {
 	int rc;
+	unsigned int size;
+	unsigned int size_len = sizeof(size);
+
 	printf("scanning for RFID token...\n");
 	rc = rfid_scan(rh, &l2h, &ph);
 	if (rc >= 2) {
@@ -272,6 +275,10 @@ static void do_scan(void)
 	}
 	if (rc >= 3) {
 		printf("Protocol success (%s)\n", rfid_protocol_name(ph));
+
+		if (rfid_protocol_getopt(ph, RFID_OPT_PROTO_SIZE, 
+					 &size, &size_len) == 0)
+			printf("Size: %u bytes\n", size);
 	}
 }
 
