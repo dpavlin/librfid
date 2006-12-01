@@ -17,6 +17,10 @@
 #define RFID_CMD_MIFARE_AUTH1A	0x60
 #define RFID_CMD_MIFARE_AUTH1B	0x61
 
+enum rfid_proto_mfcl_opt {
+	RFID_OPT_P_MFCL_SIZE	=	0x10000001,
+};
+
 #ifdef __LIBRFID__
 
 extern const struct rfid_protocol rfid_protocol_mfcl;

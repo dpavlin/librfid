@@ -781,6 +781,8 @@ tcl_getopt(struct rfid_protocol_handle *h, int optname, void *optval,
 		*optlen = sizeof(u_int8_t);
 		*opt_str = h->priv.tcl.ats_len & 0xff;
 		break;
+	default:
+		return -EINVAL;
 	}
 
 	return 0;

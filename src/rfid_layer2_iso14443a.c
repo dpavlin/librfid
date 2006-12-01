@@ -100,22 +100,22 @@ iso14443a_anticol(struct rfid_layer2_handle *handle)
 	int ret;
 	unsigned int uid_size;
 	struct iso14443a_handle *h = &handle->priv.iso14443a;
-	struct iso14443a_atqa atqa;
+	struct iso14443a_atqa *atqa = &h->atqa;
 	struct iso14443a_anticol_cmd acf;
 	unsigned int bit_of_col;
 	unsigned char sak[3];
 	unsigned int rx_len = sizeof(sak);
-	char *aqptr = (char *) &atqa;
+	char *aqptr = (char *) atqa;
 
 	memset(handle->uid, 0, sizeof(handle->uid));
 	memset(sak, 0, sizeof(sak));
-	memset(&atqa, 0, sizeof(atqa));
+	memset(atqa, 0, sizeof(&atqa));
 	memset(&acf, 0, sizeof(acf));
 
 	if (handle->flags & RFID_OPT_LAYER2_WUP)
-		ret = iso14443a_transceive_sf(handle, ISO14443A_SF_CMD_WUPA, &atqa);
+		ret = iso14443a_transceive_sf(handle, ISO14443A_SF_CMD_WUPA, atqa);
 	else
-		ret = iso14443a_transceive_sf(handle, ISO14443A_SF_CMD_REQA, &atqa);
+		ret = iso14443a_transceive_sf(handle, ISO14443A_SF_CMD_REQA, atqa);
 	if (ret < 0) {
 		h->state = ISO14443A_STATE_REQA_SENT;
 		DEBUGP("error during transceive_sf: %d\n", ret);
@@ -125,15 +125,15 @@ iso14443a_anticol(struct rfid_layer2_handle *handle)
 
 	DEBUGP("ATQA: 0x%02x 0x%02x\n", *aqptr, *(aqptr+1));
 
-	if (!atqa.bf_anticol) {
+	if (!atqa->bf_anticol) {
 		h->state = ISO14443A_STATE_NO_BITFRAME_ANTICOL;
 		DEBUGP("no bitframe anticollission bits set, aborting\n");
 		return -1;
 	}
 
-	if (atqa.uid_size == 2 || atqa.uid_size == 3)
+	if (atqa->uid_size == 2 || atqa->uid_size == 3)
 		uid_size = 3;
-	else if (atqa.uid_size == 1)
+	else if (atqa->uid_size == 1)
 		uid_size = 2;
 	else
 		uid_size = 1;
@@ -285,6 +285,24 @@ iso14443a_setopt(struct rfid_layer2_handle *handle, int optname,
 	return ret;
 }
 
+static int
+iso14443a_getopt(struct rfid_layer2_handle *handle, int optname,
+		 void *optval, unsigned int optlen)
+{
+	int ret = -EINVAL;
+	struct iso14443a_handle *h = &handle->priv.iso14443a;
+	struct iso14443a_atqa *atqa = optval;
+
+	switch (optname) {
+	case RFID_OPT_14443A_ATQA:
+		*atqa = h->atqa;
+		ret = 0;
+		break;
+	};
+
+	return ret;
+}
+
 
 static struct rfid_layer2_handle *
 iso14443a_init(struct rfid_reader_handle *rh)
@@ -328,6 +346,7 @@ const struct rfid_layer2 rfid_layer2_iso14443a = {
 		.close 		= &iso14443a_hlta,
 		.fini 		= &iso14443a_fini,
 		.setopt		= &iso14443a_setopt,
+		.getopt		= &iso14443a_getopt,
 	},
 };
 
