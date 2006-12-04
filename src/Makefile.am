@@ -27,6 +27,7 @@ endif
 
 if ENABLE_OPENCT
 READER_LOW_OPENCT=rfid_reader_cm5121_openct.c
+LDFLAGS_OPENCT=-lopenct
 endif
 
 endif
@@ -37,7 +38,7 @@ AM_CFLAGS = -std=gnu99 -D__LIBRFID__ $(AM_CFLAGS_FIRMWARE) $(AM_CFLAGS_STATIC) \
 	    $(AM_CFLAGS_CM5121)
 
 lib_LTLIBRARIES = librfid.la
-librfid_la_LDFLAGS = -Wc,-nostartfiles -version-info $(LIBVERSION) -lopenct
+librfid_la_LDFLAGS = -Wc,-nostartfiles -version-info $(LIBVERSION) $(LDFLAGS_OPENCT)
 librfid_la_SOURCES = $(CORE) $(L2) $(PROTO) $(ASIC) $(MISC) \
 		     $(READER) \
 		     $(READER_CM5121) $(READER_LOW_CCID) $(READER_LOW_OPENCT)
