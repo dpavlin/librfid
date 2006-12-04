@@ -14,9 +14,9 @@ more time.
 
 2. Supported Readers:
 
-At this time, the Omnikey Cardman 5121 and the OpenPCD readers are supported. 
+At this time, the Omnikey Cardman 5121/5321 and the OpenPCD readers are supported. 
 
-2.1 Omnikey Cardman 5121 RFID (http://www.omnikey.de/)
+2.1 Omnikey Cardman 5121/5321 RFID (http://www.omnikey.de/)
 
 The cm5121 is a relatively stupid piece of hardware.  Basically a contact-based
 cm3121 that was enhanced by putting a Philips CL RC632 reader ASIC next to it.
@@ -24,23 +24,34 @@ There is no RFID protocol implementation on the cm5121, everything is done on
 the host (PC) software.  Four primitives (read/write byte/fifo) are provided
 via simple PC_to_RDR_Escape CCID messages.
 
+The cm5321 seems to be an improved version of the 5121, mainly with different
+antenna geometrics for better communications reliability.
+
 2.2 OpenPCD (http://www.openpcd.org/)
 
 The OpenPCD reader is completely free.  You get the full schematics, the PCB
-design, the source code to the device firmware (written in C, to be compiled
-with the free GNU toolchain).
+design, and the source code to the device firmware (written in C, to be
+compiled with the free GNU toolchain).  Also, all required development tools
+are available under Free Software licenses!
 
-Also, it has various headers for access to the intermediate signal processing
-steps.
+In addition, it has various headers for access to the intermediate signal
+processing steps.
 
 This makes it the ideal device to learn and play with RFID, since you don't
 have any (proprietary) software interfere and puts you in full control of
 everything.
 
+This is now the primary development target for librfid.  However, this doesn't
+mean that we don't want to support as many readers as possible.
+
+Another interesting new option is to cross-compile librfid to fit it _inside_
+the OpenPCD firmware, enabling a fully autonomous RFID stack (and RFID
+applications) on the reader, without any requirement for a host PC!
+
 2.3 Philips Pegoda
 
-This reader is not yet supported.
-
+This reader is not yet supported.  Some initial experiments have shown that
+adding support for it is 
 
 2.x Further Readers
 
@@ -102,6 +113,27 @@ minimalistic, and mainly an example on how to use the librfid api. For an ICAO
 compliant passport, you may try "--layer2 iso14443a --protocol tcl".  For a
 mifare ultralight transponder, "--layer2 iso14443a --protocol
 mifare-ultralight" will give you a full dump of the transponder.
+
+The most basic command to get started is "librfid-tool --scan" to make it
+auto-detect the first available (and supported) transponder
+
+
+5. Help and Support
+
+If you run into any problems using librfid, the primary contact address is the
+mailinglist of librfid developers at librfid-devel@lists.gnumonks.org.  Please
+note that while the development community is trying to provide the best level
+of support, response times might vary.
+
+You can subscribe to this list at 
+	https://lists.gnumonks.org/mailman/listinfo/librfid-devel
+
+If you are interested in commercial grade support of librfid, feel free to
+contact me privately to discuss your requirements and provide you with a quote.
+
+6. Licensing
+
+Pleas read the file LICENSING.
 
 -- Harald Welte <laforge@gnumonks.org>
 
