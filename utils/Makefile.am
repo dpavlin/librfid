@@ -1,5 +1,7 @@
 INCLUDES = $(all_includes) -I$(top_srcdir)/include
 
+if ENABLE_FIRMWARE
+else
 bin_PROGRAMS = librfid-tool mifare-tool send_script 
 
 librfid_tool_SOURCES = librfid-tool.c common.c
@@ -13,5 +15,4 @@ send_script_LDFLAGS = -dynamic
 mifare_tool_SOURCES = mifare-tool.c common.c
 mifare_tool_LDADD = ../src/librfid.la
 mifare_tool_LDFLAGS = -dynamic
-
-
+endif
