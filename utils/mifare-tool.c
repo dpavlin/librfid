@@ -43,6 +43,11 @@ static char *program_name;
 
 static void help(void)
 {
+	printf( " -h	--help		Print this help message\n"
+		" -r	--read		Read a mifare sector\n"
+		" -l	--loop-read	Loop reading a mifare sector\n"
+		" -w	--write		Write a mifare sector\n"
+		" -k	--key		Specify mifare access key (in hex tuples)\n");
 }
 
 static struct option mifare_opts[] = {
