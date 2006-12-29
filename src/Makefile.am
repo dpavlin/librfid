@@ -9,6 +9,7 @@ if ENABLE_STATIC
 AM_CFLAGS_STATIC = -DLIBRFID_STATIC
 endif
 
+noinst_HEADERS=rfid_iso14443_common.h rc632.h
 
 CORE=rfid.c rfid_layer2.c rfid_protocol.c rfid_reader.c rfid_scan.c
 L2=rfid_layer2_iso14443a.c rfid_layer2_iso14443b.c rfid_layer2_iso15693.c rfid_iso14443_common.c
