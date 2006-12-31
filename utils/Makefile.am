@@ -10,9 +10,9 @@ librfid_tool_SOURCES = librfid-tool.c common.c
 librfid_tool_LDADD = ../src/librfid.la
 librfid_tool_LDFLAGS = -dynamic
 
-send_script_SOURCES= send_script.c
-send_script_LDADD = ../src/librfid.la
-send_script_LDFLAGS = -dynamic
+librfid_send_script_SOURCES= send_script.c
+librfid_send_script_LDADD = ../src/librfid.la
+librfid_send_script_LDFLAGS = -dynamic
 
 mifare_tool_SOURCES = mifare-tool.c common.c
 mifare_tool_LDADD = ../src/librfid.la
