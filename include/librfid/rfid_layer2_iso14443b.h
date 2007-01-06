@@ -25,7 +25,7 @@ struct iso14443b_atqb {
 		unsigned char fo:2,
 			      adc:2,
 			      fwi:4;
-	} protocol_info;
+	} __attribute__ ((packed)) protocol_info;
 } __attribute__ ((packed));
 
 struct iso14443b_attrib_hdr {
@@ -37,20 +37,20 @@ struct iso14443b_attrib_hdr {
 			      eof:1,
 			      min_tr1:2,
 			      min_tr0:2;
-	} param1;
+	} __attribute__ ((packed)) param1;
 	struct {
 		unsigned char fsdi:4,
 			      spd_out:2,
 			      spd_in:2;
-	} param2;
+	} __attribute__ ((packed)) param2;
 	struct {
 		unsigned char protocol_type:4,
 			      rfu:4;
-	} param3;
+	} __attribute__ ((packed)) param3;
 	struct {
 		unsigned char cid:4,
 			      rfu:4;
-	} param4;
+	} __attribute__ ((packed)) param4;
 } __attribute__ ((packed));
 
 struct iso14443b_handle {
