@@ -17,11 +17,24 @@ AC_ARG_ENABLE(ccid,
 # AC_SUBST(MY_CCID)
 AM_CONDITIONAL(ENABLE_CCID, test "$MY_CCID" == "1")
 
-AC_ARG_WITH(openct,
-	[  --with-openct	Use (patched) OpenCT for CM5121 CCID access],
-	[OPENCT_PATH="$withval"], [OPENCT_PATH=""])
-AC_SUBST(OPENCT_PATH)
-AM_CONDITIONAL(ENABLE_OPENCT, test "$OPENCT_PATH" != "")
+dnl Enable/disable openct
+AC_ARG_ENABLE(openct,
+        AC_HELP_STRING([--enable-openct], [Use (patched) OpenCT for CM5121 CCID access. [[default=no]]]),
+        [ENABLE_OPENCT="${enableval}"],
+        [ENABLE_OPENCT="no"])
+
+OPENCT_MSG=no
+if test "x${ENABLE_OPENCT}" = "xyes"; then
+        PKG_CHECK_MODULES(OPENCT, [libopenct], [
+                OPENCT_MSG=yes
+                AC_DEFINE(HAVE_OPENCT, 1, [Have OpenCT libraries and header files])
+                ], [
+                OPENCT_MSG=no
+                ])
+        AC_SUBST(OPENCT_CFLAGS)
+        AC_SUBST(OPENCT_LIBS)
+fi
+AM_CONDITIONAL(HAVE_OPENCT, test "x$OPENCT_MSG" = "xyes")
 
 AC_ARG_WITH(firmware,
 	[  --with-firmware=PATH	Compile for running inside firmware],
@@ -51,4 +64,4 @@ AC_CHECK_LIB(usb, usb_close,,)
 AM_CONDITIONAL(HAVE_LIBUSB, test "x$have_libusb" = "xyes")
 
 dnl Output the makefile
-AC_OUTPUT(Makefile src/Makefile include/Makefile include/librfid/Makefile utils/Makefile)
+AC_OUTPUT(Makefile src/Makefile include/Makefile include/librfid/Makefile utils/Makefile src/librfid.pc)

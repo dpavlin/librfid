@@ -103,7 +103,9 @@ interface to it, i.e. you can't use CT-API/OpenCT/PCSC API's to access RFID
 transponders.
 
 In order to use this backend, you need to use the
-'--with-openct=/path/to/openct' option.
+'--enable-openct' option and - if it is not installed in a default
+location like /usr or /usr/local - set the environment variables
+PATH, LD_LIBRARY_PATH and PKG_CONFIG_PATH so all files are found.
 
 
 4. Testing
