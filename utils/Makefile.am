@@ -2,7 +2,7 @@ INCLUDES = $(all_includes) -I$(top_srcdir)/include
 
 if ENABLE_FIRMWARE
 else
-bin_PROGRAMS = librfid-tool mifare-tool librfid_send_script 
+bin_PROGRAMS = librfid-tool mifare-tool librfid-send_script 
 
 noinst_HEADERS = librfid-tool.h
 
