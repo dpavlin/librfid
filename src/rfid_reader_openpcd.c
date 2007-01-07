@@ -95,7 +95,7 @@ static int openpcd_xcv(u_int8_t cmd, u_int8_t reg, u_int8_t val,
 	ret = openpcd_send_command(cmd, reg, val, len, data);
 	if (ret < 0)
 		return ret;
-	if (ret < sizeof(sizeof(struct openpcd_hdr)))
+	if (ret < sizeof(struct openpcd_hdr))
 		return -EINVAL;
 
 	return openpcd_recv_reply();
