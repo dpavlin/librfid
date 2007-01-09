@@ -7,12 +7,6 @@
 
 #include <librfid/rfid_system.h>
 
-enum rfid_frametype {
-	RFID_14443A_FRAME_REGULAR,
-	RFID_14443B_FRAME_REGULAR,
-	RFID_MIFARE_FRAME,
-};
-
 //#define DEBUG_LIBRFID
 
 #ifdef DEBUG_LIBRFID
@@ -51,6 +45,12 @@ enum rfid_opt_level {
 	RFID_LEVEL_READER,
 	RFID_LEVEL_LAYER2,
 	RFID_LEVEL_LAYER3,
+};
+
+enum rfid_frametype {
+	RFID_14443A_FRAME_REGULAR,
+	RFID_14443B_FRAME_REGULAR,
+	RFID_MIFARE_FRAME,
 };
 
 #endif /* _RFID_H */
