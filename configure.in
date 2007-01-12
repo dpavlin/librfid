@@ -64,4 +64,4 @@ AC_CHECK_LIB(usb, usb_close,,)
 AM_CONDITIONAL(HAVE_LIBUSB, test "x$have_libusb" = "xyes")
 
 dnl Output the makefile
-AC_OUTPUT(Makefile src/Makefile include/Makefile include/librfid/Makefile utils/Makefile src/librfid.pc)
+AC_OUTPUT(Makefile etc/Makefile etc/udev/Makefile src/Makefile include/Makefile include/librfid/Makefile utils/Makefile src/librfid.pc)
