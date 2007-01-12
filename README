@@ -5,9 +5,9 @@ librfid - low-level RFID access library
 This library intends to provide a reader- and (as much as possible)
 PICC / tag independent API for RFID applications.
 
-1. Supported Prodocols:
+1. Supported Protocols:
 
-At this early stage of implementaition, it offers only ISO 14443-2, ISO 14443-3
+At this early stage of implementation, it offers only ISO 14443-2, ISO 14443-3
 A and B as well as ISO 14443-4 (T=CL) support.  Other protocols, both open
 (such as ISO 15693) and proprietary are to be added as soon as I find some
 more time.
@@ -58,7 +58,7 @@ adding support for it is
 Support for more devices shouldn't be too difficult to add, provided the
 devices are stupid enough.  More sophisticated readers like Integrated
 Engineering or Philips Pegoda do much of the protocol handling in firmware on a
-Microcontroller.  This makes them (at least till now) faster, but also of
+microcontroller.  This makes them (at least till now) faster, but also of
 limited use, especially in education and research.
 
 So if you happen to run into any other dumb RFID readers, especially those
@@ -73,7 +73,7 @@ In the default configuration, librfid only includes the driver for the OpenPCD
 dumbreader firmware.
 
 If you want support for Omnikey Cardman 5121/5321, you have to add
-'--enable-reader-cm5x21' to the './configure' comannd, _and_ choose the backend
+'--enable-reader-cm5x21' to the './configure' command, _and_ choose the backend
 you want to use, either:
 
 3.1 (new) native CCID backend
@@ -111,7 +111,7 @@ PATH, LD_LIBRARY_PATH and PKG_CONFIG_PATH so all files are found.
 4. Testing
 
 In the 'utils' directory, you will get a 'librfid-tool' binary.  It is very
-minimalistic, and mainly an example on how to use the librfid api. For an ICAO
+minimalist, and mainly an example on how to use the librfid API. For an ICAO
 compliant passport, you may try "--layer2 iso14443a --protocol tcl".  For a
 mifare ultralight transponder, "--layer2 iso14443a --protocol
 mifare-ultralight" will give you a full dump of the transponder.
