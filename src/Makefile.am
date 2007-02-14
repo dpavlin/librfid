@@ -18,31 +18,25 @@ ASIC=rfid_asic_rc632.c
 READER=rfid_reader_openpcd.c
 MISC=rfid_access_mifare_classic.c
 
-if ENABLE_CM5121
-READER_CM5121=rfid_reader_cm5121.c
-AM_CFLAGS_CM5121= -DENABLE_CM5121
-
 if ENABLE_CCID
-READER_LOW_CCID=ccid/rfid_reader_cm5121_ccid_direct.c ccid/ccid-driver.c
+READER_CM5121=rfid_reader_cm5121.c ccid/rfid_reader_cm5121_ccid_direct.c ccid/ccid-driver.c
+AM_CFLAGS_CM5121= -DENABLE_CM5121
 endif
 
 if HAVE_OPENCT
-READER_LOW_OPENCT=rfid_reader_cm5121_openct.c
-LDFLAGS_OPENCT=-lopenct
-endif
-
+READER_CM5121=rfid_reader_cm5121.c rfid_reader_cm5121_openct.c
+AM_CFLAGS_CM5121= -DENABLE_CM5121
 endif
 
 INCLUDES = $(all_includes) -I$(top_srcdir)/include $(INCLUDES_FIRMWARE) \
-	   $(INCLUDES_STATIC) $(OPENCT_CFLAGS)
+	   $(INCLUDES_STATIC) @OPENCT_CFLAGS@
 AM_CFLAGS = -std=gnu99 -D__LIBRFID__ $(AM_CFLAGS_FIRMWARE) $(AM_CFLAGS_STATIC) \
 	    $(AM_CFLAGS_CM5121)
 
 lib_LTLIBRARIES = librfid.la
-librfid_la_LDFLAGS = -Wc,-nostartfiles -version-info $(LIBVERSION) $(LDFLAGS_OPENCT)
+librfid_la_LDFLAGS = -Wc,-nostartfiles -version-info $(LIBVERSION) @OPENCT_LIBS@
 librfid_la_SOURCES = $(CORE) $(L2) $(PROTO) $(ASIC) $(MISC) \
-		     $(READER) \
-		     $(READER_CM5121) $(READER_LOW_CCID) $(READER_LOW_OPENCT)
+		     $(READER) $(READER_CM5121)
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = librfid.pc
