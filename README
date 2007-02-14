@@ -1,5 +1,5 @@
 librfid - low-level RFID access library
-(C) 2005-2006 by Harald Welte <laforge@gnumonks.org>
+(C) 2005-2007 by Harald Welte <laforge@gnumonks.org>
 ======================================================================
 
 This library intends to provide a reader- and (as much as possible)
