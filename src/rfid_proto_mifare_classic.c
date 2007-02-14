@@ -82,7 +82,7 @@ mfcl_write(struct rfid_protocol_handle *ph, unsigned int page,
 	unsigned int i;
 	unsigned char tx[18];
 	unsigned char rx[1];
-	unsigned int rx_len;
+	unsigned int rx_len = sizeof(rx);
 	int ret;
 
 	if (page > MIFARE_CL_PAGE_MAX)
