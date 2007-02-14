@@ -51,12 +51,6 @@ AC_ARG_ENABLE(firmware,
 	[ENABLE_FIRMWARE=1], [ENABLE_FIRMWARE=0]) 
 AM_CONDITIONAL(ENABLE_FIRMWARE, test "$ENABLE_FIRMWARE" == "1")
 
-AC_ARG_ENABLE(reader-cm5x21,
-	[  --enable-reader-cm5x21 Support for Omnikey Cardman 5121/5321],
-	[ENABLE_CM5121=1], [ENABLE_CM5121=0])
-AM_CONDITIONAL(ENABLE_CM5121, test "$ENABLE_CM5121" == "1")
-
-
 AC_ARG_WITH()
 #AC_CHECK_HEADERS(usb.h, [have_libusb="yes"], [ AC_MSG_WARN([usb.h not found, use --enable-libusb=PATH. Otherwise, INDI will compile without Apogee USB support.]) ])
 
