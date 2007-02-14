@@ -1467,11 +1467,11 @@ rc632_mifare_set_key(struct rfid_asic_handle *h, const u_int8_t *key)
 	if (ret < 0)
 		return ret;
 
-	ret = rc632_reg_write(h, RC632_REG_COMMAND, RC632_CMD_LOAD_KEY);
+	ret = rc632_fifo_write(h, RFID_MIFARE_KEY_CODED_LEN, coded_key, 0x03);
 	if (ret < 0)
 		return ret;
 
-	ret = rc632_fifo_write(h, RFID_MIFARE_KEY_CODED_LEN, coded_key, 0x03);
+	ret = rc632_reg_write(h, RC632_REG_COMMAND, RC632_CMD_LOAD_KEY);
 	if (ret < 0)
 		return ret;
 
