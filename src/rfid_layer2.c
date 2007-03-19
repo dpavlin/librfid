@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
+#include <string.h> /* for memcpy */
 
 #include <librfid/rfid.h>
 #include <librfid/rfid_layer2.h>
