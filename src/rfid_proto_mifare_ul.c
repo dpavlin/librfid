@@ -110,7 +110,7 @@ mful_transceive(struct rfid_protocol_handle *ph,
 
 static int 
 mful_getopt(struct rfid_protocol_handle *ph, int optname, void *optval,
-	    unsigned int optlen)
+	    unsigned int *optlen)
 {
 	int ret = -EINVAL;
 	u_int16_t atqa;
@@ -139,7 +139,7 @@ mful_init(struct rfid_layer2_handle *l2h)
 	
 	/* According to "Type Identification Procedure Rev. 1.3" */
 	rfid_layer2_getopt(l2h, RFID_OPT_14443A_ATQA,
-			   &atqa, atqa_len);
+			   &atqa, &atqa_len);
 	if (atqa != 0x0044)
 		return NULL;
 
