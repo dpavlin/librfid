@@ -280,6 +280,13 @@ iso14443a_setopt(struct rfid_layer2_handle *handle, int optname,
 		speed = *(unsigned int *)optval;
 		ret = rdr->iso14443a.set_speed(handle->rh, 1, speed);
 		break;
+	case RFID_OPT_14443A_WUPA:
+		if((unsigned int*)optval)
+			handle->flags |= RFID_OPT_LAYER2_WUP;
+		else
+			handle->flags &= ~RFID_OPT_LAYER2_WUP;
+		ret = 0;
+		break;
 	};
 
 	return ret;
@@ -287,15 +294,20 @@ iso14443a_setopt(struct rfid_layer2_handle *handle, int optname,
 
 static int
 iso14443a_getopt(struct rfid_layer2_handle *handle, int optname,
-		 void *optval, unsigned int optlen)
+		 void *optval, unsigned int *optlen)
 {
 	int ret = -EINVAL;
 	struct iso14443a_handle *h = &handle->priv.iso14443a;
 	struct iso14443a_atqa *atqa = optval;
+	int *wupa = optval;
 
 	switch (optname) {
 	case RFID_OPT_14443A_ATQA:
 		*atqa = h->atqa;
+		ret = 0;
+		break;
+	case RFID_OPT_14443A_WUPA:
+		*wupa = ((handle->flags & RFID_OPT_LAYER2_WUP) != 0);
 		ret = 0;
 		break;
 	};

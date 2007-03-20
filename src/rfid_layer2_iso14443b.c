@@ -337,7 +337,7 @@ iso14443b_transceive(struct rfid_layer2_handle *handle,
 
 static int
 iso14443b_getopt(struct rfid_layer2_handle *handle,
-		 int optname, void *optval, unsigned int optlen)
+		 int optname, void *optval, unsigned int *optlen)
 {
 	unsigned int *opt_ui = optval;
 
