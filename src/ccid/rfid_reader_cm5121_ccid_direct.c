@@ -14,8 +14,8 @@
 /* this is the sole function required by rfid_reader_cm5121.c */
 int 
 PC_to_RDR_Escape(void *handle, 
-		 const unsigned char *tx_buf, unsigned int tx_len,
-		 unsigned char *rx_buf, unsigned int *rx_len)
+		 const unsigned char *tx_buf, size_t tx_len,
+		 unsigned char *rx_buf, size_t *rx_len)
 {
 	int rc;
         ccid_driver_t ch = handle;

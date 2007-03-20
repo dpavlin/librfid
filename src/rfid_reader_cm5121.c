@@ -67,7 +67,7 @@ int Write1ByteToReg(struct rfid_asic_transport_handle *rath,
 {
 	unsigned char sndbuf[SENDBUF_LEN];
 	unsigned char rcvbuf[RECVBUF_LEN];
-	unsigned int retlen = RECVBUF_LEN;
+	size_t retlen = RECVBUF_LEN;
 
 	sndbuf[0] = 0x20;
 	sndbuf[1] = 0x00;
@@ -96,7 +96,7 @@ static int Read1ByteFromReg(struct rfid_asic_transport_handle *rath,
 {
 	unsigned char sndbuf[SENDBUF_LEN];
 	unsigned char recvbuf[RECVBUF_LEN];
-	unsigned int retlen = sizeof(recvbuf);
+	size_t retlen = sizeof(recvbuf);
 
 	sndbuf[0] = 0x20;
 	sndbuf[1] = 0x00;
@@ -124,7 +124,7 @@ static int ReadNBytesFromFIFO(struct rfid_asic_transport_handle *rath,
 {
 	unsigned char sndbuf[SENDBUF_LEN];
 	unsigned char recvbuf[0x7f];
-	unsigned int retlen = sizeof(recvbuf);
+	size_t retlen = sizeof(recvbuf);
 
 	sndbuf[0] = 0x20;
 	sndbuf[1] = 0x00;
@@ -153,7 +153,7 @@ static int WriteNBytesToFIFO(struct rfid_asic_transport_handle *rath,
 {
 	unsigned char sndbuf[SENDBUF_LEN];
 	unsigned char recvbuf[0x7f];
-	unsigned int retlen = sizeof(recvbuf);
+	size_t retlen = sizeof(recvbuf);
 
 	sndbuf[0] = 0x20;
 	sndbuf[1] = 0x00;
@@ -302,7 +302,7 @@ static int cm5121_enable_rc632(struct rfid_asic_transport_handle *rath)
 {
 	unsigned char tx_buf[1] = { 0x01 };	
 	unsigned char rx_buf[64];
-	unsigned int rx_len = sizeof(rx_buf);
+	size_t rx_len = sizeof(rx_buf);
 
 	PC_to_RDR_Escape(rath->data, tx_buf, 1, rx_buf, &rx_len);
 
