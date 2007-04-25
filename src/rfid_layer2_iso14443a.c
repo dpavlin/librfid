@@ -23,6 +23,8 @@
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
+ 
+// #define DEBUG_LIBRFID
 
 #include <librfid/rfid.h>
 #include <librfid/rfid_layer2.h>
@@ -31,6 +33,8 @@
 #include <librfid/rfid_protocol.h>
 
 #define TIMEOUT 1236
+
+unsigned long randctx[4]={0x22d4a017,0x773a1f44,0xc39e1460,0x9cde8801};
 
 /* Transceive a 7-bit short frame */
 int
@@ -80,19 +84,37 @@ iso14443a_code_nvb_bits(unsigned char *nvb, unsigned int bits)
 	return 0;
 }
 
+int random_bit(void)
+{
+    unsigned long e;
+
+    e = randctx[0];    
+    randctx[0]=randctx[1];
+    randctx[1]=(randctx[2]<<19) + (randctx[2]>>13) + randctx[3];
+    randctx[2]=randctx[3] ^ randctx[0];
+    randctx[3]=e+randctx[1];
+    
+    return randctx[1]&1;
+}
+
 /* first bit is '1', second bit '2' */
 static void
-set_bit_in_field(unsigned char *bitfield, unsigned int bit)
+rnd_toggle_bit_in_field(unsigned char *bitfield, unsigned int size, unsigned int bit)
 {
-	unsigned int byte_count = bit / 8;
-	unsigned int bit_count = bit % 8;
+    unsigned int byte,rnd;
 
-	DEBUGP("bitfield=%p, byte_count=%u, bit_count=%u\n",
-			bitfield, byte_count, bit_count);
-	DEBUGP("%p = 0x%02x\n", (bitfield+byte_count), *(bitfield+byte_count));
-	*(bitfield+byte_count) |= 1 << (bit_count-1);
-	DEBUGP("%p = 0x%02x\n", (bitfield+byte_count), *(bitfield+byte_count));
+    if(bit && (bit <= (size*8)) )
+    {
+	rnd=random_bit();
+	
+        DEBUGP("xor'ing bit %u with %u\n",bit,rnd);
+        bit--;
+        byte=bit/8;
+        bit=rnd<<(bit%8);
+        bitfield[byte] ^= bit;
+    }
 }
+
 
 static int
 iso14443a_anticol(struct rfid_layer2_handle *handle)
@@ -122,7 +144,7 @@ iso14443a_anticol(struct rfid_layer2_handle *handle)
 		return ret;
 	}
 	h->state = ISO14443A_STATE_ATQA_RCVD;
-
+	
 	DEBUGP("ATQA: 0x%02x 0x%02x\n", *aqptr, *(aqptr+1));
 
 	if (!atqa->bf_anticol) {
@@ -150,18 +172,20 @@ cascade:
 	ret = iso14443a_transceive_acf(handle, &acf, &bit_of_col);
 	if (ret < 0)
 		return ret;
-	DEBUGP("bit_of_col = %u\n", bit_of_col);
 	
 	while (bit_of_col != ISO14443A_BITOFCOL_NONE) {
-		set_bit_in_field(&acf.uid_bits[0], bit_of_col-16);
+		DEBUGP("collision at pos %u\n", bit_of_col);
+
 		iso14443a_code_nvb_bits(&acf.nvb, bit_of_col);
+		rnd_toggle_bit_in_field(acf.uid_bits, sizeof(acf.uid_bits), bit_of_col);
+		DEBUGP("acf: nvb=0x%02X uid_bits=%s\n",acf.nvb,rfid_hexdump(acf.uid_bits,sizeof(acf.uid_bits)));
 		ret = iso14443a_transceive_acf(handle, &acf, &bit_of_col);
-		DEBUGP("bit_of_col = %u\n", bit_of_col);
 		if (ret < 0)
 			return ret;
 	}
 
 	iso14443a_code_nvb_bits(&acf.nvb, 7*8);
+
 	ret = iso14443a_transceive(handle, RFID_14443A_FRAME_REGULAR,
 				   (unsigned char *)&acf, 7, 
 				   (unsigned char *) &sak, &rx_len,
@@ -325,7 +349,7 @@ iso14443a_init(struct rfid_reader_handle *rh)
 		return NULL;
 
 	memset(h, 0, sizeof(*h));
-
+	
 	h->l2 = &rfid_layer2_iso14443a;
 	h->rh = rh;
 	h->priv.iso14443a.state = ISO14443A_STATE_NONE;

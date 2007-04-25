@@ -875,7 +875,7 @@ rc632_iso14443a_transceive_acf(struct rfid_asic_handle *handle,
 	int ret;
 	u_int8_t rx_buf[64];
 	u_int8_t rx_len = sizeof(rx_buf);
-	u_int8_t rx_align = 0, tx_last_bits, tx_bytes;
+	u_int8_t rx_align = 0, tx_last_bits, tx_bytes, tx_bytes_total;
 	u_int8_t boc;
 	u_int8_t error_flag;
 	*bit_of_col = ISO14443A_BITOFCOL_NONE;
@@ -899,14 +899,14 @@ rc632_iso14443a_transceive_acf(struct rfid_asic_handle *handle,
 	if (ret < 0)
 		return ret;
 
-	tx_last_bits = acf->nvb & 0x0f;	/* lower nibble indicates bits */
-	tx_bytes = acf->nvb >> 4;
+	tx_last_bits = acf->nvb & 0x07;	/* lower nibble indicates bits */
+	tx_bytes = ( acf->nvb >> 4 ) & 0x07;
 	if (tx_last_bits) {
-		tx_bytes++;
-		rx_align = (tx_last_bits+1) % 8;/* rx frame complements tx */
+		tx_bytes_total = tx_bytes+1;
+		rx_align = tx_last_bits & 0x07; /* rx frame complements tx */
 	}
-
-	//rx_align = 8 - tx_last_bits;/* rx frame complements tx */
+	else
+		tx_bytes_total = tx_bytes;
 
 	/* set RxAlign and TxLastBits*/
 	ret = rc632_reg_write(handle, RC632_REG_BIT_FRAMING,
@@ -914,7 +914,7 @@ rc632_iso14443a_transceive_acf(struct rfid_asic_handle *handle,
 	if (ret < 0)
 		return ret;
 
-	ret = rc632_transceive(handle, (u_int8_t *)acf, tx_bytes,
+	ret = rc632_transceive(handle, (u_int8_t *)acf, tx_bytes_total,
 				rx_buf, &rx_len, 0x32, 0);
 	if (ret < 0)
 		return ret;
@@ -923,8 +923,10 @@ rc632_iso14443a_transceive_acf(struct rfid_asic_handle *handle,
 	acf->uid_bits[tx_bytes-2] = (
 		  (acf->uid_bits[tx_bytes-2] & (0xff >> (8-tx_last_bits)))
 		| rx_buf[0]);
+	
 	/* copy the rest */
-	memcpy(&acf->uid_bits[tx_bytes+1-2], &rx_buf[1], rx_len-1);
+	if(rx_len)
+	    memcpy(&acf->uid_bits[tx_bytes-1], &rx_buf[1], rx_len-1);
 
 	/* determine whether there was a collission */
 	ret = rc632_reg_read(handle, RC632_REG_ERROR_FLAG, &error_flag);
