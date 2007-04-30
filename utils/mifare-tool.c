@@ -21,7 +21,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include <libgen.h>
+//#include <libgen.h>
 
 #define _GNU_SOURCE
 #include <getopt.h>
@@ -95,7 +95,12 @@ int main(int argc, char **argv)
 	unsigned int page;
 	char key[MIFARE_CL_KEY_LEN];
 	char buf[MIFARE_CL_PAGE_SIZE];
+
+#ifdef  __MINGW32__
+	program_name = argv[0];
+#else
 	program_name = basename(argv[0]);
+#endif/*__MINGW32__*/
 
 	memcpy(key, MIFARE_CL_KEYA_DEFAULT_INFINEON,
 	       sizeof(MIFARE_CL_KEYA_DEFAULT_INFINEON));

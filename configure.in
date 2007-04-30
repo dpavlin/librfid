@@ -3,13 +3,23 @@ dnl Process this file with autoconf to create configure.
 AC_INIT
 
 AC_CANONICAL_SYSTEM
-
 AM_INIT_AUTOMAKE(librfid, 0.1.0)
 
 AC_PROG_CC
 AC_EXEEXT
 AM_PROG_LIBTOOL
 AC_SUBST(LIBTOOL_DEPS)
+
+AC_MSG_CHECKING([for build environment])
+case "$target_alias" in
+*-mingw*)	BUILDENV=WIN32;;
+*-cygwin*)	BUILDENV=WIN32;;
+*)		BUILDENV=UNIX;;
+esac
+AC_MSG_RESULT($BUILDENV)
+AC_SUBST(BUILDENV)
+AM_CONDITIONAL(ENABLE_WIN32, test "$BUILDENV" == "WIN32")
+AM_CONDITIONAL(DISABLE_WIN32, test "$BUILDENV" != "WIN32")
 
 AC_ARG_ENABLE(ccid,
 	[  --enable-ccid        Include internal CCID driver for CM5121],
@@ -52,7 +62,6 @@ AC_ARG_ENABLE(firmware,
 AM_CONDITIONAL(ENABLE_FIRMWARE, test "$ENABLE_FIRMWARE" == "1")
 
 AC_ARG_WITH()
-#AC_CHECK_HEADERS(usb.h, [have_libusb="yes"], [ AC_MSG_WARN([usb.h not found, use --enable-libusb=PATH. Otherwise, INDI will compile without Apogee USB support.]) ])
 
 AC_CHECK_LIB(usb, usb_close,,)
 AM_CONDITIONAL(HAVE_LIBUSB, test "x$have_libusb" = "xyes")

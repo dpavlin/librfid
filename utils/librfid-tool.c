@@ -21,7 +21,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include <libgen.h>
+/*#include <libgen.h>*/
 
 #define _GNU_SOURCE
 #include <getopt.h>
@@ -352,7 +352,7 @@ void register_module(struct rfidtool_module *me)
 
 	old = find_module(me->name);
 	if (old) {
-		fprintf(stderr, "%s: target `%s' already registere.\n",
+		fprintf(stderr, "%s: target `%s' already registered.\n",
 			program_name, me->name);
 		exit(1);
 	}
@@ -370,10 +370,14 @@ static void help(void)
 int main(int argc, char **argv)
 {
 	int rc;
-	char buf[0x40];
-	int i, protocol = -1, layer2 = -1;
+	char buf[0x100];
+	int i, len, protocol = -1, layer2 = -1;
 
+#ifdef  __MINGW32__
+	program_name = argv[0];
+#else /*__MINGW32__*/
 	program_name = basename(argv[0]);
+#endif/*__MINGW32__*/
 	
 	printf("%s - (C) 2006 by Harald Welte\n"
 	       "This program is Free Software and has "
@@ -450,8 +454,6 @@ int main(int argc, char **argv)
 		exit(1);
 
 	switch (protocol) {
-		char buf[32000];
-		int len = 200;
 
 	case RFID_PROTOCOL_TCL:
 		printf("Protocol T=CL\n");
@@ -493,7 +495,7 @@ int main(int argc, char **argv)
 
 		while (1) {
 			printf("reading EF1\n");
-			len = 200;
+			len = sizeof(buf);
 			printf("reading ef\n");
 			rc = iso7816_read_binary(buf, &len);
 			if (rc < 0) {

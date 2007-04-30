@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <librfid/rfid.h>
 #include <librfid/rfid_reader.h>
 #include <librfid/rfid_protocol.h>
 #include <librfid/rfid_protocol_tcl.h>
@@ -32,6 +33,7 @@ struct rfid_reader_handle rfid_rh;
 #endif
 
 #ifndef LIBRFID_FIRMWARE
+#ifdef  LIBRFID_DEBUG
 const char *
 rfid_hexdump(const void *data, unsigned int len)
 {
@@ -48,6 +50,7 @@ rfid_hexdump(const void *data, unsigned int len)
 	}
 	return string;
 }
+#endif/*LIBRFID_DEBUG*/
 #else
 #define rfid_hexdump(x, y) hexdump(x, y)
 #endif
