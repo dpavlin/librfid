@@ -35,8 +35,10 @@
 
 #include "rfid_iso14443_common.h"
 #include "rc632.h"
-//#include "rc632_14443a.h"
 
+#ifdef  __MINGW32__
+#include "usleep.h"
+#endif/*__MINGW32__*/
 
 #define RC632_TMO_AUTH1	140
 
@@ -608,7 +610,7 @@ rc632_open(struct rfid_asic_transport_handle *th)
 		return NULL;
 	memset(h, 0, sizeof(*h));
 
-	h->asic = &rc632;
+	h->asic = (void*)&rc632;
 	h->rath = th;
 	h->fc = h->asic->fc;
 	/* FIXME: this is only cm5121 specific, since the latency

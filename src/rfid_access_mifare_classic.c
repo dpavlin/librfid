@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <sys/types.h>
 
 #include <librfid/rfid.h>
 #include <librfid/rfid_access_mifare_classic.h>
@@ -229,4 +228,3 @@ char *mfcl_access_exp_acc_stringify(const struct mfcl_access_exp_acc *acc)
 		mfcl_access_str[acc->key_b_wr]);
 	return buf;
 }
-

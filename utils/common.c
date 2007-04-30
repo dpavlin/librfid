@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include <libgen.h>
+//#include <libgen.h>
 
 #include <librfid/rfid.h>
 #include <librfid/rfid_scan.h>

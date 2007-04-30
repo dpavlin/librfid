@@ -1,7 +1,6 @@
 #ifndef _RFID_LAYER2_H
 #define _RFID_LAYER2_H
 
-#include <sys/types.h>
 #include <librfid/rfid.h>
 
 struct rfid_layer2_handle;

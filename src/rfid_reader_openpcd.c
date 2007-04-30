@@ -56,7 +56,12 @@ static struct openpcd_hdr *rcv_hdr;
 
 #ifndef LIBRFID_FIRMWARE
 
+#ifdef  __MINGW32__
+#include "libusb_dyn.h"
+#else /*__MINGW32__*/
 #include <usb.h>
+#endif/*__MINGW32__*/
+
 static struct usb_device *dev;
 static struct usb_dev_handle *hdl;
 
