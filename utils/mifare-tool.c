@@ -102,8 +102,7 @@ int main(int argc, char **argv)
 	program_name = basename(argv[0]);
 #endif/*__MINGW32__*/
 
-	memcpy(key, MIFARE_CL_KEYA_DEFAULT_INFINEON,
-	       sizeof(MIFARE_CL_KEYA_DEFAULT_INFINEON));
+	memcpy(key, MIFARE_CL_KEYA_DEFAULT_INFINEON, MIFARE_CL_KEY_LEN);
 
 	printf("%s - (C) 2006 by Harald Welte\n"
 	       "This program is Free Software and has "
