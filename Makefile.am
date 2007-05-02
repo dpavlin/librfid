@@ -1,6 +1,6 @@
 AUTOMAKE_OPTIONS = foreign dist-bzip2 1.6
 
-SUBDIRS = etc include src utils
+SUBDIRS = etc include src utils win32
 
 DEFAULT_AM_CFLAGS = -std=gnu99
 if ENABLE_WIN32

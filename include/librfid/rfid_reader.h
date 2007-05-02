@@ -12,6 +12,22 @@ struct rfid_reader {
 	unsigned int l2_supported;
 	unsigned int proto_supported;
 
+        int (*get_api_version)(
+            struct rfid_reader_handle *h,
+            u_int8_t *version);
+
+        int (*get_environment)(
+            struct rfid_reader_handle *rh,
+            unsigned char num_bytes,
+            unsigned char *buf);
+
+        int (*set_environment)(
+            struct rfid_reader_handle *rh,
+            unsigned char num_bytes,
+            const unsigned char *buf);
+
+        int (*reset)(struct rfid_reader_handle *h);
+
 	int (*transceive)(struct rfid_reader_handle *h,
 			  enum rfid_frametype frametype,
 			  const unsigned char *tx_buf, unsigned int tx_len,

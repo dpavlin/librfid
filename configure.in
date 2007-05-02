@@ -1,12 +1,14 @@
 dnl Process this file with autoconf to create configure.
 
 AC_INIT
-
 AC_CANONICAL_SYSTEM
 AM_INIT_AUTOMAKE(librfid, 0.1.0)
 
 AC_PROG_CC
+AM_PROG_CC_C_O
+AC_C_CONST
 AC_EXEEXT
+AC_LIBTOOL_WIN32_DLL
 AM_PROG_LIBTOOL
 AC_SUBST(LIBTOOL_DEPS)
 
@@ -67,4 +69,4 @@ AC_CHECK_LIB(usb, usb_close,,)
 AM_CONDITIONAL(HAVE_LIBUSB, test "x$have_libusb" = "xyes")
 
 dnl Output the makefile
-AC_OUTPUT(Makefile etc/Makefile etc/udev/Makefile src/Makefile include/Makefile include/librfid/Makefile utils/Makefile src/librfid.pc)
+AC_OUTPUT(Makefile etc/Makefile etc/udev/Makefile src/Makefile include/Makefile include/librfid/Makefile utils/Makefile src/librfid.pc win32/Makefile)
