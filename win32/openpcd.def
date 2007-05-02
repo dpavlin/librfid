@@ -1,0 +1,15 @@
+LIBRARY openpcd.dll
+EXPORTS
+	openpcd_open_reader@4
+	openpcd_close_reader@4 
+	openpcd_select_card@4
+	openpcd_deselect_card@4
+	openpcd_read@16
+	openpcd_write@16
+	openpcd_get_card_id@8
+	openpcd_set_key@12
+	openpcd_get_error_text@4
+	openpcd_get_api_version@8
+	openpcd_get_environment@12
+	openpcd_set_environment@12
+	openpcd_reset_reader@4
