@@ -92,7 +92,7 @@ static void mifare_l3(void)
 int main(int argc, char **argv)
 {
 	int len, rc, c, option_index = 0;
-	unsigned int page;
+	unsigned int page,uid,uid_len;
 	char key[MIFARE_CL_KEY_LEN];
 	char buf[MIFARE_CL_PAGE_SIZE];
 
@@ -136,13 +136,20 @@ int main(int argc, char **argv)
 			mifare_l3();
 			if (mifare_cl_auth(key, page) < 0)
 				exit(1);
+
+        		uid_len=sizeof(uid);
+                    	uid=0;
+                    	if(rfid_layer2_getopt(l2h,RFID_OPT_LAYER2_UID,&uid,&uid_len)>=0)
+                            printf("UID=%08X (len=%u)\n",uid,uid_len);
+				
+	                len=MIFARE_CL_PAGE_SIZE;																				    				
 			rc = rfid_protocol_read(ph, page, buf, &len);
 			if (rc < 0) {
 				printf("\n");
 				fprintf(stderr, "error during read\n");
 				break;
 			}
-			printf("%s\n", hexdump(buf, len));
+			printf("len=%u data=%s\n", len, hexdump(buf, len));
 
 			if (page & 0x3 == 0x3) {
 				struct mfcl_access_sect s;
@@ -171,6 +178,13 @@ int main(int argc, char **argv)
 				mifare_l3();
 				if (mifare_cl_auth(key, page) < 0)
 					continue;
+
+                    		uid_len=sizeof(uid);
+                    		uid=0;
+                    		if(rfid_layer2_getopt(l2h,RFID_OPT_LAYER2_UID,&uid,&uid_len)>=0)
+                        	    printf("UID=%08X (len=%u)\n",uid,uid_len);
+
+	            		len=MIFARE_CL_PAGE_SIZE;																				    				
 				rc = rfid_protocol_read(ph, page, buf, &len);
 				if (rc < 0) {
 					printf("\n");
