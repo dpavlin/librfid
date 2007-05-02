@@ -80,7 +80,7 @@ static int openpcd_send_command(u_int8_t cmd, u_int8_t reg, u_int8_t val,
 
 	cur = sizeof(*snd_hdr) + len;
 
-	return usb_bulk_write(hdl, OPENPCD_OUT_EP, (char *)snd_hdr, cur, 0);
+	return usb_bulk_write(hdl, OPENPCD_OUT_EP, (char *)snd_hdr, cur, 1000);
 }
 
 static int openpcd_recv_reply(void)
@@ -120,7 +120,7 @@ static struct usb_device *find_opcd_device(void)
 {
 	struct usb_bus *bus;
 
-	for (bus = usb_busses; bus; bus = bus->next) {
+	for (bus = usb_get_busses(); bus; bus = bus->next) {
 		struct usb_device *dev;
 		for (dev = bus->devices; dev; dev = dev->next) {
 			int i;
@@ -225,6 +225,83 @@ const struct rfid_asic_transport openpcd_rat = {
 	},
 };
 
+static int openpcd_get_api_version(struct rfid_reader_handle *rh, u_int8_t *version)
+{
+	int ret;
+	
+	// preset version result to zero
+	rcv_hdr->val=0;
+    
+	ret = openpcd_xcv(OPENPCD_CMD_GET_API_VERSION, 0, 0, 0, NULL);
+	if (ret < 0) {
+		DEBUGPC("ERROR sending command [%i]\n", ret);
+		return ret;
+	}
+
+	if (ret < sizeof(struct openpcd_hdr)) {
+		DEBUGPC("ERROR: short packet [%i]\n", ret);
+		return -EINVAL;
+	}
+
+	*version = rcv_hdr->val;
+	
+	return ret;
+}
+
+static int openpcd_get_environment(
+    struct rfid_reader_handle *rh,
+    unsigned char num_bytes,
+    unsigned char *buf)
+{
+	int ret;
+
+	DEBUGP(" ");
+
+	ret = openpcd_xcv(OPENPCD_CMD_GET_ENVIRONMENT, 0x00, num_bytes, 0, NULL);
+	if (ret < 0) {
+		DEBUGPC("ERROR sending command [%i]\n",ret);
+		return ret;
+	}
+	DEBUGPC("ret = %d\n", ret);
+
+	memcpy(buf, rcv_hdr->data, ret - sizeof(struct openpcd_hdr));
+	DEBUGPC("len=%d val=%s: OK\n", ret - sizeof(struct openpcd_hdr),
+		rfid_hexdump(rcv_hdr->data, ret - sizeof(struct openpcd_hdr)));
+
+	return ret;
+}
+
+static int openpcd_set_environment(
+    struct rfid_reader_handle *rh, 
+    const unsigned char num_bytes,
+    unsigned char *buf)
+{
+	int ret;
+	
+	ret = openpcd_xcv(OPENPCD_CMD_SET_ENVIRONMENT, 0, 0, num_bytes, buf);
+	if (ret < 0) {
+		DEBUGPC("ERROR sending command [%i]\n",ret);
+		return ret;
+	}
+
+	if (ret < sizeof(struct openpcd_hdr)) {
+		DEBUGPC("ERROR: short packet [%i]\n", ret);
+		return -EINVAL;
+	}
+
+	return rcv_hdr->val;
+}
+
+static int openpcd_reset(struct rfid_reader_handle *rh)
+{
+	int ret;
+
+	DEBUGP("reset ");
+	ret = openpcd_xcv(OPENPCD_CMD_RESET, 0, 0, 0, 0);
+
+	return ret;
+}
+
 #else
 /* RC632 access primitives for librfid inside reader firmware */
 
@@ -325,7 +402,7 @@ openpcd_14443a_set_speed(struct rfid_reader_handle *rh,
 		break;
 	case RFID_14443A_SPEED_424K:
 		rate = 0x02;
-		DEBUGPC("424K\n");
+ 		DEBUGPC("424K\n");
 		break;
 	case RFID_14443A_SPEED_848K:
 		rate = 0x03;
@@ -393,6 +470,13 @@ openpcd_open(void *data)
 		return NULL;
 	}
 
+        if(usb_set_configuration(hdl, 1 ) < 0)
+        {
+            DEBUGP("setting config failed\n");
+            usb_close( hdl );
+            return NULL;
+        }
+									
 	if (usb_claim_interface(hdl, 0) < 0) {
 		DEBUGP("Can't claim interface\n");
 		usb_close(hdl);
@@ -447,6 +531,12 @@ const struct rfid_reader rfid_reader_openpcd = {
 	.id = RFID_READER_OPENPCD,
 	.open = &openpcd_open,
 	.close = &openpcd_close,
+	
+        .get_api_version = &openpcd_get_api_version,
+	.get_environment = &openpcd_get_environment,
+	.set_environment = &openpcd_set_environment,
+        .reset = &openpcd_reset,
+					
 	.transceive = &openpcd_transceive,
 	.l2_supported = (1 << RFID_LAYER2_ISO14443A) |
 			(1 << RFID_LAYER2_ISO14443B) |

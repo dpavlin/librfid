@@ -33,7 +33,9 @@ extern const struct rfid_protocol rfid_protocol_mfcl;
 #define MIFARE_CL_RESP_ACK	0x0a
 #define MIFARE_CL_RESP_NAK	0x00
 
-
 #endif /* __LIBRFID__ */
+
+extern int mfcl_set_key(struct rfid_protocol_handle *ph, unsigned char *key);
+extern int mfcl_auth(struct rfid_protocol_handle *ph, u_int8_t cmd, u_int8_t block);				
 
 #endif /* _MIFARE_CLASSIC_H */

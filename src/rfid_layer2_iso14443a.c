@@ -23,8 +23,9 @@
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
- 
-// #define DEBUG_LIBRFID
+#ifdef  __MINGW32__
+#include <windows.h>
+#endif/*__MINGW32__*/
 
 #include <librfid/rfid.h>
 #include <librfid/rfid_layer2.h>
@@ -349,6 +350,12 @@ iso14443a_init(struct rfid_reader_handle *rh)
 		return NULL;
 
 	memset(h, 0, sizeof(*h));
+	
+#ifdef  __MINGW32__
+	randctx[0] ^= GetTickCount();
+#endif/*__MINGW32__*/
+        for(ret=0;ret<23;ret++)
+            random_bit();
 	
 	h->l2 = &rfid_layer2_iso14443a;
 	h->rh = rh;
