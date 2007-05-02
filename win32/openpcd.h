@@ -1,6 +1,7 @@
 /*************************************************************************/
 /*                                                                       */
-/* Mifare support for accessing RFID cards with Infratec RFID reader     */
+/* Mifare support for accessing RFID cards with OpenPCD RFID reader      */
+/* in WIN32 - see http://www.openpcd.org                                 */
 /*                                                                       */
 /* Copyright (C) 2007 Milosch Meriac <meriac@bitmanufaktur.de>           */
 /*                                                                       */
