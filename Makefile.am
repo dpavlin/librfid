@@ -1,9 +1,10 @@
 AUTOMAKE_OPTIONS = foreign dist-bzip2 1.6
 
-SUBDIRS = etc include src utils win32
+SUBDIRS = etc include src utils
 
 DEFAULT_AM_CFLAGS = -std=gnu99
 if ENABLE_WIN32
+SUBDIRS += win32
 LINKOPTS = -mno-cygwin
 AM_CFLAGS = $(DEFAULT_AM_CFLAGS)
 else
