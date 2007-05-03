@@ -25,13 +25,10 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-//#define DEBUG
-
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
-
 
 #include <librfid/rfid.h>
 #include <librfid/rfid_reader.h>
@@ -52,7 +49,6 @@ static char snd_buf[SENDBUF_LEN];
 static char rcv_buf[RECVBUF_LEN];
 static struct openpcd_hdr *snd_hdr;
 static struct openpcd_hdr *rcv_hdr;
-
 
 #ifndef LIBRFID_FIRMWARE
 
@@ -532,10 +528,12 @@ const struct rfid_reader rfid_reader_openpcd = {
 	.open = &openpcd_open,
 	.close = &openpcd_close,
 	
+#ifndef LIBRFID_FIRMWARE
         .get_api_version = &openpcd_get_api_version,
 	.get_environment = &openpcd_get_environment,
 	.set_environment = &openpcd_set_environment,
         .reset = &openpcd_reset,
+#endif
 					
 	.transceive = &openpcd_transceive,
 	.l2_supported = (1 << RFID_LAYER2_ISO14443A) |
