@@ -15,6 +15,7 @@
 #include <librfid/rfid_protocol_mifare_ul.h>
 
 #include "librfid-tool.h"
+#include "common.h"
 
 const char *
 hexdump(const void *data, unsigned int len)
@@ -85,7 +86,6 @@ int reader_init(void)
 
 int l2_init(int layer2)
 {
-	unsigned char buf[0x3f];
 	int rc;
 
 	printf("opening layer2 handle\n");
