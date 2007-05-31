@@ -1,3 +1,20 @@
+/* Python bindings for librfid 
+ *  (C) 2007 by Kushal Das <kushal@openpcd.org>
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License version 2 
+ *  as published by the Free Software Foundation
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -41,8 +58,8 @@ static PyMethodDef pyi_Methods[] = {
 PyMODINIT_FUNC initpyrfid() {
     PyObject *m;
 
-    m = Py_InitModule("openpcd", pyi_Methods);
-    pyi_Error = PyErr_NewException("openpcd.error", NULL, NULL);
+    m = Py_InitModule("pyrfid", pyi_Methods);
+    pyi_Error = PyErr_NewException("pyrfid.error", NULL, NULL);
     Py_INCREF(pyi_Error);
     PyModule_AddObject(m, "error", pyi_Error);
     return;
@@ -59,8 +76,9 @@ static PyObject *pyi_open(PyObject *self, PyObject *args) {
 
 static PyObject *pyi_close(PyObject *self, PyObject *args) {
     rfid_reader_close(rh);
-    Py_INCREF(Py_None);
-    return Py_None;
+//     Py_INCREF(Py_None);
+//     return Py_None;
+     return Py_BuildValue("i", 0);
 }
 
 static PyObject *pyi_rfidscan(PyObject *self, PyObject *args) {
