@@ -1,14 +1,29 @@
 #!/usr/bin/env python
+  #Python bindings test file 
+  #(C) 2007 by Kushal Das <kushal@openpcd.org>
+
+  #This program is free software; you can redistribute it and/or modify
+  #it under the terms of the GNU General Public License version 2 
+  #as published by the Free Software Foundation
+
+  #This program is distributed in the hope that it will be useful,
+  #but WITHOUT ANY WARRANTY; without even the implied warranty of
+  #MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  #GNU General Public License for more details.
+
+  #You should have received a copy of the GNU General Public License
+  #along with this program; if not, write to the Free Software
+  #Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 import pyrfid
 
-res = openpcd.open()
+res = pyrfid.open()
 if res == 1:
         print "No device found"
 else:
         print "We found a device :)"
         while 1:
-                res = openpcd.scan()
+                res = pyrfid.scan()
                 if res == 3:
-                        print "The id of the card is %s" %(openpcd.get_id())
-openpcd.close()
+                        print "The id of the card is %s" %(pyrfid.get_id())
+        pyrfid.close()
