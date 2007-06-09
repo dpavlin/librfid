@@ -21,7 +21,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-//#include <libgen.h>
+
+#ifndef __MINGW32__
+#include <libgen.h>
+#endif
 
 #define _GNU_SOURCE
 #include <getopt.h>

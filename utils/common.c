@@ -3,7 +3,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-//#include <libgen.h>
+
+#ifndef __MINGW32__
+#include <libgen.h>
+#endif
 
 #include <librfid/rfid.h>
 #include <librfid/rfid_scan.h>
