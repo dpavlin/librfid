@@ -164,6 +164,8 @@ tcl_parse_ats(struct rfid_protocol_handle *h,
 
 	h->priv.tcl.historical_len = (ats+len) - cur;
 	h->priv.tcl.historical_bytes = cur;
+	
+	DEBUGP("ATS parsed: %s\n", rfid_hexdump(ats, size));
 
 	return 0;
 }
