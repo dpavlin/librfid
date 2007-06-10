@@ -31,6 +31,8 @@ extern const char *rfid_hexdump(const void *data, unsigned int len);
 #define DEBUGPC(x, args ...) fprintf(stderr, x, ## args)
 #endif /* LIBRFID_FIRMWARE */
 
+#include <stdio.h>
+
 #else /* DEBUG */
 extern const char *rfid_hexdump(const void *data, unsigned int len);
 
