@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 #include <sys/types.h>
+#include <stdio.h>
 
 #ifdef  __MINGW32__
 #define ENOTSUP         100
