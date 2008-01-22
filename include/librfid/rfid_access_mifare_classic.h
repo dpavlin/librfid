@@ -17,20 +17,38 @@ enum mfcl_access_exp_data {
 };
 
 struct mfcl_access_exp_block {
+#ifndef RFID_BIG_ENDIAN_BITFIELD
 	u_int8_t read:2,
 		 write:2,
 		 inc:2,
 		 dec:2;
-};
+#else
+	u_int8_t dec:2,
+		 inc:2,
+		 write:2,
+		 read:2;
+#endif
+} __attribute__ ((packed));
 
 struct mfcl_access_exp_acc {
-	u_int16_t key_a_rd:2,
+#ifndef RFID_BIG_ENDIAN_BITFIELD
+	u_int8_t key_a_rd:2,
 		  key_a_wr:2,
 		  acc_rd:2,
-		  acc_wr:2,
-		  key_b_rd:2,
-		  key_b_wr:2;
-};
+		  acc_wr:2;
+	u_int8_t key_b_rd:2,
+		  key_b_wr:2,
+		  reserved:4;
+#else
+	u_int8_t acc_wr:2,
+		  acc_rd:2,
+		  key_a_wr:2,
+		  key_a_rd:2;
+	u_int8_t reserved:4,
+		  key_b_wr:2,
+		  key_b_rd:2;
+#endif
+} __attribute__ ((packed));
 
 
 struct mfcl_access_exp_sect {

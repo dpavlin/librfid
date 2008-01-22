@@ -30,11 +30,19 @@ enum iso14443a_sf_cmd {
 };
 
 struct iso14443a_atqa {
+#ifndef RFID_BIG_ENDIAN_BITFIELD
 	u_int8_t bf_anticol:5,
 		 rfu1:1,
 		 uid_size:2;
 	u_int8_t proprietary:4,
 		 rfu2:4;
+#else
+	u_int8_t uid_size:2,
+		 rfu1:1,
+		 bf_anticol:5;
+	u_int8_t rfu2:4,
+		 proprietary:4;
+#endif
 } __attribute__((packed));
 
 #define ISO14443A_HLTA		0x5000

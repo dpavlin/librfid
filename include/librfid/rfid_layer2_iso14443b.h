@@ -20,11 +20,19 @@ struct iso14443b_atqb {
 	unsigned char app_data[4];
 	struct {
 		unsigned char bit_rate_capability;
+#ifndef RFID_BIG_ENDIAN_BITFIELD
 		unsigned char protocol_type:4,
 			      max_frame_size:4;
 		unsigned char fo:2,
 			      adc:2,
 			      fwi:4;
+#else
+		unsigned char max_frame_size:4,
+			      protocol_type:4;
+		unsigned char fwi:4,
+			      adc:2,
+			      fo:2;
+#endif
 	} __attribute__ ((packed)) protocol_info;
 } __attribute__ ((packed));
 
@@ -32,24 +40,48 @@ struct iso14443b_attrib_hdr {
 	unsigned char one_d;
 	unsigned char identifier[4];
 	struct {
+#ifndef RFID_BIG_ENDIAN_BITFIELD
 		unsigned char rfu:2,
 			      sof:1,
 			      eof:1,
 			      min_tr1:2,
 			      min_tr0:2;
+#else
+		unsigned char min_tr0:2,
+			      min_tr1:1,
+			      eof:1,
+			      sof:1,
+			      rfu:2;
+#endif
 	} __attribute__ ((packed)) param1;
 	struct {
+#ifndef RFID_BIG_ENDIAN_BITFIELD
 		unsigned char fsdi:4,
 			      spd_out:2,
 			      spd_in:2;
+#else
+		unsigned char spd_in:2,
+			      spd_out:2,
+			      fsdi:4;
+#endif
 	} __attribute__ ((packed)) param2;
 	struct {
+#ifndef RFID_BIG_ENDIAN_BITFIELD
 		unsigned char protocol_type:4,
 			      rfu:4;
+#else
+		unsigned char rfu:4,
+			      protocol_type:4;
+#endif
 	} __attribute__ ((packed)) param3;
 	struct {
+#ifndef RFID_BIG_ENDIAN_BITFIELD
 		unsigned char cid:4,
 			      rfu:4;
+#else
+		unsigned char rfu:4,
+			      cid:4;
+#endif
 	} __attribute__ ((packed)) param4;
 } __attribute__ ((packed));
 
