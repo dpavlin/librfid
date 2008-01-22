@@ -79,7 +79,6 @@ static int
 mfcl_write(struct rfid_protocol_handle *ph, unsigned int page,
 	   unsigned char *tx_data, unsigned int tx_len)
 {
-	unsigned int i;
 	unsigned char tx[18];
 	unsigned char rx[1];
 	unsigned int rx_len = sizeof(rx);
@@ -145,7 +144,7 @@ mfcl_getopt(struct rfid_protocol_handle *ph, int optname, void *optval,
 	    unsigned int *optlen)
 {
 	int ret = -EINVAL;
-	u_int16_t atqa;
+	u_int8_t atqa[2];
 	unsigned int atqa_size = sizeof(atqa);
 	unsigned int *size = optval;
 
@@ -156,10 +155,10 @@ mfcl_getopt(struct rfid_protocol_handle *ph, int optname, void *optval,
 		*optlen = sizeof(*size);
 		ret = 0;
 		rfid_layer2_getopt(ph->l2h, RFID_OPT_14443A_ATQA,
-				   (void *) &atqa, &atqa_size);
-		if (atqa == 0x0004)
+				   atqa, &atqa_size);
+		if (atqa[0] == 0x04 && atqa[1] == 0x00)
 			*size = 1024;
-		else if (atqa == 0x0002)
+		else if (atqa[0] == 0x02 && atqa[1] == 0x00)
 			*size = 4096;
 		else
 			ret = -EIO;

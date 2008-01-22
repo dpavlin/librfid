@@ -99,21 +99,11 @@ mful_write(struct rfid_protocol_handle *ph, unsigned int page,
 	return ret;
 }
 
-static int
-mful_transceive(struct rfid_protocol_handle *ph,
-		const unsigned char *tx_data, unsigned int tx_len,
-		unsigned char *rx_data, unsigned int *rx_len,
-		unsigned int timeout, unsigned int flags)
-{
-	return -EINVAL;
-}
-
 static int 
 mful_getopt(struct rfid_protocol_handle *ph, int optname, void *optval,
 	    unsigned int *optlen)
 {
 	int ret = -EINVAL;
-	u_int16_t atqa;
 	unsigned int *size = optval;
 
 	switch (optname) {
@@ -131,7 +121,7 @@ static struct rfid_protocol_handle *
 mful_init(struct rfid_layer2_handle *l2h)
 {
 	struct rfid_protocol_handle *ph;
-	u_int16_t atqa;
+	u_int8_t atqa[2];
 	unsigned int atqa_len = sizeof(atqa);
 
 	if (l2h->l2->id != RFID_LAYER2_ISO14443A)
@@ -139,8 +129,8 @@ mful_init(struct rfid_layer2_handle *l2h)
 	
 	/* According to "Type Identification Procedure Rev. 1.3" */
 	rfid_layer2_getopt(l2h, RFID_OPT_14443A_ATQA,
-			   &atqa, &atqa_len);
-	if (atqa != 0x0044)
+			   atqa, &atqa_len);
+	if (atqa[0] != 0x44 || atqa[1] != 0x00)
 		return NULL;
 
 	/* according to "Functional Specification Rev. 3.0 */

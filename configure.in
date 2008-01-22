@@ -23,6 +23,8 @@ AC_SUBST(BUILDENV)
 AM_CONDITIONAL(ENABLE_WIN32, test "$BUILDENV" == "WIN32")
 AM_CONDITIONAL(DISABLE_WIN32, test "$BUILDENV" != "WIN32")
 
+AC_C_BIGENDIAN(AC_DEFINE(RFID_BIG_ENDIAN_BITFIELD, 1, [Big-endian bitfield]),,)
+
 AC_ARG_ENABLE(ccid,
 	[  --enable-ccid        Include internal CCID driver for CM5121],
 	[MY_CCID=1], [MY_CCID=0])
