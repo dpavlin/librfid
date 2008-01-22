@@ -55,10 +55,8 @@ hexread(unsigned char *result, const unsigned char *in, unsigned int len)
 	unsigned char *res = result;
 
 	for (pos = in; pos-in <= len-2; pos+=2) {
-		if (*pos == ':') {
+		if (*pos == ':')
 			pos++;
-			continue;
-		}
 		dig1 = *pos;
 		dig2 = *(pos+1);
 
