@@ -109,7 +109,8 @@ mful_getopt(struct rfid_protocol_handle *ph, int optname, void *optval,
 	switch (optname) {
 	case RFID_OPT_PROTO_SIZE:
 		ret = 0;
-		*size = 512;
+		/* we have to return the size in bytes, not bits */
+		*size = 512/8;
 		break;
 	}
 
