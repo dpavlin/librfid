@@ -50,7 +50,8 @@ static void help(void)
 		" -r	--read		Read a mifare sector\n"
 		" -l	--loop-read	Loop reading a mifare sector\n"
 		" -w	--write		Write a mifare sector\n"
-		" -k	--key		Specify mifare access key (in hex tuples)\n");
+		" -k	--key		Specify mifare access key (in hex tuples)\n"
+		" -b    --brute-force n	Brute Force read sector n\n");
 }
 
 static struct option mifare_opts[] = {
@@ -59,6 +60,7 @@ static struct option mifare_opts[] = {
 	{ "loop-read", 1, 0, 'l' },
 	{ "write", 1 ,0, 'w' },
 	{ "help", 0, 0, 'h' },
+	{ "brute-force", 1, 0, 'c' },
 	{ 0, 0, 0, 0 }
 };
 
@@ -92,6 +94,19 @@ static void mifare_l3(void)
 	printf("Mifare card available\n");
 }
 
+static void inc_key(char* key, int len)
+{
+	int i;
+
+	if (len <= 0)
+		return;
+	i = len - 1;
+	if (key[i] < 0xff)
+		key[i]++;
+	else
+		key[i] = 0;
+}
+
 int main(int argc, char **argv)
 {
 	int len, rc, c, option_index = 0;
@@ -120,12 +135,25 @@ int main(int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long(argc, argv, "k:r:l:w:", mifare_opts,
+		c = getopt_long(argc, argv, "k:r:l:w:c:", mifare_opts,
 				&option_index);
 		if (c == -1)
 			break;
 
 		switch (c) {
+			int i;
+		case 'c':
+			page = atoi(optarg);
+			printf("key: %s\n", hexdump(key, MIFARE_CL_KEY_LEN));
+			len = MIFARE_CL_PAGE_SIZE;
+			mifare_l3();
+			for (i = 0; i <= 0xff; i++) {
+				key[MIFARE_CL_KEY_LEN-1]=i;
+				if (mifare_cl_auth(key, page) >= 0)
+					printf("KEY: %s\n",hexdump(key, MIFARE_CL_KEY_LEN));
+			}
+
+			break;
 		case 'k':
 			hexread(key, optarg, strlen(optarg));
 			printf("key: %s\n", hexdump(key, MIFARE_CL_KEY_LEN));
