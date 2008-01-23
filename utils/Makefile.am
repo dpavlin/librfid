@@ -4,7 +4,7 @@ if ENABLE_FIRMWARE
 else
 bin_PROGRAMS = librfid-tool mifare-tool librfid-send_script 
 
-noinst_HEADERS = librfid-tool.h
+noinst_HEADERS = librfid-tool.h common.h
 
 librfid_tool_SOURCES = librfid-tool.c common.c
 librfid_tool_LDADD = ../src/librfid.la
