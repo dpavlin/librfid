@@ -17,7 +17,7 @@ struct rfid_asic_transport {
 struct rfid_asic_transport_handle {
 	void *data;		/* handle to stuff like even lower layers */
 
-	struct rfid_asic_transport *rat;
+	const struct rfid_asic_transport *rat;
 };
 
 /* Some implementation-specific data.  A reader will specify one of these for

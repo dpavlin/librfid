@@ -76,7 +76,7 @@ struct rfid_reader_handle {
 	union {
 
 	} priv;
-	struct rfid_reader *reader;
+	const struct rfid_reader *reader;
 };
 
 extern struct rfid_reader_handle *

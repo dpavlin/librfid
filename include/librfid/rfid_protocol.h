@@ -89,7 +89,7 @@ struct rfid_protocol {
 
 struct rfid_protocol_handle {
 	struct rfid_layer2_handle *l2h;
-	struct rfid_protocol *proto;
+	const struct rfid_protocol *proto;
 	union {
 		struct tcl_handle tcl;
 	} priv;				/* priv has to be last, since

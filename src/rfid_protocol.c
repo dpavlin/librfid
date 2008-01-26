@@ -33,7 +33,7 @@ static const struct rfid_protocol *rfid_protocols[] = {
 struct rfid_protocol_handle *
 rfid_protocol_init(struct rfid_layer2_handle *l2h, unsigned int id)
 {
-	struct rfid_protocol *p;
+	const struct rfid_protocol *p;
 	struct rfid_protocol_handle *ph = NULL;
 
 	if (id >= ARRAY_SIZE(rfid_protocols))

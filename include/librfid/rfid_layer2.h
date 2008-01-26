@@ -76,7 +76,7 @@ struct rfid_layer2_handle {
 		struct iso14443b_handle iso14443b;
 		struct iso15693_handle iso15693;
 	} priv;
-	struct rfid_layer2 *l2;
+	const struct rfid_layer2 *l2;
 };
 
 #endif /* __LIBRFID__ */
