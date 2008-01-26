@@ -33,7 +33,6 @@ struct rfid_reader_handle rfid_rh;
 #endif
 
 #ifndef LIBRFID_FIRMWARE
-#ifdef  DEBUG_LIBRFID
 const char *
 rfid_hexdump(const void *data, unsigned int len)
 {
@@ -50,7 +49,6 @@ rfid_hexdump(const void *data, unsigned int len)
 	}
 	return string;
 }
-#endif/*DEBUG_LIBRFID*/
 #else
 #define rfid_hexdump(x, y) hexdump(x, y)
 #endif
