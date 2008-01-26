@@ -1,0 +1,39 @@
+.TH mifare-tool 1 "January 24, 2008"
+.SH NAME
+mifare-tool \- Low-level mifare tag command line tool based on librfid
+.SH SYNOPSIS
+.B mifare-tool \fR[\fB\-rlwkbh\fR]
+.SH DESCRIPTION
+.B mifare-tool
+is a command line tool for testing low-level mifare tag support in librfid.
+.SH OPTIONS
+.B "\-r, \-\-read"
+Read a mifare sector.
+.TP
+.B "\-l, \-\-loop-read"
+Loop reading a mifare sector.
+.TP
+.B "\-w, \-\-write"
+Write a mifare sector.
+.TP
+.B "\-k, \-\-key"
+Specify a mifare access key (in hex tuples).
+.TP
+.B "\-b, \-\-brute-force N"
+Brute-force read sector N.
+.TP
+.B "\-h, \-\-help"
+Show a help text and exit.
+.SH BUGS
+Please report any bugs on the
+.B librfid-devel
+mailing list at
+.BR https://lists.gnumonks.org/mailman/listinfo/librfid-devel/ "."
+.SH LICENCE
+.B mifare-tool
+is covered by the GNU General Public License (GPL), version 2.
+.SH AUTHORS
+Harald Welte <laforge@gnumonks.org>
+.PP
+This manual page was written by Uwe Hermann <uwe@hermann-uwe.de>.
+It is licensed under the terms of the GNU GPL (version 2 or later).
