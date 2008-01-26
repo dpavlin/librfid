@@ -85,35 +85,34 @@ iso14443a_code_nvb_bits(unsigned char *nvb, unsigned int bits)
 	return 0;
 }
 
-int random_bit(void)
+static int random_bit(void)
 {
-    unsigned long e;
+	unsigned long e;
 
-    e = randctx[0];    
-    randctx[0]=randctx[1];
-    randctx[1]=(randctx[2]<<19) + (randctx[2]>>13) + randctx[3];
-    randctx[2]=randctx[3] ^ randctx[0];
-    randctx[3]=e+randctx[1];
+	e = randctx[0];    
+	randctx[0] = randctx[1];
+	randctx[1] = (randctx[2]<<19) + (randctx[2]>>13) + randctx[3];
+	randctx[2] = randctx[3] ^ randctx[0];
+	randctx[3] = e+randctx[1];
     
-    return randctx[1]&1;
+	return randctx[1]&1;
 }
 
 /* first bit is '1', second bit '2' */
 static void
 rnd_toggle_bit_in_field(unsigned char *bitfield, unsigned int size, unsigned int bit)
 {
-    unsigned int byte,rnd;
+	unsigned int byte,rnd;
 
-    if(bit && (bit <= (size*8)) )
-    {
-	rnd=random_bit();
+	if (bit && (bit <= (size*8))) {
+		rnd = random_bit();
 	
-        DEBUGP("xor'ing bit %u with %u\n",bit,rnd);
-        bit--;
-        byte=bit/8;
-        bit=rnd<<(bit%8);
-        bitfield[byte] ^= bit;
-    }
+		DEBUGP("xor'ing bit %u with %u\n",bit,rnd);
+		bit--;
+		byte = bit/8;
+		bit = rnd << (bit % 8);
+		bitfield[byte] ^= bit;
+	}
 }
 
 
