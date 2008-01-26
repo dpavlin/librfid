@@ -22,7 +22,7 @@ MISC=rfid_access_mifare_classic.c
 
 if ENABLE_WIN32
 WIN32=usleep.c libusb_dyn.c
-AM_LDLAGS_WIN32=-mno-cygwin -lwinmm
+AM_LDFLAGS_WIN32=-mno-cygwin -lwinmm
 AM_CFLAGS_WIN32=-mno-cygwin
 librfid_la_LIBADD = -lwinmm
 endif

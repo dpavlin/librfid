@@ -13,7 +13,7 @@ if ENABLE_WIN32
 SUBDIRS += win32
 endif
 
-EXTRA_DIST = LICENSING librfid.spec openct-cm5121-librfid.patch
+EXTRA_DIST = LICENSING librfid.spec openct-cm5121-librfid.patch README.MinGW
 
 $(OBJECTS): libtool
 libtool: $(LIBTOOL_DEPS)
