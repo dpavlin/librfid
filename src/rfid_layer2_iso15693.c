@@ -95,7 +95,7 @@ iso15693_anticol(struct rfid_layer2_handle *handle)
 
 static int
 iso15693_getopt(struct rfid_layer2_handle *handle,
-		int optname, void *optval, unsigned int optlen)
+		int optname, void *optval, unsigned int *optlen)
 {
 	switch (optname) {
 	case RFID_OPT_15693_MOD_DEPTH:

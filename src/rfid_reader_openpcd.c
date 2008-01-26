@@ -269,8 +269,8 @@ static int openpcd_get_environment(
 
 static int openpcd_set_environment(
     struct rfid_reader_handle *rh, 
-    const unsigned char num_bytes,
-    unsigned char *buf)
+    unsigned char num_bytes,
+    const unsigned char *buf)
 {
 	int ret;
 	

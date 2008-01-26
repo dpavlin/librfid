@@ -43,7 +43,7 @@ iso14443a_transceive_sf(struct rfid_layer2_handle *handle,
 			 unsigned char cmd,
 			 struct iso14443a_atqa *atqa)
 {
-	struct rfid_reader *rdr = handle->rh->reader;
+	const struct rfid_reader *rdr = handle->rh->reader;
 
 	return rdr->iso14443a.transceive_sf(handle->rh, cmd, atqa);
 }
@@ -54,7 +54,7 @@ iso14443a_transceive_acf(struct rfid_layer2_handle *handle,
 			 struct iso14443a_anticol_cmd *acf,
 			 unsigned int *bit_of_col)
 {
-	struct rfid_reader *rdr = handle->rh->reader;
+	const struct rfid_reader *rdr = handle->rh->reader;
 
 	return rdr->iso14443a.transceive_acf(handle->rh, acf, bit_of_col);
 }
@@ -289,7 +289,7 @@ iso14443a_setopt(struct rfid_layer2_handle *handle, int optname,
 		 const void *optval, unsigned int optlen)
 {
 	int ret = -EINVAL;
-	struct rfid_reader *rdr = handle->rh->reader;
+	const struct rfid_reader *rdr = handle->rh->reader;
 	unsigned int speed;
 
 	switch (optname) {

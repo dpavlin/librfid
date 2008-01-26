@@ -94,19 +94,6 @@ static void mifare_l3(void)
 	printf("Mifare card available\n");
 }
 
-static void inc_key(char* key, int len)
-{
-	int i;
-
-	if (len <= 0)
-		return;
-	i = len - 1;
-	if (key[i] < 0xff)
-		key[i]++;
-	else
-		key[i] = 0;
-}
-
 int main(int argc, char **argv)
 {
 	int len, rc, c, option_index = 0;
