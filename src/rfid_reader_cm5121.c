@@ -31,9 +31,11 @@
 #include <string.h>
 #include <errno.h>
 
+#define DEBUG_LIBRFID
 #include <librfid/rfid.h>
 
 #ifndef LIBRFID_FIRMWARE
+
 
 #include <librfid/rfid_reader.h>
 #include <librfid/rfid_asic.h>
@@ -51,7 +53,7 @@
 				    plus 10 bytes reserve */
 #define RECVBUF_LEN	SENDBUF_LEN
 
-//#define DEBUG_REGISTER
+#define DEBUG_REGISTER
 
 #ifdef DEBUG_REGISTER
 #define DEBUGRC DEBUGPC
