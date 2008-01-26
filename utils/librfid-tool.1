@@ -1,0 +1,44 @@
+.TH LIBRFID-TOOL 1 "January 24, 2008"
+.SH NAME
+librfid-tool \- Low-level RFID access command line tool based on librfid
+.SH SYNOPSIS
+.B librfid-tool \fR[\fB\-sSplh\fR]
+.SH DESCRIPTION
+.B librfid-tool
+is a command line tool which gives you low-level RFID access using one
+of the RFID reader devices supported by librfid.
+.SH OPTIONS
+.B "\-s, \-\-scan"
+Scan for RFID tags until the first tag is found.
+.TP
+.B "\-S, \-\-scan-loop"
+Scan for RFID tags in an endless loop. Show information on the detected
+RFID tags (if any).
+.TP
+.B "\-p, \-\-protocol"
+Specify the RFID protocol to use. Possible values are:
+.BR tcl ,
+.BR mifare-ultralight ", and "
+.BR mifare-classic "."
+.TP
+.B "\-l, \-\-layer2"
+Specify the layer 2 protocol to use. Possible values are:
+.BR iso14443a ,
+.BR iso14443b ", and "
+.BR iso15693 "."
+.TP
+.B "\-h, \-\-help"
+Show a help text and exit.
+.SH BUGS
+Please report any bugs on the
+.B librfid-devel
+mailing list at
+.BR https://lists.gnumonks.org/mailman/listinfo/librfid-devel/ "."
+.SH LICENCE
+.B librfid-tool
+is covered by the GNU General Public License (GPL), version 2.
+.SH AUTHORS
+Harald Welte <laforge@gnumonks.org>
+.PP
+This manual page was written by Uwe Hermann <uwe@hermann-uwe.de>.
+It is licensed under the terms of the GNU GPL (version 2 or later).
