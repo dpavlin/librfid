@@ -12,7 +12,7 @@ if ENABLE_STATIC
 AM_CFLAGS += -DLIBRFID_STATIC
 endif
 
-noinst_HEADERS=rfid_iso14443_common.h rc632.h libusb_dyn.h usleep.h
+noinst_HEADERS=rfid_iso14443_common.h rc632.h libusb_dyn.h usleep.h cm5121_source.h
 
 CORE=rfid.c rfid_layer2.c rfid_protocol.c rfid_reader.c rfid_scan.c
 L2=rfid_layer2_iso14443a.c rfid_layer2_iso14443b.c rfid_layer2_iso15693.c rfid_iso14443_common.c
@@ -38,7 +38,7 @@ AM_CFLAGS += -DENABLE_SPIDEV
 endif
 
 if ENABLE_CCID
-READER_CM5121=rfid_reader_cm5121.c ccid/rfid_reader_cm5121_ccid_direct.c ccid/ccid-driver.c
+READER_CM5121=rfid_reader_cm5121.c ccid/rfid_reader_cm5121_ccid_direct.c ccid/ccid-driver.c ccid/ccid-driver.h
 AM_CFLAGS += -DENABLE_CM5121
 endif
 
