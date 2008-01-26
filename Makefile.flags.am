@@ -1,0 +1,18 @@
+LIBVERSION= 0:0:0
+
+AM_CFLAGS = -std=gnu99
+INCLUDES = $(all_includes) -I$(top_srcdir)/include
+
+if ENABLE_WIN32
+AM_LDFLAGS = -mno-cygwin
+AM_CFLAGS += -mno-cygwin
+else
+if HAVE_LIBUSB
+AM_LDFLAGS = -lusb
+AM_CFLAGS += -DHAVE_LIBUSB
+endif
+endif
+
+if ENABLE_FIRMWARE
+AM_CFLAGS += -DLIBRFID_FIRMWARE
+endif

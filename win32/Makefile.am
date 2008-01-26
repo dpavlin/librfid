@@ -1,9 +1,8 @@
-LIBVERSION= 0:0:0
+include $(top_srcdir)/Makefile.flags.am
 
 noinst_HEADERS = openpcd.h
 noinst_DATA = openpcd.dll
 
-INCLUDES = -I$(top_srcdir)/include
 LIBRFID_DIR = $(top_builddir)/src/.libs/
 CLEANFILES = $(noinst_DATA)
 

@@ -1,22 +1,16 @@
 AUTOMAKE_OPTIONS = foreign dist-bzip2 1.6
 
+include $(top_srcdir)/Makefile.flags.am
+
 SUBDIRS = etc include src
 
-DEFAULT_AM_CFLAGS = -std=gnu99
+if ENABLE_FIRMWARE
+else
+SUBDIRS += utils
+endif
 
 if ENABLE_WIN32
 SUBDIRS += win32
-LINKOPTS = -mno-cygwin
-AM_CFLAGS = $(DEFAULT_AM_CFLAGS) -mno-cygwin
-else
-LINKOPTS = -lusb
-AM_CFLAGS = $(DEFAULT_AM_CFLAGS)
-endif
-
-if ENABLE_FIRMWARE
-AM_CFLAGS += -DLIBRFID_FIRMWARE
-else
-SUBDIRS += utils
 endif
 
 EXTRA_DIST = LICENSING librfid.spec openct-cm5121-librfid.patch

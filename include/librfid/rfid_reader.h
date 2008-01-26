@@ -67,6 +67,7 @@ enum rfid_reader_id {
 	RFID_READER_CM5121,
 	RFID_READER_PEGODA,
 	RFID_READER_OPENPCD,
+	RFID_READER_SPIDEV,
 };
 
 struct rfid_reader_handle {
