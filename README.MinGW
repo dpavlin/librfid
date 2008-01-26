@@ -1,0 +1,31 @@
+Quick steps for MinGW+autotools setup
+=====================================
+
+1. Download MinGW/MSys packages from MinGW's project homepage[A]. I've downloaded[B].
+2. Unpack MinGW packages to some directory. In my case it was to c:\mingw. 
+3. Install MSys using exe installer. In my case I've installed it in c:\mingw\msys.
+4. Unpack MSys packages[B] to directory, where you've installed MSys in step 4.
+5. Install msysDTK (very old Perl etc. needed for autotools).
+6. Run msys.bat and just cd to librfid directory and run ./autogen.sh, then ./configure
+7. Lucky number
+
+A. http://http://www.mingw.org/download.shtml
+B. MinGW packages:
+   ---------------
+        gcc-g++-3.4.5-20060117-1.tar.gz
+        gcc-core-3.4.5-20060117-1.tar.gz
+        binutils-2.16.91-20060119-1.tar.gz
+        w32api-3.6.tar.gz
+        mingw-runtime-3.9.tar.gz
+        mingw32-make-3.80.0-3.tar.gz
+        gdb-6.3-2.exe
+        mingw-utils-0.3.tar.gz
+
+   MSys packages:
+   --------------
+        MSYS-1.0.10.exe
+        bash-2.05b-MSYS.tar.bz2
+        msys-autoconf-2.59.tar.bz2
+        msys-automake-1.8.2.tar.bz2
+        msys-libtool-1.5.tar.bz2
+        msysDTK-1.0.1.exe
