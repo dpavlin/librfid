@@ -512,17 +512,14 @@ rc632_calc_crc16_from(struct rfid_asic_handle *handle)
 int
 rc632_register_dump(struct rfid_asic_handle *handle, u_int8_t *buf)
 {
-	int ret;
+	int ret = 0;
 	u_int8_t i;
 
-	for (i = 0; i <= 0x3f; i++) {
-		ret = rc632_reg_read(handle, i, &buf[i]);
-		// do we want error checks?
-	}
-	return 0;
+	for (i = 0; i <= 0x3f; i++)
+		ret |= rc632_reg_read(handle, i, &buf[i]);
+
+	return ret;
 }
-
-
 
 /* generic FIFO access functions (if no more efficient ones provided by
  * transport driver) */
@@ -927,8 +924,8 @@ rc632_iso14443a_transceive_acf(struct rfid_asic_handle *handle,
 		| rx_buf[0]);
 	
 	/* copy the rest */
-	if(rx_len)
-	    memcpy(&acf->uid_bits[tx_bytes-1], &rx_buf[1], rx_len-1);
+	if (rx_len)
+		memcpy(&acf->uid_bits[tx_bytes-1], &rx_buf[1], rx_len-1);
 
 	/* determine whether there was a collission */
 	ret = rc632_reg_read(handle, RC632_REG_ERROR_FLAG, &error_flag);
