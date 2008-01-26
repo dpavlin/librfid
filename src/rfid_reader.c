@@ -24,12 +24,18 @@
 #include <librfid/rfid_reader.h>
 #include <librfid/rfid_reader_cm5121.h>
 #include <librfid/rfid_reader_openpcd.h>
+#include <librfid/rfid_reader_spidev.h>
 
 static const struct rfid_reader *rfid_readers[] = {
+#ifdef HAVE_LIBUSB
 #ifdef ENABLE_CM5121
 	[RFID_READER_CM5121]	= &rfid_reader_cm5121,
 #endif
 	[RFID_READER_OPENPCD]	= &rfid_reader_openpcd,
+#endif
+#ifdef ENABLE_SPIDEV
+	[RFID_READER_SPIDEV]	= &rfid_reader_spidev,
+#endif
 };
 
 struct rfid_reader_handle *

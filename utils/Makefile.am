@@ -1,7 +1,4 @@
-INCLUDES = $(all_includes) -I$(top_srcdir)/include
-
-if ENABLE_FIRMWARE
-else
+include $(top_srcdir)/Makefile.flags.am
 
 man_MANS = librfid-tool.1 mifare-tool.1 librfid-send_script.1
 
@@ -25,6 +22,4 @@ LINKOPTS = -dynamic -mno-cygwin
 librfid_send_script_LDFLAGS = $(LINKOPTS)
 librfid_tool_LDFLAGS = $(LINKOPTS)
 mifare_tool_LDFLAGS = $(LINKOPTS)
-endif
-
 endif

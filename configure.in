@@ -37,6 +37,11 @@ AC_ARG_ENABLE(openct,
         [ENABLE_OPENCT="${enableval}"],
         [ENABLE_OPENCT="no"])
 
+AC_ARG_ENABLE(spidev,
+	[  --enable-spidev      Enable spidev reader],
+	[ENABLE_SPIDEV=1], [ENABLE_SPIDEV=0])
+AM_CONDITIONAL(ENABLE_SPIDEV, test "$ENABLE_SPIDEV" == "1")
+
 OPENCT_MSG=no
 if test "x${ENABLE_OPENCT}" = "xyes"; then
         PKG_CHECK_MODULES(OPENCT, [libopenct], [
@@ -63,8 +68,8 @@ AM_CONDITIONAL(ENABLE_STATIC, test "$ENABLE_STATIC" == "1")
 
 AC_ARG_WITH()
 
-AC_CHECK_LIB(usb, usb_close,,)
-AM_CONDITIONAL(HAVE_LIBUSB, test "x$have_libusb" = "xyes")
+AC_CHECK_LIB(usb, usb_close, [HAVE_LIBUSB=1], [HAVE_LIBUSB=0])
+AM_CONDITIONAL(HAVE_LIBUSB, test "$HAVE_LIBUSB" == "1")
 
 dnl Output the makefile
 AC_OUTPUT(Makefile etc/Makefile etc/udev/Makefile src/Makefile include/Makefile include/librfid/Makefile utils/Makefile src/librfid.pc win32/Makefile)
