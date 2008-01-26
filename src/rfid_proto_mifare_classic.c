@@ -38,9 +38,8 @@
 #define MIFARE_UL_CMD_WRITE	0xA2
 #define MIFARE_UL_CMD_READ	0x30
 
-/* FIXME */
-#define MIFARE_CL_READ_FWT	100
-#define MIFARE_CL_WRITE_FWT	100
+#define MIFARE_CL_READ_FWT	250
+#define MIFARE_CL_WRITE_FWT	600
 
 static int
 mfcl_read(struct rfid_protocol_handle *ph, unsigned int page,
@@ -79,7 +78,7 @@ static int
 mfcl_write(struct rfid_protocol_handle *ph, unsigned int page,
 	   unsigned char *tx_data, unsigned int tx_len)
 {
-	unsigned char tx[18];
+	unsigned char tx[2];
 	unsigned char rx[1];
 	unsigned int rx_len = sizeof(rx);
 	int ret;
@@ -87,54 +86,25 @@ mfcl_write(struct rfid_protocol_handle *ph, unsigned int page,
 	if (page > MIFARE_CL_PAGE_MAX)
 		return -EINVAL;
 
-	if (tx_len != 16 && tx_len != 4)
+	if (tx_len != 16)
 		return -EINVAL;
 	
-	if (tx_len == 16) {
-		tx[0] = MIFARE_CL_CMD_WRITE16;
-		tx[1] = page & 0xff;
+	tx[0] = MIFARE_CL_CMD_WRITE16;
+	tx[1] = page & 0xff;
 
-		ret = rfid_layer2_transceive(ph->l2h, RFID_MIFARE_FRAME, tx,
-					     2, rx, &rx_len, 
-					     MIFARE_CL_WRITE_FWT, 0);
-		if (ret < 0)
-			return ret;
+	ret = rfid_layer2_transceive(ph->l2h, RFID_MIFARE_FRAME, tx, 2, rx,
+				     &rx_len, MIFARE_CL_WRITE_FWT, 0);
+	if (ret < 0)
+		return ret;
 
-		ret = rfid_layer2_transceive(ph->l2h, RFID_MIFARE_FRAME, tx_data,
-					     tx_len, rx, &rx_len,
-					     MIFARE_CL_WRITE_FWT, 0);
-		if (ret < 0)
-			return ret;
+	ret = rfid_layer2_transceive(ph->l2h, RFID_MIFARE_FRAME, tx_data,
+				     tx_len, rx, &rx_len,
+				     MIFARE_CL_WRITE_FWT, 0);
+	if (ret < 0)
+		return ret;
 
-		if (rx[0] != MIFARE_UL_RESP_ACK)
-			return -EIO;
-
-		ret = rfid_layer2_transceive(ph->l2h, RFID_MIFARE_FRAME, tx,
-					     sizeof(tx), rx, &rx_len, 
-					     MIFARE_CL_WRITE_FWT, 0);
-		if (ret < 0)
-			return ret;
-
-		if (rx[0] != MIFARE_UL_RESP_ACK)
-			return -EIO;
-
-	} else if (tx_len == 4) {
-
-		tx[0] = MIFARE_CL_CMD_WRITE4;
-		tx[1] = page & 0xff;
-
-		memcpy(tx+2, tx_data, 4);
-
-		ret = rfid_layer2_transceive(ph->l2h, RFID_MIFARE_FRAME, tx,
-					     2+4, rx, &rx_len, 
-					     MIFARE_CL_WRITE_FWT, 0);
-		if (ret < 0)
-			return ret;
-
-		if (rx[0] != MIFARE_UL_RESP_ACK)
-			return -EIO;
-
-	}
+	if (rx[0] != MIFARE_UL_RESP_ACK)
+		return -EIO;
 
 	return ret;
 }
