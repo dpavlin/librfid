@@ -260,12 +260,17 @@ static int l2_by_name(const char *name)
 	return -1;
 }
 
-static void do_scan(void)
+static int do_scan(int first)
 {
 	int rc;
 	unsigned int size;
 	unsigned int size_len = sizeof(size);
 
+	if (first) {
+		rh->reader->rf_power(rh, 0);
+		usleep(10*1000);
+		rh->reader->rf_power(rh, 1);
+	}
 	printf("scanning for RFID token...\n");
 	rc = rfid_scan(rh, &l2h, &ph);
 	if (rc >= 2) {
@@ -282,6 +287,31 @@ static void do_scan(void)
 		if (rfid_protocol_getopt(ph, RFID_OPT_PROTO_SIZE, 
 					 &size, &size_len) == 0)
 			printf("Size: %u bytes\n", size);
+	}
+
+	return rc;
+}
+
+static void do_endless_scan()
+{
+	int rc;
+	int first = 1;
+
+	while (1) {
+		if (first)
+			putc('\n', stdout);
+		printf("==> doing %s scan\n", first ? "first" : "successive");
+		rc = do_scan(first);
+		if (rc >= 3) {
+			printf("closing proto\n");
+			rfid_protocol_close(ph);
+		}
+		if (rc >= 2) {
+			printf("closing layer2\n");
+			rfid_layer2_close(l2h);
+			first = 0;
+		} else
+			first = 1;
 	}
 }
 
@@ -399,14 +429,13 @@ int main(int argc, char **argv)
 		case 's':
 			if (reader_init() < 0)
 				exit(1);
-			do_scan();
+			do_scan(0);
 			exit(0);
 			break;
 		case 'S':
 			if (reader_init() < 0)
 				exit(1);
-			while (1) 
-				do_scan();
+			do_endless_scan();
 			exit(0);
 			break;
 		case 'p':

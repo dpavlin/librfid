@@ -274,6 +274,11 @@ spidev_mifare_auth(struct rfid_reader_handle *rh, u_int8_t cmd,
 							       cmd, serno,
 							       block);
 }
+static int
+spidev_rf_power(struct rfid_reader_handle *rh, int on)
+{
+	return rh->ah->asic->priv.rc632.fn.rf_power(rh->ah, on);
+}
 
 static struct rfid_reader_handle *spidev_open(void *data)
 {
@@ -363,6 +368,7 @@ struct rfid_reader rfid_reader_spidev = {
 	.id = RFID_READER_SPIDEV,
 	.open = &spidev_open,
 	.close = &spidev_close,
+	.rf_power = &spidev_rf_power,
 	.transceive = &spidev_transceive,
 	.l2_supported = (1 << RFID_LAYER2_ISO14443A) |
 			(1 << RFID_LAYER2_ISO14443B) |

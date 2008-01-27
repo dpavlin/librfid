@@ -438,6 +438,12 @@ openpcd_mifare_auth(struct rfid_reader_handle *rh, u_int8_t cmd,
 							cmd, serno, block);
 }
 
+static void
+openpcd_rf_power(struct rfid_reader_handle *rh, int on)
+{
+	return rh->ah->asic->priv.rc632.fn.rf_power(rh->ah, on);
+}
+
 static struct rfid_reader_handle *
 openpcd_open(void *data)
 {
@@ -527,6 +533,7 @@ const struct rfid_reader rfid_reader_openpcd = {
 	.id = RFID_READER_OPENPCD,
 	.open = &openpcd_open,
 	.close = &openpcd_close,
+	.rf_power = &openpcd_rf_power,
 	
 #ifndef LIBRFID_FIRMWARE
         .get_api_version = &openpcd_get_api_version,

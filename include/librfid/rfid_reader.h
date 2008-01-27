@@ -35,6 +35,7 @@ struct rfid_reader {
 			  u_int64_t timeout, unsigned int flags);
 	struct rfid_reader_handle * (*open)(void *data);
 	void (*close)(struct rfid_reader_handle *h);
+	int (*rf_power)(struct rfid_reader_handle *h, int on);
 
 	struct rfid_14443a_reader {
 		int (*init)(struct rfid_reader_handle *h);
