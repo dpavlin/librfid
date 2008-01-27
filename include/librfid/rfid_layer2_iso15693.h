@@ -4,11 +4,28 @@
 #include <sys/types.h>
 
 /*
-07h = TagIt
-04h = I.CODE
-05h = Infineon
-02h = ST
-*/
+ * ISO15693 tag manufacturer codes as found at
+ * http://rfid-handbook.de/forum/read.php?5,437,580#msg-580
+ *
+ * 01h = Motorola
+ * 02h = ST Microelectronics
+ * 03h = Hitachi
+ * 04h = Philips/NXP I.CODE
+ * 05h = Siemens/Infineon
+ * 06h = Cylinc
+ * 07h = Texas Instruments TagIt
+ * 08h = Fujitsu Limited
+ * 09h = Mashushita Electric Industrial
+ * 0Ah = NEC
+ * 0Bh = Oki Electric
+ * 0Ch = Toshiba
+ * 0Dh = Mishubishi Electric
+ * 0Eh = Samsung Electronics
+ * 0Fh = Hyundai Electronics
+ * 10h = LG Semiconductors
+ * 16h = EMarin Microelectronic
+ *
+ */
 
 /* protocol definitions */
 
@@ -51,6 +68,7 @@ struct iso15693_handle {
 enum rfid_15693_state {
 	ISO15693_STATE_ERROR,
 	ISO15693_STATE_NONE,
+	ISO15693_STATE_ANTICOL_RUNNING,
 };
 
 enum rfid_15693_opt {
@@ -85,7 +103,7 @@ enum rfid_15693_opt_vicc_speed {
 #define ISO15693_UID_LEN	8
 #define ISO15693_CRC_LEN	2
 
-/* ISO 15693-3, Ch. 7.2 Table 3*/
+/* ISO 15693-3, Ch. 7.2 Table 3 */
 enum iso15693_request_flags {
 	RFID_15693_F_SUBC_TWO	 = 0x01,
 	RFID_15693_F_RATE_HIGH	 = 0x02,
@@ -114,6 +132,12 @@ struct iso15693_request {
 	u_int8_t data[0];
 } __attribute__ ((packed));
 
+/* ISO 15963-3, Ch. 7.2 Figure 5 */
+struct iso15693_response {
+	u_int8_t flags;
+	u_int8_t data[0];
+} __attribute__ ((packed));
+
 /* ISO 15693, Ch. 7.3 Table 6 */
 enum iso15693_response_flags {
 	RFID_15693_RF_ERROR	= 0x01,
@@ -130,6 +154,7 @@ enum iso15693_response_errors {
 	RFID_15693_ERR_BLOCK_LOCKED_CH = 0x12,
 	RFID_15693_ERR_BLOCK_NOTPROG = 0x13,
 	RFID_15693_ERR_BLOCK_NOTLOCK = 0x14,
+	/* 0xA0 .. 0xDF Custom Command error Codes */
 };
 
 /* ISO 15693, Ch. 7.4 */
@@ -169,6 +194,14 @@ enum iso15693_commands {
 	/* Proprietary 0xe0 .. 0xff */
 };
 
+struct iso15693_anticol_cmd {
+	/* iso15693-3 table5 flags*/
+	unsigned char flags;	// SLOTS16 | SLOT1, AFI_PRESENT, OPTION_FLAG
+	unsigned char afi;		// AFI 0 for any
+	unsigned char mask_len;
+	unsigned char mask_bits[ISO15693_UID_LEN];
+	unsigned char current_slot;
+} __attribute__((packed));
 
 #include <librfid/rfid_layer2.h>
 extern const struct rfid_layer2 rfid_layer2_iso15693;

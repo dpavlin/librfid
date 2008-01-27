@@ -260,6 +260,15 @@ static int spidev_15693_init(struct rfid_reader_handle *rh)
 	return rh->ah->asic->priv.rc632.fn.iso15693.init(rh->ah);
 }
 
+static int spidev_15693_transceive_ac(struct rfid_reader_handle *rh,
+				      struct iso15693_anticol_cmd *acf,
+				      unsigned char uuid[ISO15693_UID_LEN],
+				      char *bit_of_col)
+{
+	return rh->ah->asic->priv.rc632.fn.iso15693.transceive_ac(
+					rh->ah, acf, uuid, bit_of_col);
+}
+
 static int
 spidev_mifare_setkey(struct rfid_reader_handle *rh, const u_int8_t * key)
 {
@@ -386,6 +395,10 @@ struct rfid_reader rfid_reader_spidev = {
 	},
 	.iso14443b = {
 		      .init = &spidev_14443b_init,
+	},
+	.iso15693 = {
+		     .init = &spidev_15693_init,
+		     .transceive_ac = &spidev_15693_transceive_ac,
 	},
 	.mifare_classic = {
 		.setkey = &spidev_mifare_setkey,

@@ -58,6 +58,14 @@ static struct openpcd_hdr *rcv_hdr;
 #include <usb.h>
 #endif/*__MINGW32__*/
 
+#ifdef DEBUG_REGISTER
+#define DEBUGRC DEBUGPC
+#define DEBUGR DEBUGP
+#else
+#define DEBUGRC(x, args ...)	do {} while(0)
+#define DEBUGR(x, args ...)	do {} while(0)
+#endif
+
 static struct usb_device *dev;
 static struct usb_dev_handle *hdl;
 
@@ -138,13 +146,13 @@ static int openpcd_reg_write(struct rfid_asic_transport_handle *rath,
 {
 	int ret;
 
-	DEBUGP("reg=0x%02x, val=%02x: ", reg, value);
+	DEBUGR("reg=0x%02x, val=%02x: ", reg, value);
 
 	ret = openpcd_xcv(OPENPCD_CMD_WRITE_REG, reg, value, 0, NULL);
 	if (ret < 0)
-		DEBUGPC("ERROR sending command\n");
+		DEBUGRC("ERROR sending command\n");
 	else
-		DEBUGPC("OK\n");
+		DEBUGRC("OK\n");
 
 	return ret;
 }
@@ -155,21 +163,21 @@ static int openpcd_reg_read(struct rfid_asic_transport_handle *rath,
 {
 	int ret;	
 
-	DEBUGP("reg=0x%02x, ", reg);
+	DEBUGR("reg=0x%02x, ", reg);
 
 	ret = openpcd_xcv(OPENPCD_CMD_READ_REG, reg, 0, 0, NULL);
 	if (ret < 0) {
-		DEBUGPC("ERROR sending command\n");
+		DEBUGRC("ERROR sending command\n");
 		return ret;
 	}
 
 	if (ret < sizeof(struct openpcd_hdr)) {
-		DEBUGPC("ERROR: short packet\n");
+		DEBUGRC("ERROR: short packet\n");
 		return ret;
 	}
 
 	*value = rcv_hdr->val;
-	DEBUGPC("val=%02x: OK\n", *value);
+	DEBUGRC("val=%02x: OK\n", *value);
 
 	return ret;
 }
@@ -180,17 +188,17 @@ static int openpcd_fifo_read(struct rfid_asic_transport_handle *rath,
 {
 	int ret;
 
-	DEBUGP(" ");
+	DEBUGR(" ");
 
 	ret = openpcd_xcv(OPENPCD_CMD_READ_FIFO, 0x00, num_bytes, 0, NULL);
 	if (ret < 0) {
-		DEBUGPC("ERROR sending command\n");
+		DEBUGRC("ERROR sending command\n");
 		return ret;
 	}
-	DEBUGPC("ret = %d\n", ret);
+	DEBUGRC("ret = %d\n", ret);
 
 	memcpy(buf, rcv_hdr->data, ret - sizeof(struct openpcd_hdr));
-	DEBUGPC("len=%d val=%s: OK\n", ret - sizeof(struct openpcd_hdr),
+	DEBUGRC("len=%d val=%s: OK\n", ret - sizeof(struct openpcd_hdr),
 		rfid_hexdump(rcv_hdr->data, ret - sizeof(struct openpcd_hdr)));
 
 	return ret;
@@ -203,7 +211,7 @@ static int openpcd_fifo_write(struct rfid_asic_transport_handle *rath,
 {
 	int ret;
 
-	DEBUGP("len=%u, data=%s\n", len, rfid_hexdump(bytes, len));
+	DEBUGR("len=%u, data=%s\n", len, rfid_hexdump(bytes, len));
 	ret = openpcd_xcv(OPENPCD_CMD_WRITE_FIFO, 0, 0, len, bytes);
 
 	return ret;
@@ -372,6 +380,16 @@ openpcd_transceive_acf(struct rfid_reader_handle *rh,
 	return rh->ah->asic->priv.rc632.fn.iso14443a.transceive_acf(rh->ah,
 							 cmd, bit_of_col);
 }
+
+static int
+openpcd_iso15693_transceive_ac(struct rfid_reader_handle *rh,
+			struct iso15693_anticol_cmd *acf, unsigned char uuid[ISO15693_UID_LEN],
+			char *bit_of_col)
+{
+	return 	rh->ah->asic->priv.rc632.fn.iso15693.transceive_ac(
+					rh->ah, acf, uuid, bit_of_col);
+}
+
 
 static int
 openpcd_14443a_init(struct rfid_reader_handle *rh)
@@ -562,6 +580,7 @@ const struct rfid_reader rfid_reader_openpcd = {
 	},
 	.iso15693 = {
 		.init = &openpcd_15693_init,
+		.transceive_ac = &openpcd_iso15693_transceive_ac,
 	},
 	.mifare_classic = {
 		.setkey = &openpcd_mifare_setkey,

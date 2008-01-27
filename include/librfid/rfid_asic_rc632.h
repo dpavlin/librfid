@@ -28,6 +28,7 @@ struct rfid_asic_handle;
 
 struct iso14443a_atqa;
 struct iso14443a_anticol_cmd;
+struct iso15693_anticol_cmd;
 
 struct rfid_asic_rc632 {
 	struct {
@@ -59,6 +60,10 @@ struct rfid_asic_rc632 {
 		} iso14443b;
 		struct {
 			int (*init)(struct rfid_asic_handle *h);
+			int (*transceive_ac)(struct rfid_asic_handle *h,
+					     struct iso15693_anticol_cmd *acf,
+					     unsigned char *uuid,
+					     char *bit_of_col);
 		} iso15693;
 		struct {
 			int (*setkey)(struct rfid_asic_handle *h,
@@ -92,5 +97,68 @@ struct rfid_asic_rc632_impl {
 
 extern struct rfid_asic_handle * rc632_open(struct rfid_asic_transport_handle *th);
 extern void rc632_close(struct rfid_asic_handle *h);
+
+
+/* register decoding inlines... */
+#define DEBUGP_ERROR_FLAG(value) do {DEBUGP("error_flag: 0x%0.2x",value); \
+				if (value & RC632_ERR_FLAG_CRC_ERR ) \
+					DEBUGPC(", CRC"); \
+				if (value & RC632_ERR_FLAG_COL_ERR ) \
+					DEBUGPC(", COL"); \
+				if (value & RC632_ERR_FLAG_FRAMING_ERR ) \
+					DEBUGPC(", FRAMING"); \
+				if (value & RC632_ERR_FLAG_PARITY_ERR) \
+					DEBUGPC(", PARITY"); \
+				if (value & RC632_ERR_FLAG_KEY_ERR ) \
+					DEBUGPC(", KEY"); \
+				if (value & RC632_ERR_FLAG_ACCESS_ERR ) \
+					DEBUGPC(", ACCESS"); \
+                DEBUGPC("\n");} while (0);
+
+#define DEBUGP_STATUS_FLAG(foo) do {\
+			DEBUGP("status_flag: 0x%0.2x",foo); \
+			if (foo & RC632_STAT_ERR ) \
+				DEBUGPC(", ERR"); \
+			if (foo & RC632_STAT_HIALERT ) \
+				DEBUGPC(", Hi"); \
+			if (foo & RC632_STAT_IRQ ) \
+				DEBUGPC(", IRQ"); \
+			if (foo & RC632_STAT_LOALERT )  \
+				DEBUGPC(", Lo"); \
+			if ((foo & RC632_STAT_MODEM_MASK) == RC632_STAT_MODEM_AWAITINGRX )  \
+				DEBUGPC(", mAwaitingRX"); \
+			if ((foo & RC632_STAT_MODEM_MASK) == RC632_STAT_MODEM_GOTORX )  \
+				DEBUGPC(", mGotoRX"); \
+			if ((foo & RC632_STAT_MODEM_MASK) == RC632_STAT_MODEM_IDLE )  \
+				DEBUGPC(", mIdle"); \
+			if ((foo & RC632_STAT_MODEM_MASK) == RC632_STAT_MODEM_PREPARERX )  \
+				DEBUGPC(", mPrepareRX"); \
+			if ((foo & RC632_STAT_MODEM_MASK) == RC632_STAT_MODEM_RECV )  \
+				DEBUGPC(", mRX"); \
+			if ((foo & RC632_STAT_MODEM_MASK) == RC632_STAT_MODEM_TXDATA )  \
+				DEBUGPC(", mTXData"); \
+			if ((foo & RC632_STAT_MODEM_MASK) == RC632_STAT_MODEM_TXEOF )  \
+				DEBUGPC(", mTXeof"); \
+			if ((foo & RC632_STAT_MODEM_MASK) == RC632_STAT_MODEM_TXSOF )  \
+				DEBUGPC(", mTXsof"); \
+            DEBUGPC("\n"); } while (0);
+
+#define DEBUGP_INTERRUPT_FLAG(foo) do {\
+                DEBUGP("interrupt_flag: 0x%0.2x",foo); \
+                if (foo & RC632_INT_HIALERT) \
+                    DEBUGPC(", HiA"); \
+                if (foo & RC632_INT_LOALERT) \
+                    DEBUGPC(", LoA"); \
+                if (foo & RC632_INT_IDLE) \
+                    DEBUGPC(", IDLE"); \
+                if (foo & RC632_INT_RX) \
+                    DEBUGPC(", RX"); \
+                if (foo & RC632_INT_TX) \
+                    DEBUGPC(", TX"); \
+                if (foo & RC632_INT_TIMER) \
+                    DEBUGPC(", TIMER"); \
+                if (foo & RC632_INT_SET) \
+                    DEBUGPC(", SET"); \
+                DEBUGPC("\n"); } while (0);
 
 #endif

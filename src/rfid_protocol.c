@@ -28,6 +28,7 @@ static const struct rfid_protocol *rfid_protocols[] = {
 	[RFID_PROTOCOL_MIFARE_CLASSIC]	= &rfid_protocol_mfcl,
 	[RFID_PROTOCOL_MIFARE_UL] 	= &rfid_protocol_mful,
 	[RFID_PROTOCOL_TCL]		= &rfid_protocol_tcl,
+	[RFID_PROTOCOL_TAGIT]		= &rfid_protocol_tagit,
 };
 
 struct rfid_protocol_handle *

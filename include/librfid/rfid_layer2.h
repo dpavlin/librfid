@@ -11,6 +11,7 @@ enum rfid_layer2_id {
 	RFID_LAYER2_ISO14443A,
 	RFID_LAYER2_ISO14443B,
 	RFID_LAYER2_ISO15693,
+	RFID_LAYER2_ICODE1,
 };
 
 /* 0...0xffff = global options, 0x10000...0x1ffff = private options */
@@ -41,6 +42,7 @@ char *rfid_layer2_name(struct rfid_layer2_handle *l2h);
 #include <librfid/rfid_layer2_iso14443a.h>
 #include <librfid/rfid_layer2_iso14443b.h>
 #include <librfid/rfid_layer2_iso15693.h>
+#include <librfid/rfid_layer2_icode1.h>
 
 struct rfid_layer2 {
 	unsigned int id;

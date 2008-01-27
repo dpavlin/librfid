@@ -5,9 +5,13 @@
 #include <sys/types.h>
 #include <stdio.h>
 
+#define ECOLLISION		1000
+
 #ifdef  __MINGW32__
 #define ENOTSUP         100
+/* 110 under linux */
 #define ETIMEDOUT       101
+
 typedef unsigned char u_int8_t;
 typedef unsigned short u_int16_t;
 typedef unsigned long u_int32_t;
@@ -62,6 +66,8 @@ enum rfid_frametype {
 	RFID_14443A_FRAME_REGULAR,
 	RFID_14443B_FRAME_REGULAR,
 	RFID_MIFARE_FRAME,
+	RFID_15693_FRAME,
+	RFID_15693_FRAME_ICODE1,
 };
 
 #endif /* _RFID_H */
