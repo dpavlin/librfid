@@ -72,13 +72,13 @@ struct rfid_protocol_handle *ph;
 
 int reader_init(void) 
 {
-	printf("opening reader handle\n");
-	rh = rfid_reader_open(NULL, RFID_READER_CM5121);
+	printf("opening reader handle OpenPCD, CM5x21\n");
+	rh = rfid_reader_open(NULL, RFID_READER_OPENPCD);
 	if (!rh) {
-		fprintf(stderr, "No Omnikey Cardman 5121 found\n");
-		rh = rfid_reader_open(NULL, RFID_READER_OPENPCD);
+		fprintf(stderr, "No OpenPCD found\n");
+		rh = rfid_reader_open(NULL, RFID_READER_CM5121);
 		if (!rh) {
-			fprintf(stderr, "No OpenPCD found either\n");
+			fprintf(stderr, "No Omnikey Cardman 5x21 found\n");
 			return -1;
 		}
 	}
@@ -92,11 +92,11 @@ int l2_init(int layer2)
 	printf("opening layer2 handle\n");
 	l2h = rfid_layer2_init(rh, layer2);
 	if (!l2h) {
-		fprintf(stderr, "error during iso14443a_init\n");
+		fprintf(stderr, "error during layer2(%d)_init (0=14a,1=14b,3=15)\n",layer2);
 		return -1;
 	}
 
-	printf("running layer2 anticol\n");
+	printf("running layer2 anticol(_open)\n");
 	rc = rfid_layer2_open(l2h);
 	if (rc < 0) {
 		fprintf(stderr, "error during layer2_open\n");

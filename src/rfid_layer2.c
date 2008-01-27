@@ -117,6 +117,15 @@ rfid_layer2_setopt(struct rfid_layer2_handle *ph, int optname,
 {
 	if (optname >> 16 == 0) {
 		switch (optname) {
+		case RFID_OPT_LAYER2_UID:
+		printf("----> sizeof(ph->uid): %d\n",sizeof(ph->uid));
+			if ((ph->uid_len < sizeof(ph->uid)) && (optlen<=sizeof(ph->uid))) {
+				//(ph->uid_len<optlen)
+				ph->uid_len = optlen;
+				memcpy(ph->uid, optval, optlen);
+			} else
+				return -EINVAL;
+		break;
 		default:
 			return -EINVAL;
 			break;

@@ -3,6 +3,7 @@
 
 #include <librfid/rfid_asic.h>
 #include <librfid/rfid_layer2_iso14443a.h>
+#include <librfid/rfid_layer2_iso15693.h>
 
 struct rfid_reader_handle;
 
@@ -56,6 +57,10 @@ struct rfid_reader {
 	} iso14443b;
 	struct rfid_15693_reader {
 		int (*init)(struct rfid_reader_handle *rh);
+		int (*transceive_ac)(struct rfid_reader_handle *h,
+				     struct iso15693_anticol_cmd *acf,
+				     unsigned char *uuid,
+				     char *bit_of_col);
 	} iso15693;
 	struct rfid_mifare_classic_reader {
 		int (*setkey)(struct rfid_reader_handle *h, const unsigned char *key);

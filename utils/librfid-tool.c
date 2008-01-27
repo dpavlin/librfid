@@ -1,6 +1,6 @@
 /* librfid-tool - a small command-line tool for librfid testing
  *
- * (C) 2005-2006 by Harald Welte <laforge@gnumonks.org>
+ * (C) 2005-2008 by Harald Welte <laforge@gnumonks.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2 
@@ -35,8 +35,13 @@
 #include <librfid/rfid_layer2.h>
 #include <librfid/rfid_protocol.h>
 
+#include <librfid/rfid_layer2_iso14443a.h>
+#include <librfid/rfid_layer2_iso15693.h>
+
 #include <librfid/rfid_protocol_mifare_classic.h>
 #include <librfid/rfid_protocol_mifare_ul.h>
+#include <librfid/rfid_protocol_tagit.h>
+#include <librfid/rfid_protocol_icode.h>
 
 #include "librfid-tool.h"
 
@@ -226,6 +231,8 @@ static char *proto_names[] = {
 	[RFID_PROTOCOL_TCL] = "tcl",
 	[RFID_PROTOCOL_MIFARE_UL] = "mifare-ultralight",
 	[RFID_PROTOCOL_MIFARE_CLASSIC] = "mifare-classic",
+	[RFID_PROTOCOL_ICODE_SLI] = "icode",
+	[RFID_PROTOCOL_TAGIT] = "tagit",
 };
 
 static int proto_by_name(const char *name)
@@ -245,6 +252,7 @@ static char *l2_names[] = {
 	[RFID_LAYER2_ISO14443A] = "iso14443a",
 	[RFID_LAYER2_ISO14443B] = "iso14443b",
 	[RFID_LAYER2_ISO15693] = "iso15693",
+	[RFID_LAYER2_ICODE1] = "icode1",
 };
 
 static int l2_by_name(const char *name)
@@ -315,6 +323,86 @@ static void do_endless_scan()
 	}
 }
 
+static void do_regdump(void)
+{
+	u_int8_t buffer[0xff];
+	int i;
+
+	printf("dumping rc632 regs...\n");
+
+	rc632_register_dump(rh->ah, buffer);
+
+	printf("\n     ");
+	for (i=0; i<=0x0f; i++)
+		printf(" 0x_%01X",i);
+	printf("\n-----------------------------------------------------------------------------------\n");
+
+	for (i=0; i <= 0x3f; i++) {
+		if ((i % 0x10) == 0)
+			printf("0x%01X_:",i/0x10);
+		printf(" 0x%02X", buffer[i]);
+		if ((i% 0x10) == 0x0f)
+			printf("\n");
+	}
+
+	/* print regdump as c-style array*/
+	printf("u_int8_t rc632_regs[] = {");
+	for (i = 0; i <= 0x3f; i++) {
+		if (((i+1) % 0x08) == 1) {
+			if (i > 7)
+				printf("//%2d..%2d",i-8,i-1);
+			printf("\n\t");
+		}
+		printf(" 0x%02X, ",buffer[i]);
+	}
+	printf("//%2d..%2d\n\t 0 };\n",i-8,i-1);
+
+}
+
+static void do_enum(int layer2)
+{
+	int rc;
+	//unsigned int size;
+	//unsigned int size_len = sizeof(size);
+	unsigned char uid_buf[16];
+	unsigned int uid_len;
+
+	printf("scanning for RFID token on layer %s...\n", l2_names[layer2]);
+
+	if (rh->reader->l2_supported & (1 << layer2)) {
+		l2h = rfid_layer2_init(rh, layer2);
+		rc = rfid_layer2_open(l2h);
+	} else {
+		printf("error during layer2_open\n");
+		return ;
+	}
+
+	while (rc>=0) {
+		if (l2h) {
+			uid_len = sizeof(uid_buf);
+			rfid_layer2_getopt(l2h, RFID_OPT_LAYER2_UID, &uid_buf, &uid_len);
+			printf("Layer 2 success (%s)[%d]: %s\n", rfid_layer2_name(l2h), uid_len, hexdump(uid_buf, uid_len));
+		}
+
+       	/*
+		ph = rfid_protocol_scan(l2h);
+		if (ph) {
+			printf("Protocol success (%s)\n", rfid_protocol_name(ph));
+
+			if (rfid_protocol_getopt(ph, RFID_OPT_PROTO_SIZE,
+					     &size, &size_len) == 0)
+			printf("Size: %u bytes\n", size);
+		} else
+			printf("##############\n");
+		*/
+
+		if (rc >= 0) {
+			rfid_layer2_close(l2h);
+		}
+		rc = rfid_layer2_open(l2h);
+	}
+}
+
 #define OPTION_OFFSET 256
 
 static struct option original_opts[] = {
@@ -323,6 +411,8 @@ static struct option original_opts[] = {
 	{ "protocol", 1, 0, 'p' },
 	{ "scan", 0, 0, 's' },
 	{ "scan-loop", 0, 0, 'S' },
+	{ "dump", 0, 0, 'd' },
+	{ "enum", 0, 0, 'e' },
 	{0, 0, 0, 0}
 };
 
@@ -395,8 +485,10 @@ static void help(void)
 {
 	printf( " -s	--scan		scan until first RFID tag is found\n"
 		" -S	--scan-loop	endless scanning loop\n" 
-		" -p	--protocol	{tcl,mifare-ultralight,mifare-classic}\n"
+		" -p	--protocol	{tcl,mifare-ultralight,mifare-classic,tagit}\n"
 		" -l	--layer2	{iso14443a,iso14443b,iso15693}\n"
+		" -d	--dump		dump rc632 registers\n"
+		" -e	--enum		enumerate all tag's in field (iso14443a)\n"
 		" -h	--help\n");
 }
 
@@ -412,7 +504,7 @@ int main(int argc, char **argv)
 	program_name = basename(argv[0]);
 #endif/*__MINGW32__*/
 	
-	printf("%s - (C) 2006 by Harald Welte\n"
+	printf("%s - (C) 2005-2008 by Harald Welte\n"
 	       "This program is Free Software and has "
 	       "ABSOLUTELY NO WARRANTY\n\n", program_name);
 
@@ -421,11 +513,23 @@ int main(int argc, char **argv)
 
 	while (1) {
 		int c, option_index = 0;
-		c = getopt_long(argc, argv, "hp:l:sS", opts, &option_index);
+		c = getopt_long(argc, argv, "hp:l:sSde", opts, &option_index);
 		if (c == -1)
 			break;
 
 		switch (c) {
+		case 'e':
+			if (reader_init() < 0)
+				exit(1);
+			layer2 = RFID_LAYER2_ISO14443A;
+			do_enum(layer2);
+			exit(0);
+			break;
+		case 'd':
+			if (reader_init() < 0)
+				exit(1);
+			do_regdump();
+			break;
 		case 's':
 			if (reader_init() < 0)
 				exit(1);
@@ -479,11 +583,16 @@ int main(int argc, char **argv)
 	if (reader_init() < 0)
 		exit(1);
 
-	if (l2_init(layer2) < 0)
-		exit(1);
 
-	if (l3_init(protocol) < 0)
+	if (l2_init(layer2) < 0) {
+		rfid_reader_close(rh);
 		exit(1);
+	}
+
+	if (l3_init(protocol) < 0) {
+		rfid_reader_close(rh);
+		exit(1);
+	}
 
 	switch (protocol) {
 
@@ -573,7 +682,7 @@ int main(int argc, char **argv)
 		}
 		break;
 	default:
-		printf("unknown protocol\n");
+		printf("unknown protocol %u\n", protocol);
 		exit(1);
 		break;
 	}

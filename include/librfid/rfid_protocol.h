@@ -40,6 +40,8 @@ enum rfid_protocol_id {
 	RFID_PROTOCOL_TCL,
 	RFID_PROTOCOL_MIFARE_UL,
 	RFID_PROTOCOL_MIFARE_CLASSIC,
+	RFID_PROTOCOL_ICODE_SLI,
+	RFID_PROTOCOL_TAGIT,
 	NUM_RFID_PROTOCOLS
 };
 
@@ -86,6 +88,7 @@ struct rfid_protocol {
 #include <librfid/rfid_protocol_tcl.h>
 #include <librfid/rfid_protocol_mifare_ul.h>
 #include <librfid/rfid_protocol_mifare_classic.h>
+#include <librfid/rfid_protocol_tagit.h>
 
 struct rfid_protocol_handle {
 	struct rfid_layer2_handle *l2h;

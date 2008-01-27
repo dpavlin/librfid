@@ -366,6 +366,16 @@ cm5121_close(struct rfid_reader_handle *rh)
 	free_reader_handle(rh);
 }
 
+static int
+cm5121_iso15693_transceive_ac(struct rfid_reader_handle *rh,
+			      struct iso15693_anticol_cmd *acf,
+			      unsigned char uuid[ISO15693_UID_LEN],
+			      char *bit_of_col)
+{
+	return rh->ah->asic->priv.rc632.fn.iso15693.transceive_ac(
+					rh->ah, acf, uuid, bit_of_col);
+}
+
 const struct rfid_reader rfid_reader_cm5121 = {
 	.name 	= "Omnikey CardMan 5121 RFID",
 	.open = &cm5121_open,
@@ -391,6 +401,7 @@ const struct rfid_reader rfid_reader_cm5121 = {
 	},
 	.iso15693 = {
 		.init = &cm5121_15693_init,
+		.transceive_ac = &cm5121_iso15693_transceive_ac,
 	},
 	.mifare_classic = {
 		.setkey = &cm5121_mifare_setkey,
