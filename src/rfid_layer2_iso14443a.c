@@ -237,19 +237,19 @@ cascade:
 		}
 	}
 
-	h->level = ISO14443A_LEVEL_NONE;
-	h->state = ISO14443A_STATE_SELECTED;
-
 	{
-		if (uid_size == 1)
+		if (h->level == ISO14443A_LEVEL_CL1)
 			handle->uid_len = 4;
-		else if (uid_size == 2)
+		else if (h->level == ISO14443A_LEVEL_CL2)
 			handle->uid_len = 7;
 		else 
 			handle->uid_len = 10;
 
 		DEBUGP("UID %s\n", rfid_hexdump(handle->uid, handle->uid_len));
 	}
+
+	h->level = ISO14443A_LEVEL_NONE;
+	h->state = ISO14443A_STATE_SELECTED;
 
 	if (sak[0] & 0x20) {
 		DEBUGP("we have a T=CL compliant PICC\n");

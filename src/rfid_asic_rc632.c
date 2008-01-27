@@ -139,17 +139,17 @@ rc632_clear_bits(struct rfid_asic_handle *handle,
 }
 
 static int 
-rc632_turn_on_rf(struct rfid_asic_handle *handle)
+rc632_rf_power(struct rfid_asic_handle *handle, int on)
 {
 	ENTER();
-	return rc632_set_bits(handle, RC632_REG_TX_CONTROL, 0x03);
-}
-
-static int 
-rc632_turn_off_rf(struct rfid_asic_handle *handle)
-{
-	ENTER();
-	return rc632_clear_bits(handle, RC632_REG_TX_CONTROL, 0x03);
+	if (on)
+		return rc632_set_bits(handle, RC632_REG_TX_CONTROL,
+				      RC632_TXCTRL_TX1_RF_EN|
+				      RC632_TXCTRL_TX2_RF_EN);
+	else
+		return rc632_clear_bits(handle, RC632_REG_TX_CONTROL,
+					RC632_TXCTRL_TX1_RF_EN|
+					RC632_TXCTRL_TX2_RF_EN);
 }
 
 static int
@@ -375,7 +375,7 @@ rc632_transceive(struct rfid_asic_handle *handle,
 	else
 		cur_tx_len = tx_len;
 
-	ret = rc632_timer_set(handle, timer*10);
+	ret = rc632_timer_set(handle, timer);
 	if (ret < 0)
 		return ret;
 	
@@ -566,14 +566,14 @@ rc632_init(struct rfid_asic_handle *ah)
 		return ret;
 
 	/* switch off rf */
-	ret = rc632_turn_off_rf(ah);
+	ret = rc632_rf_power(ah, 0);
 	if (ret < 0)
 		return ret;
 
 	usleep(100000);
 
 	/* switch on rf */
-	ret = rc632_turn_on_rf(ah);
+	ret = rc632_rf_power(ah, 1);
 	if (ret < 0)
 		return ret;
 
@@ -586,7 +586,7 @@ rc632_fini(struct rfid_asic_handle *ah)
 	int ret;
 
 	/* switch off rf */
-	ret = rc632_turn_off_rf(ah);
+	ret = rc632_rf_power(ah, 0);
 	if (ret < 0)
 		return ret;
 
@@ -746,7 +746,7 @@ rc632_iso14443a_fini(struct iso14443a_handle *handle_14443)
 {
 
 #if 0
-	ret = rc632_turn_off_rf(handle);
+	ret = rc632_rf_power(handle, 0);
 	if (ret < 0)
 		return ret;
 #endif
@@ -765,6 +765,7 @@ rc632_iso14443a_transceive_sf(struct rfid_asic_handle *handle,
 	int ret;
 	u_int8_t tx_buf[1];
 	u_int8_t rx_len = 2;
+	u_int8_t error_flag;
 
 	memset(atqa, 0, sizeof(*atqa));
 
@@ -804,6 +805,21 @@ rc632_iso14443a_transceive_sf(struct rfid_asic_handle *handle,
 	ret = rc632_reg_write(handle, RC632_REG_BIT_FRAMING, 0x00);
 	if (ret < 0)
 		return ret;
+
+	/* determine whether there was a collission */
+	ret = rc632_reg_read(handle, RC632_REG_ERROR_FLAG, &error_flag);
+	if (ret < 0)
+		return ret;
+
+	if (error_flag & RC632_ERR_FLAG_COL_ERR) {
+		u_int8_t boc;
+		/* retrieve bit of collission */
+		ret = rc632_reg_read(handle, RC632_REG_COLL_POS, &boc);
+		if (ret < 0)
+			return ret;
+		DEBUGP("collision detected in xcv_sf: bit_of_col=%u\n", boc);
+		/* FIXME: how to signal this up the stack */
+	}
 
 	if (rx_len != 2) {
 		DEBUGP("rx_len(%d) != 2\n", rx_len);
@@ -1617,8 +1633,7 @@ const struct rfid_asic rc632 = {
 		.fn = {
 			.power_up = &rc632_power_up,
 			.power_down = &rc632_power_down,
-			.turn_on_rf = &rc632_turn_on_rf,
-			.turn_off_rf = &rc632_turn_off_rf,
+			.rf_power = &rc632_rf_power,
 			.transceive = &rc632_iso14443ab_transceive,
 			.iso14443a = {
 				.init = &rc632_iso14443a_init,

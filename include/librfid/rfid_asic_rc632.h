@@ -33,8 +33,7 @@ struct rfid_asic_rc632 {
 	struct {
 		int (*power_up)(struct rfid_asic_handle *h);
 		int (*power_down)(struct rfid_asic_handle *h);
-		int (*turn_on_rf)(struct rfid_asic_handle *h);
-		int (*turn_off_rf)(struct rfid_asic_handle *h);
+		int (*rf_power)(struct rfid_asic_handle *h, int on);
 		int (*transceive)(struct rfid_asic_handle *h,
 				  enum rfid_frametype,
 				  const u_int8_t *tx_buf,
