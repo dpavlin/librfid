@@ -1,7 +1,7 @@
 
 /* Mifare Classic implementation, PCD side.
  *
- * (C) 2005-2006 by Harald Welte <laforge@gnumonks.org>
+ * (C) 2005-2008 by Harald Welte <laforge@gnumonks.org>
  *
  */
 
@@ -126,6 +126,7 @@ mfcl_getopt(struct rfid_protocol_handle *ph, int optname, void *optval,
 		ret = 0;
 		rfid_layer2_getopt(ph->l2h, RFID_OPT_14443A_ATQA,
 				   atqa, &atqa_size);
+		/* FIXME: ATQA of mifare mini */
 		if (atqa[0] == 0x04 && atqa[1] == 0x00)
 			*size = 1024;
 		else if (atqa[0] == 0x02 && atqa[1] == 0x00)
@@ -188,4 +189,34 @@ int mfcl_auth(struct rfid_protocol_handle *ph, u_int8_t cmd, u_int8_t block)
 
 	return ph->l2h->rh->reader->mifare_classic.auth(ph->l2h->rh, cmd,
 						       serno, block);
+}
+
+int mfcl_block2sector(u_int8_t block)
+{
+	if (block < MIFARE_CL_SMALL_SECTORS * MIFARE_CL_BLOCKS_P_SECTOR_1k)
+		return block/MIFARE_CL_BLOCKS_P_SECTOR_1k;
+	else
+		return (block - MIFARE_CL_SMALL_SECTORS * MIFARE_CL_BLOCKS_P_SECTOR_1k)
+					/ MIFARE_CL_BLOCKS_P_SECTOR_4k;
+}
+
+int mfcl_sector2block(u_int8_t sector)
+{
+	if (sector < MIFARE_CL_SMALL_SECTORS)
+		return sector * MIFARE_CL_BLOCKS_P_SECTOR_1k;
+	else if (sector < MIFARE_CL_SMALL_SECTORS + MIFARE_CL_LARGE_SECTORS)
+		return MIFARE_CL_SMALL_SECTORS * MIFARE_CL_BLOCKS_P_SECTOR_1k + 
+			(sector - MIFARE_CL_SMALL_SECTORS) * MIFARE_CL_BLOCKS_P_SECTOR_4k; 
+	else
+		return -EINVAL;
+}
+
+int mfcl_sector_blocks(u_int8_t sector)
+{
+	if (sector < MIFARE_CL_SMALL_SECTORS)
+		return MIFARE_CL_BLOCKS_P_SECTOR_1k;
+	else if (sector < MIFARE_CL_SMALL_SECTORS + MIFARE_CL_LARGE_SECTORS)
+		return MIFARE_CL_BLOCKS_P_SECTOR_4k;
+	else
+		return -EINVAL;
 }
