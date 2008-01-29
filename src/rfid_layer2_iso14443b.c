@@ -305,7 +305,7 @@ iso14443b_init(struct rfid_reader_handle *rh)
 	h->priv.iso14443b.tr0 = (256/ISO14443_FREQ_SUBCARRIER)*10e6;
 	h->priv.iso14443b.tr1 = (200/ISO14443_FREQ_SUBCARRIER)*10e6;
 
-	ret = h->rh->reader->iso14443b.init(h->rh);
+	ret = h->rh->reader->init(h->rh, RFID_LAYER2_ISO14443B);
 	if (ret < 0) {
 		DEBUGP("error during reader 14443b init\n");
 		free_layer2_handle(h);

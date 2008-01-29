@@ -71,3 +71,16 @@ rfid_reader_close(struct rfid_reader_handle *rh)
 {
 	rh->reader->close(rh);
 }
+
+int
+rfid_reader_getopt(struct rfid_reader_handle *rh, int optname,
+		   void *optval, unsigned int *optlen)
+{
+	return rh->reader->getopt(rh, optname, optval, optlen);
+}
+
+int rfid_reader_setopt(struct rfid_reader_handle *rh, int optname,
+		       const void *optval, unsigned int optlen)
+{
+	return rh->reader->setopt(rh, optname, optval, optlen);
+}

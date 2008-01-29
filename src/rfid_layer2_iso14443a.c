@@ -361,7 +361,7 @@ iso14443a_init(struct rfid_reader_handle *rh)
 	h->priv.iso14443a.state = ISO14443A_STATE_NONE;
 	h->priv.iso14443a.level = ISO14443A_LEVEL_NONE;
 
-	ret = h->rh->reader->iso14443a.init(h->rh);
+	ret = h->rh->reader->init(h->rh, RFID_LAYER2_ISO14443A);
 	if (ret < 0) {
 		free_layer2_handle(h);
 		return NULL;

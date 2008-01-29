@@ -5,6 +5,7 @@ struct rfid_asic_transport_handle;
 
 #include <librfid/rfid.h>
 #include <librfid/rfid_asic.h>
+#include <librfid/rfid_layer2.h>
 
 struct rfid_asic_rc632_transport {
 	struct {
@@ -32,9 +33,9 @@ struct iso15693_anticol_cmd;
 
 struct rfid_asic_rc632 {
 	struct {
-		int (*power_up)(struct rfid_asic_handle *h);
-		int (*power_down)(struct rfid_asic_handle *h);
+		int (*power)(struct rfid_asic_handle *h, int on);
 		int (*rf_power)(struct rfid_asic_handle *h, int on);
+		int (*init)(struct rfid_asic_handle *h, enum rfid_layer2_id);
 		int (*transceive)(struct rfid_asic_handle *h,
 				  enum rfid_frametype,
 				  const u_int8_t *tx_buf,
@@ -44,7 +45,6 @@ struct rfid_asic_rc632 {
 				  u_int64_t timeout,
 				  unsigned int flags);
 		struct {
-			int (*init)(struct rfid_asic_handle *h);
 			int (*transceive_sf)(struct rfid_asic_handle *h,
 					     u_int8_t cmd,
 					     struct iso14443a_atqa *atqa);
@@ -56,14 +56,11 @@ struct rfid_asic_rc632 {
 					 unsigned int speed);
 		} iso14443a;
 		struct {
-			int (*init)(struct rfid_asic_handle *h);
-		} iso14443b;
-		struct {
-			int (*init)(struct rfid_asic_handle *h);
 			int (*transceive_ac)(struct rfid_asic_handle *h,
-					     struct iso15693_anticol_cmd *acf,
-					     unsigned char *uuid,
-					     char *bit_of_col);
+					     const struct iso15693_anticol_cmd *acf,
+					     unsigned int acf_len,
+					     struct iso15693_anticol_resp *resp,
+					     unsigned int *rx_len, char *bit_of_col);
 		} iso15693;
 		struct {
 			int (*setkey)(struct rfid_asic_handle *h,

@@ -99,4 +99,9 @@ enum openpcd_cmd_class {
 
 extern const struct rfid_reader rfid_reader_openpcd;
 
+/* 0...0xffff = global options, 0x10000...0x1ffff = private options */
+enum rfid_reader_openpcd_opt {
+	RFID_OPT_RDR_ENVIRONMENT	= 0x10001,
+};
+
 #endif

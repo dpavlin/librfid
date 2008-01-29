@@ -44,6 +44,8 @@
 #include <librfid/rfid_layer2.h>
 #include <librfid/rfid_protocol.h>
 
+#include "rfid_reader_rc632_common.h"
+
 #include "cm5121_source.h"
 
 /* FIXME */
@@ -52,8 +54,6 @@
 #define SENDBUF_LEN	256+7+10 /* 256bytes max FSD/FSC, plus 7 bytes header,
 				    plus 10 bytes reserve */
 #define RECVBUF_LEN	SENDBUF_LEN
-
-#define DEBUG_REGISTER
 
 #ifdef DEBUG_REGISTER
 #define DEBUGRC DEBUGPC
@@ -178,122 +178,6 @@ static int WriteNBytesToFIFO(struct rfid_asic_transport_handle *rath,
 	return -1;
 }
 
-#if 0
-static int TestFIFO(struct rc632_handle *handle)
-{
-	unsigned char sndbuf[60]; // 0x3c
-
-	// FIXME: repne stosd, call
-
-	memset(sndbuf, 0, sizeof(sndbuf));
-
-	if (WriteNBytesToFIFO(handle, sizeof(sndbuf), sndbuf, 0) < 0)
-		return -1;
-
-	return ReadNBytesFromFIFO(handle, sizeof(sndbuf), sndbuf);
-}
-#endif
-
-static int cm5121_transceive(struct rfid_reader_handle *rh,
-			     enum rfid_frametype frametype,
-			     const unsigned char *tx_data, unsigned int tx_len,
-			     unsigned char *rx_data, unsigned int *rx_len,
-			     u_int64_t timeout, unsigned int flags)
-{
-	return rh->ah->asic->priv.rc632.fn.transceive(rh->ah, frametype,
-						tx_data, tx_len, rx_data,
-						rx_len, timeout, flags);
-}
-
-static int cm5121_transceive_sf(struct rfid_reader_handle *rh,
-			       unsigned char cmd, struct iso14443a_atqa *atqa)
-{
-	return rh->ah->asic->priv.rc632.fn.iso14443a.transceive_sf(rh->ah,
-								   cmd,
-								   atqa);
-}
-
-static int
-cm5121_transceive_acf(struct rfid_reader_handle *rh,
-		      struct iso14443a_anticol_cmd *cmd,
-		      unsigned int *bit_of_col)
-{
-	return rh->ah->asic->priv.rc632.fn.iso14443a.transceive_acf(rh->ah,
-							 cmd, bit_of_col);
-}
-
-static int
-cm5121_14443a_init(struct rfid_reader_handle *rh)
-{
-	return rh->ah->asic->priv.rc632.fn.iso14443a.init(rh->ah);
-}
-
-static int
-cm5121_14443a_set_speed(struct rfid_reader_handle *rh, 
-			unsigned int tx,
-			unsigned int speed)
-{
-	u_int8_t rate;
-	
-	DEBUGP("setting rate: ");
-	switch (speed) {
-	case RFID_14443A_SPEED_106K:
-		rate = 0x00;
-		DEBUGPC("106K\n");
-		break;
-	case RFID_14443A_SPEED_212K:
-		rate = 0x01;
-		DEBUGPC("212K\n");
-		break;
-	case RFID_14443A_SPEED_424K:
-		rate = 0x02;
-		DEBUGPC("424K\n");
-		break;
-	case RFID_14443A_SPEED_848K:
-		rate = 0x03;
-		DEBUGPC("848K\n");
-		break;
-	default:
-		DEBUGPC("invalid\n");
-		return -EINVAL;
-		break;
-	}
-	return rh->ah->asic->priv.rc632.fn.iso14443a.set_speed(rh->ah,
-								tx, rate);
-}
-
-static int
-cm5121_14443b_init(struct rfid_reader_handle *rh)
-{
-	return rh->ah->asic->priv.rc632.fn.iso14443b.init(rh->ah);
-}
-
-static int
-cm5121_15693_init(struct rfid_reader_handle *rh)
-{
-	return rh->ah->asic->priv.rc632.fn.iso15693.init(rh->ah);
-}
-
-static int
-cm5121_mifare_setkey(struct rfid_reader_handle *rh, const u_int8_t *key)
-{
-	return rh->ah->asic->priv.rc632.fn.mifare_classic.setkey(rh->ah, key);
-}
-
-static int
-cm5121_mifare_auth(struct rfid_reader_handle *rh, u_int8_t cmd, 
-		   u_int32_t serno, u_int8_t block)
-{
-	return rh->ah->asic->priv.rc632.fn.mifare_classic.auth(rh->ah, 
-							cmd, serno, block);
-}
-
-static int
-cm5121_rf_power(struct rfid_reader_handle *rh, int on)
-{
-	return rh->ah->asic->priv.rc632.fn.rf_power(rh->ah, on);
-}
-
 struct rfid_asic_transport cm5121_ccid = {
 	.name = "CM5121 OpenCT",
 	.priv.rc632 = {
@@ -366,46 +250,33 @@ cm5121_close(struct rfid_reader_handle *rh)
 	free_reader_handle(rh);
 }
 
-static int
-cm5121_iso15693_transceive_ac(struct rfid_reader_handle *rh,
-			      struct iso15693_anticol_cmd *acf,
-			      unsigned char uuid[ISO15693_UID_LEN],
-			      char *bit_of_col)
-{
-	return rh->ah->asic->priv.rc632.fn.iso15693.transceive_ac(
-					rh->ah, acf, uuid, bit_of_col);
-}
-
 const struct rfid_reader rfid_reader_cm5121 = {
 	.name 	= "Omnikey CardMan 5121 RFID",
 	.open = &cm5121_open,
 	.close = &cm5121_close,
-	.rf_power = &cm5121_rf_power,
-	.transceive = &cm5121_transceive,
 	.l2_supported = (1 << RFID_LAYER2_ISO14443A) |
 			(1 << RFID_LAYER2_ISO14443B) |
 			(1 << RFID_LAYER2_ISO15693),
 	.proto_supported = (1 << RFID_PROTOCOL_TCL) |
 			(1 << RFID_PROTOCOL_MIFARE_UL) |
 			(1 << RFID_PROTOCOL_MIFARE_CLASSIC),
+	.getopt = &_rdr_rc632_getopt,
+	.setopt = &_rdr_rc632_setopt,
+	.transceive = &_rdr_rc632_transceive,
+	.init = &_rdr_rc632_l2_init,
 	.iso14443a = {
-		.init = &cm5121_14443a_init,
-		.transceive_sf = &cm5121_transceive_sf,
-		.transceive_acf = &cm5121_transceive_acf,
+		.transceive_sf = &_rdr_rc632_transceive_sf,
+		.transceive_acf = &_rdr_rc632_transceive_acf,
 		.speed = RFID_14443A_SPEED_106K | RFID_14443A_SPEED_212K |
 			 RFID_14443A_SPEED_424K, //| RFID_14443A_SPEED_848K,
-		.set_speed = &cm5121_14443a_set_speed,
-	},
-	.iso14443b = {
-		.init = &cm5121_14443b_init,
+		.set_speed = &_rdr_rc632_14443a_set_speed,
 	},
 	.iso15693 = {
-		.init = &cm5121_15693_init,
-		.transceive_ac = &cm5121_iso15693_transceive_ac,
+		.transceive_ac = &_rdr_rc632_iso15693_transceive_ac,
 	},
 	.mifare_classic = {
-		.setkey = &cm5121_mifare_setkey,
-		.auth = &cm5121_mifare_auth,
+		.setkey = &_rdr_rc632_mifare_setkey,
+		.auth = &_rdr_rc632_mifare_auth,
 	},
 };
 

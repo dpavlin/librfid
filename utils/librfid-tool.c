@@ -334,9 +334,18 @@ static int do_scan(int first)
 	unsigned int size_len = sizeof(size);
 
 	if (first) {
-		rh->reader->rf_power(rh, 0);
+		unsigned int opt;
+		unsigned int optlen = sizeof(opt);
+
+		/* turn off RF */
+		opt = 1;
+		rfid_reader_setopt(rh, RFID_OPT_RDR_RF_KILL, &opt, optlen);
+
 		usleep(10*1000);
-		rh->reader->rf_power(rh, 1);
+
+		/* turn on RF */
+		opt = 0;
+		rfid_reader_setopt(rh, RFID_OPT_RDR_RF_KILL, &opt, optlen);
 	}
 	printf("scanning for RFID token...\n");
 	rc = rfid_scan(rh, &l2h, &ph);

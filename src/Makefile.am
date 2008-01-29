@@ -19,7 +19,7 @@ L2 = rfid_layer2_iso14443a.c rfid_layer2_iso14443b.c rfid_iso14443_common.c \
      rfid_layer2_iso15693.c
 PROTO = rfid_proto_tcl.c rfid_proto_mifare_ul.c rfid_proto_mifare_classic.c \
 	rfid_proto_icode.c rfid_proto_tagit.c
-ASIC = rfid_asic_rc632.c
+ASIC = rfid_asic_rc632.c rfid_reader_rc632_common.c
 MISC = rfid_access_mifare_classic.c
 
 if ENABLE_WIN32

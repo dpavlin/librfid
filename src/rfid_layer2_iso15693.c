@@ -45,7 +45,22 @@ struct iso15693_request_adressed {
 #define ISO15693_BLOCK_SIZE_MAX	(256/8)
 #define ISO15693_RESP_SIZE_MAX	(4+ISO15693_BLOCK_SIZE_MAX)
 
-#define TIMEOUT 200
+const unsigned int iso15693_timing[2][5] = {
+	[ISO15693_T_SLOW] = {
+		[ISO15693_T1]	= 1216,	/* max time after VCD EOF before VICC SOF */
+		[ISO15693_T2]	= 1200,	/* min time before VCD EOF after VICC response */
+		[ISO15693_T3]	= 1502,	/* min time after VCD EOF before next EOF if no VICC response */
+		[ISO15693_T4]	= 1216,	/* time after wich VICC transmits after VCD EOF */
+		[ISO15693_T4_WRITE]=20000,	/* time after wich VICC transmits after VCD EOF */
+	},
+	[ISO15693_T_FAST] = {
+		[ISO15693_T1]	= 304,	/* max time after VCD EOF before VICC SOF */
+		[ISO15693_T2]	= 300,	/* min time before VCD EOF after VICC response */
+		[ISO15693_T3]	= 602,	/* min time after VCD EOF before next EOF if no VICC response */
+		[ISO15693_T4]	= 304,	/* time after wich VICC transmits after VCD EOF */
+		[ISO15693_T4_WRITE]=20000,	/* time after wich VICC transmits after VCD EOF */
+	},
+};
 
 static int iso15693_transceive(struct rfid_layer2_handle *handle,
 			       enum rfid_frametype frametype,
@@ -60,14 +75,15 @@ static int iso15693_transceive(struct rfid_layer2_handle *handle,
 /* Transmit an anticollission frame */
 static int
 iso15693_transceive_acf(struct rfid_layer2_handle *handle,
-			struct iso15693_anticol_cmd *acf,
-			unsigned char uuid[ISO15693_UID_LEN],
-			char *bit_of_col)
+			const struct iso15693_anticol_cmd *acf,
+			unsigned int acf_len,
+			struct iso15693_anticol_resp *resp,
+			unsigned int *rx_len, char *bit_of_col)
 {
-	struct rfid_reader *rdr = handle->rh->reader;
+	const struct rfid_reader *rdr = handle->rh->reader;
 	if (!rdr->iso15693.transceive_ac)
 		return -1;
-	return rdr->iso15693.transceive_ac(handle->rh, acf, uuid, bit_of_col);
+	return rdr->iso15693.transceive_ac(handle->rh, acf, acf_len, resp, rx_len, bit_of_col);
 }
 
 #if 0
@@ -120,77 +136,102 @@ iso15693_lock_block()
 
 #endif
 
+/* Helper function to build an ISO 15693 anti collision frame */
+static int
+iso15693_build_acf(u_int8_t *target, u_int8_t flags, u_int8_t afi,
+		   u_int8_t mask_len, u_int8_t *mask)
+{
+	struct iso15693_request *req = (struct iso15693_request *) target;
+	int i = 0, j;
+
+	req->flags = flags;
+	req->command = ISO15693_CMD_INVENTORY;
+	if (flags & RFID_15693_F5_AFI_PRES)
+		req->data[i++] = afi;
+	req->data[i++] = mask_len;
+
+	for (j = 0; j < mask_len; j++)
+		req->data[i++] = mask[j];
+	
+	return i + sizeof(*req);
+}
+
 static int
 iso15693_anticol(struct rfid_layer2_handle *handle)
 {
 	int i, ret;
-	int rx_len = 0;
+	int tx_len, rx_len;
 	int num_valid = 0;
-	struct iso15693_anticol_cmd acf;
-	char uuid[ISO15693_UID_LEN];
-	char boc;
+	union {
+		struct iso15693_anticol_cmd_afi w_afi;
+		struct iso15693_anticol_cmd no_afi;
+	} acf;
 
-	char uuid_list[16][ISO15693_UID_LEN];
-	int uuid_list_valid[16];
+	struct iso15693_anticol_resp resp;
+		
+	char boc;
+#define MAX_SLOTS 16	
+	int num_slots = MAX_SLOTS;
+
+	u_int8_t uuid_list[MAX_SLOTS][ISO15693_UID_LEN];
+	int uuid_list_valid[MAX_SLOTS];
+
+	u_int8_t flags;
 
 #define MY_NONE 0
 #define MY_COLL 1
 #define MY_UUID 2
 
-	memset(uuid_list_valid, MY_NONE, 16);
-	memset(uuid_list, 0, ISO15693_UID_LEN * 16);
+	memset(uuid_list_valid, MY_NONE, sizeof(uuid_list_valid));
+	memset(uuid_list, 0, sizeof(uuid_list));
 
-	memset(&acf, 0, sizeof(struct iso15693_anticol_cmd));
-	acf.afi = 0;
-	acf.flags = RFID_15693_F5_NSLOTS_1 | /* comment out for 16 slots */
-		    RFID_15693_F_INV_TABLE_5 |
-		    RFID_15693_F_RATE_HIGH;
-		    //RFID_15693_F_SUBC_TWO
-	acf.mask_len = 0;
-	//acf.mask_bits[0] = 3;
-	acf.current_slot = 0;
+	//memset(&acf, 0, sizeof(acf));
 
-	if (acf.flags & RFID_15693_F5_NSLOTS_1)
-		i = 1;
-	else
-		i = 16;
-	for (; i >=1; i--) {
-		//acf.current_slot=0;
-		ret = iso15693_transceive_acf(handle, &acf, &uuid[0], &boc);
-		switch (ret) {
-		case -ETIMEDOUT:
-			DEBUGP("no answer from vicc in slot %d\n",
-				acf.current_slot);
-			uuid_list_valid[acf.current_slot] = MY_NONE;
-			break;
-		case -ECOLLISION:
-			DEBUGP("Collision during anticol. slot %d bit %d\n",
-				acf.current_slot,boc);
-			uuid_list_valid[acf.current_slot] = -boc;
-			memcpy(uuid_list[acf.current_slot], uuid, ISO15693_UID_LEN);
-			break;
-		default:
-			if (ret < 0) {
-				DEBUGP("ERROR ret: %d, slot %d\n", ret,
-					acf.current_slot);
-				uuid_list_valid[acf.current_slot] = MY_NONE;
+	/* FIXME: we can't use multiple slots at this point, since the RC632
+	 * with librfid on the host PC has too much latency between 'EOF pulse
+	 * to mark start of next slot' and 'receive data' commands :( */
+
+	flags = RFID_15693_F_INV_TABLE_5;
+	if (handle->priv.iso15693.vicc_fast)
+		flags |= RFID_15693_F_RATE_HIGH;
+	if (handle->priv.iso15693.vicc_two_subc)
+		flags |= RFID_15693_F_SUBC_TWO;
+	if (handle->priv.iso15693.single_slot) {
+		flags |= RFID_15693_F5_NSLOTS_1;
+		num_slots = 1;
+	}
+	if (handle->priv.iso15693.use_afi)
+		flags |= RFID_15693_F5_AFI_PRES;
+
+	tx_len = iso15693_build_acf((u_int8_t *)&acf, flags,
+				    handle->priv.iso15693.afi, 0, NULL);
+
+	for (i = 0; i < num_slots; i++) {
+		rx_len = sizeof(resp);
+		ret = iso15693_transceive_acf(handle, (u_int8_t *) &acf, tx_len, &resp, &rx_len, &boc);
+		if (ret == -ETIMEDOUT) {
+			DEBUGP("no answer from vicc in slot %d\n", i);
+			uuid_list_valid[i] = MY_NONE;
+		} else if (ret < 0) {
+			DEBUGP("ERROR ret: %d, slot %d\n", ret, i);
+			uuid_list_valid[i] = MY_NONE;
+		} else {
+
+			if (boc) {
+				DEBUGP("Collision during anticol. slot %d bit %d\n",
+					i, boc);
+				uuid_list_valid[i] = -boc;
+				memcpy(uuid_list[i], resp.uuid, ISO15693_UID_LEN);
 			} else {
-				DEBUGP("Slot %d ret: %d UUID: %s\n",
-					acf.current_slot, ret,
-					rfid_hexdump(uuid, ISO15693_UID_LEN));
-				uuid_list_valid[acf.current_slot] = MY_UUID;
-				memcpy(&uuid_list[acf.current_slot][0], uuid,
-					ISO15693_UID_LEN);
+				DEBUGP("Slot %d ret: %d UUID: %s\n", i, ret,
+					rfid_hexdump(resp.uuid, ISO15693_UID_LEN));
+				uuid_list_valid[i] = MY_UUID;
+				memcpy(&uuid_list[i][0], resp.uuid, ISO15693_UID_LEN);
 			}
 		}
-		usleep(1000*200);
 	}
-	if (acf.flags & RFID_15693_F5_NSLOTS_1)
-		i = 1;
-	else
-		i = 16;
 
-	while (i) {
+	for (i = 0; i < num_slots; i++) {
 		if (uuid_list_valid[i] == MY_NONE) {
 			DEBUGP("slot[%d]: timeout\n",i);
 		} else if (uuid_list_valid[i] == MY_UUID) {
@@ -204,8 +245,8 @@ iso15693_anticol(struct rfid_layer2_handle *handle)
 				(uuid_list_valid[i]*-1)%8,
 			rfid_hexdump(uuid_list[i], ISO15693_UID_LEN));
 		}
-		i--;
 	}
+
 	if (num_valid == 0)
 		return -1;
 
@@ -245,15 +286,60 @@ static int
 iso15693_getopt(struct rfid_layer2_handle *handle,
 		int optname, void *optval, unsigned int *optlen)
 {
+	unsigned int *val = optval;
+	u_int8_t *val_u8 = optval;
+
+	if (!optlen || !optval || *optlen < sizeof(unsigned int))
+		return -EINVAL;
+	
+	*optlen = sizeof(unsigned int);
+
 	switch (optname) {
 	case RFID_OPT_15693_MOD_DEPTH:
+		if (handle->priv.iso15693.vcd_ask100)
+			*val = RFID_15693_MOD_100ASK;
+		else
+			*val = RFID_15693_MOD_10ASK;
+		break;
 	case RFID_OPT_15693_VCD_CODING:
+		if (handle->priv.iso15693.vcd_out256)
+			*val = RFID_15693_VCD_CODING_1OUT256;
+		else
+			*val = RFID_15693_VCD_CODING_1OUT4;
+		break;
 	case RFID_OPT_15693_VICC_SUBC:
+		if (handle->priv.iso15693.vicc_two_subc)
+			*val = RFID_15693_VICC_SUBC_DUAL;
+		else
+			*val = RFID_15693_VICC_SUBC_SINGLE;
+		break;
 	case RFID_OPT_15693_VICC_SPEED:
+		if (handle->priv.iso15693.vicc_fast)
+			*val = RFID_15693_VICC_SPEED_FAST;
+		else
+			*val = RFID_15693_VICC_SPEED_SLOW;
+		break;
+	case RFID_OPT_15693_VCD_SLOTS:
+		if (handle->priv.iso15693.single_slot)
+			*val = 1;
+		else
+			*val = 16;
+		break;
+	case RFID_OPT_15693_USE_AFI:
+		if (handle->priv.iso15693.use_afi)
+			*val = 1;
+		else
+			*val = 0;
+		break;
+	case RFID_OPT_15693_AFI:
+		*val_u8 = handle->priv.iso15693.afi;
+		*optlen = sizeof(u_int8_t);
+		break;
 	default:
 		return -EINVAL;
 		break;
 	}
+
 	return 0;
 }
 
@@ -261,14 +347,91 @@ static int
 iso15693_setopt(struct rfid_layer2_handle *handle, int optname,
 	        const void *optval, unsigned int optlen)
 {
+	unsigned int val;
+	
+	if (optlen < sizeof(u_int8_t) || !optval)
+		return -EINVAL;
+
+	if (optlen == sizeof(u_int8_t))
+		val = *((u_int8_t *) optval);
+	if (optlen == sizeof(u_int16_t))
+		val = *((u_int16_t *) optval);
+	if (optlen == sizeof(unsigned int))
+		val = *((unsigned int *) optval);
+
 	switch (optname) {
 	case RFID_OPT_15693_MOD_DEPTH:
+		switch (val) {
+		case RFID_15693_MOD_10ASK:
+			handle->priv.iso15693.vcd_ask100 = 0;
+			break;
+		case RFID_15693_MOD_100ASK:
+			handle->priv.iso15693.vcd_ask100 = 1;
+			break;
+		default:
+			return -EINVAL;
+		}
+		break;
 	case RFID_OPT_15693_VCD_CODING:
+		switch (val) {
+		case RFID_15693_VCD_CODING_1OUT256:
+			handle->priv.iso15693.vcd_out256 = 1;
+			break;
+		case RFID_15693_VCD_CODING_1OUT4:
+			handle->priv.iso15693.vcd_out256 = 0;
+			break;
+		default:
+			return -EINVAL;
+		}
+		break;
 	case RFID_OPT_15693_VICC_SUBC:
+		switch (val) {
+		case RFID_15693_VICC_SUBC_SINGLE:
+			handle->priv.iso15693.vicc_two_subc = 0;
+			break;
+		case RFID_15693_VICC_SUBC_DUAL:
+			handle->priv.iso15693.vicc_two_subc = 1;
+			break;
+		default:
+			return -EINVAL;
+		}
+		break;
 	case RFID_OPT_15693_VICC_SPEED:
+		switch (val) {
+		case RFID_15693_VICC_SPEED_SLOW:
+			handle->priv.iso15693.vicc_fast = 0;
+			break;
+		case RFID_15693_VICC_SPEED_FAST:
+			handle->priv.iso15693.vicc_fast = 1;
+			break;
+		default:
+			return -EINVAL;
+		}
+	case RFID_OPT_15693_VCD_SLOTS:
+		switch (val) {
+		case 16:
+			handle->priv.iso15693.single_slot = 0;
+			break;
+		case 1:
+			handle->priv.iso15693.single_slot = 1;
+			break;
+		default:
+			return -EINVAL;
+		}
+		break;
+	case RFID_OPT_15693_USE_AFI:
+		if (val)
+			handle->priv.iso15693.use_afi = 1;
+		else
+			handle->priv.iso15693.use_afi = 1;
+		break;
+	case RFID_OPT_15693_AFI:
+		if (val > 0xff)
+			return -EINVAL;
+		handle->priv.iso15693.afi = val;
+		break;
 	default:
 		return -EINVAL;
-		break;
 	}
 	return 0;
 }
@@ -289,7 +452,15 @@ iso15693_init(struct rfid_reader_handle *rh)
 	h->l2 = &rfid_layer2_iso15693;
 	h->rh = rh;
 	h->priv.iso15693.state = ISO15693_STATE_NONE;
-	ret = h->rh->reader->iso15693.init(h->rh);
+	h->priv.iso15693.vcd_ask100 = 1; /* 100ASK is easier to generate */
+	h->priv.iso15693.vicc_two_subc = 0;
+	h->priv.iso15693.vicc_fast = 1;
+	h->priv.iso15693.single_slot = 1;
+	h->priv.iso15693.vcd_out256 = 0;
+	h->priv.iso15693.use_afi = 0;	/* not all VICC support AFI */
+	h->priv.iso15693.afi = 0;
+
+	ret = h->rh->reader->init(h->rh, RFID_LAYER2_ISO15693);
 	if (ret < 0) {
 		free_layer2_handle(h);
 		return NULL;
