@@ -32,9 +32,9 @@ int rfid_layer2_transceive(struct rfid_layer2_handle *l2h,
 			   u_int64_t timeout, unsigned int flags);
 int rfid_layer2_close(struct rfid_layer2_handle *l2h);
 int rfid_layer2_fini(struct rfid_layer2_handle *l2h);
-int rfid_layer2_getopt(struct rfid_layer2_handle *ph, int optname,
+int rfid_layer2_getopt(struct rfid_layer2_handle *l2h, int optname,
 			void *optval, unsigned int *optlen);
-int rfid_layer2_setopt(struct rfid_layer2_handle *ph, int optname,
+int rfid_layer2_setopt(struct rfid_layer2_handle *l2h, int optname,
 			const void *optval, unsigned int optlen);
 char *rfid_layer2_name(struct rfid_layer2_handle *l2h);
 #ifdef __LIBRFID__

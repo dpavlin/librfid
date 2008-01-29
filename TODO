@@ -1,6 +1,14 @@
+architecture:
+- somehow have some more abstrcat handle type in order to enable the generic
+  rfid_{get,set}opt() functions
+- remove additional transceive_{acf,sf} functions from reader and asic structs,
+  make the code reuse the existing transceive() function by using the frametype
+  to differentiate different cases.
+
 rc632:
-- fix handling of timeout (program timer of RC632)
-- add a timeout tolerance factor that can be user-specified
+- make timeout tolerance factor (TIMER_RELAX_FACTOR) user-specified
+- try to use built-in timer for timing analysis, i.e. determine the exact time
+  until a card response by reading the remaining timer ticks from the register
 - make sure interrupt mode for timer wait works
 
 cm5121:
@@ -15,21 +23,22 @@ iso14443b:
 
 iso15693:
 - implement anticollision
-- implement all the rest
 
 mifare_clasic:
-- test 
-- try to auto-detect 1k/4k
-- try to distinguish mifare ultralight and mifare classic in/after anticol
+[none]
+
+icode1:
+- implement and test code (I only have ICode2 tags)
 
 tcl:
 - implement pps for asymmetric (rx/tx) speeds
 
 openct:
-- add ifdhandler driver
+- add ifdhandler driver for PC/SC support
+- add various standardized PC/SC remappings for cards != tcl
 
 other:
-- implementation of code for various passive tags
+- implementation of code for various passive tags, ie. ITRX, I*Code1, I*Code2, Tag-it, ...
 - documentation
 - add notion of 'asic implementation' for specifying reader-specific
   initialization values such as mod_conductance

@@ -38,6 +38,8 @@
 #include <librfid/rfid_layer2.h>
 #include <librfid/rfid_protocol.h>
 
+#include "rfid_reader_rc632_common.h"
+
 /* FIXME */
 #include "rc632.h"
 
@@ -252,10 +254,9 @@ static int openpcd_get_api_version(struct rfid_reader_handle *rh, u_int8_t *vers
 	return ret;
 }
 
-static int openpcd_get_environment(
-    struct rfid_reader_handle *rh,
-    unsigned char num_bytes,
-    unsigned char *buf)
+static int openpcd_get_environment(struct rfid_reader_handle *rh,
+				   unsigned char num_bytes,
+				   unsigned char *buf)
 {
 	int ret;
 
@@ -275,10 +276,9 @@ static int openpcd_get_environment(
 	return ret;
 }
 
-static int openpcd_set_environment(
-    struct rfid_reader_handle *rh, 
-    unsigned char num_bytes,
-    const unsigned char *buf)
+static int openpcd_set_environment(struct rfid_reader_handle *rh, 
+				   unsigned char num_bytes,
+				   const unsigned char *buf)
 {
 	int ret;
 	
@@ -352,115 +352,24 @@ const struct rfid_asic_transport openpcd_rat = {
 
 #endif /* LIBRFID_FIRMWARE */
 
-static int openpcd_transceive(struct rfid_reader_handle *rh,
-			     enum rfid_frametype frametype,
-			     const unsigned char *tx_data, unsigned int tx_len,
-			     unsigned char *rx_data, unsigned int *rx_len,
-			     u_int64_t timeout, unsigned int flags)
+static int openpcd_getopt(struct rfid_reader_handle *rh, int optname,
+			  void *optval, unsigned int *optlen)
 {
-	return rh->ah->asic->priv.rc632.fn.transceive(rh->ah, frametype,
-						      tx_data, tx_len, 
-						      rx_data, rx_len,
-						      timeout, flags);
-}
+	int rc;
+	u_int8_t *val_u8 = (u_int8_t *) optval;
 
-static int openpcd_transceive_sf(struct rfid_reader_handle *rh,
-			       unsigned char cmd, struct iso14443a_atqa *atqa)
-{
-	return rh->ah->asic->priv.rc632.fn.iso14443a.transceive_sf(rh->ah,
-								   cmd,
-								   atqa);
-}
-
-static int
-openpcd_transceive_acf(struct rfid_reader_handle *rh,
-		      struct iso14443a_anticol_cmd *cmd,
-		      unsigned int *bit_of_col)
-{
-	return rh->ah->asic->priv.rc632.fn.iso14443a.transceive_acf(rh->ah,
-							 cmd, bit_of_col);
-}
-
-static int
-openpcd_iso15693_transceive_ac(struct rfid_reader_handle *rh,
-			struct iso15693_anticol_cmd *acf, unsigned char uuid[ISO15693_UID_LEN],
-			char *bit_of_col)
-{
-	return 	rh->ah->asic->priv.rc632.fn.iso15693.transceive_ac(
-					rh->ah, acf, uuid, bit_of_col);
-}
-
-
-static int
-openpcd_14443a_init(struct rfid_reader_handle *rh)
-{
-	return rh->ah->asic->priv.rc632.fn.iso14443a.init(rh->ah);
-}
-
-static int
-openpcd_14443a_set_speed(struct rfid_reader_handle *rh, 
-			unsigned int tx,
-			unsigned int speed)
-{
-	u_int8_t rate;
-	
-	DEBUGP("setting rate: ");
-	switch (speed) {
-	case RFID_14443A_SPEED_106K:
-		rate = 0x00;
-		DEBUGPC("106K\n");
-		break;
-	case RFID_14443A_SPEED_212K:
-		rate = 0x01;
-		DEBUGPC("212K\n");
-		break;
-	case RFID_14443A_SPEED_424K:
-		rate = 0x02;
- 		DEBUGPC("424K\n");
-		break;
-	case RFID_14443A_SPEED_848K:
-		rate = 0x03;
-		DEBUGPC("848K\n");
-		break;
+	switch (optname) {
+#ifndef LIBRFID_FIRMWARE
+	case RFID_OPT_RDR_FW_VERSION:
+		return openpcd_get_api_version(rh, val_u8);
+#endif
 	default:
-		return -EINVAL;
-		break;
+		return _rdr_rc632_getopt(rh, optname, optval, optlen);
 	}
-	return rh->ah->asic->priv.rc632.fn.iso14443a.set_speed(rh->ah,
-								tx, rate);
+
+	return 0;
 }
 
-static int
-openpcd_14443b_init(struct rfid_reader_handle *rh)
-{
-	return rh->ah->asic->priv.rc632.fn.iso14443b.init(rh->ah);
-}
-
-static int
-openpcd_15693_init(struct rfid_reader_handle *rh)
-{
-	return rh->ah->asic->priv.rc632.fn.iso15693.init(rh->ah);
-}
-
-static int
-openpcd_mifare_setkey(struct rfid_reader_handle *rh, const u_int8_t *key)
-{
-	return rh->ah->asic->priv.rc632.fn.mifare_classic.setkey(rh->ah, key);
-}
-
-static int
-openpcd_mifare_auth(struct rfid_reader_handle *rh, u_int8_t cmd, 
-		   u_int32_t serno, u_int8_t block)
-{
-	return rh->ah->asic->priv.rc632.fn.mifare_classic.auth(rh->ah, 
-							cmd, serno, block);
-}
-
-static void
-openpcd_rf_power(struct rfid_reader_handle *rh, int on)
-{
-	return rh->ah->asic->priv.rc632.fn.rf_power(rh->ah, on);
-}
 
 static struct rfid_reader_handle *
 openpcd_open(void *data)
@@ -551,16 +460,13 @@ const struct rfid_reader rfid_reader_openpcd = {
 	.id = RFID_READER_OPENPCD,
 	.open = &openpcd_open,
 	.close = &openpcd_close,
-	.rf_power = &openpcd_rf_power,
-	
+	.getopt = &openpcd_getopt,
 #ifndef LIBRFID_FIRMWARE
-        .get_api_version = &openpcd_get_api_version,
-	.get_environment = &openpcd_get_environment,
-	.set_environment = &openpcd_set_environment,
         .reset = &openpcd_reset,
 #endif
-					
-	.transceive = &openpcd_transceive,
+	.setopt = &_rdr_rc632_setopt,
+	.init = &_rdr_rc632_l2_init,
+	.transceive = &_rdr_rc632_transceive,
 	.l2_supported = (1 << RFID_LAYER2_ISO14443A) |
 			(1 << RFID_LAYER2_ISO14443B) |
 			(1 << RFID_LAYER2_ISO15693),
@@ -568,22 +474,17 @@ const struct rfid_reader rfid_reader_openpcd = {
 			(1 << RFID_PROTOCOL_MIFARE_UL) |
 			(1 << RFID_PROTOCOL_MIFARE_CLASSIC),
 	.iso14443a = {
-		.init = &openpcd_14443a_init,
-		.transceive_sf = &openpcd_transceive_sf,
-		.transceive_acf = &openpcd_transceive_acf,
+		.transceive_sf = &_rdr_rc632_transceive_sf,
+		.transceive_acf = &_rdr_rc632_transceive_acf,
 		.speed = RFID_14443A_SPEED_106K | RFID_14443A_SPEED_212K |
 			 RFID_14443A_SPEED_424K, //| RFID_14443A_SPEED_848K,
-		.set_speed = &openpcd_14443a_set_speed,
-	},
-	.iso14443b = {
-		.init = &openpcd_14443b_init,
+		.set_speed = &_rdr_rc632_14443a_set_speed,
 	},
 	.iso15693 = {
-		.init = &openpcd_15693_init,
-		.transceive_ac = &openpcd_iso15693_transceive_ac,
+		.transceive_ac = &_rdr_rc632_iso15693_transceive_ac,
 	},
 	.mifare_classic = {
-		.setkey = &openpcd_mifare_setkey,
-		.auth = &openpcd_mifare_auth,
+		.setkey = &_rdr_rc632_mifare_setkey,
+		.auth = &_rdr_rc632_mifare_auth,
 	},
 };

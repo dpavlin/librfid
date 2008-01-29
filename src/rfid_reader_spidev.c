@@ -40,6 +40,8 @@
 #include <librfid/rfid_layer2.h>
 #include <librfid/rfid_protocol.h>
 
+#include "rfid_reader_rc632_common.h"
+
 /* FIXME */
 #include "rc632.h"
 static int spidev_fd;
@@ -172,122 +174,14 @@ static int spidev_fifo_write(struct rfid_asic_transport_handle *rath,
 struct rfid_asic_transport spidev_spi = {
 	.name = "spidev",
 	.priv.rc632 = {
-		       .fn = {
-			      .reg_write = &spidev_reg_write,
-			      .reg_read = &spidev_reg_read,
-			      .fifo_write = &spidev_fifo_write,
-			      .fifo_read = &spidev_fifo_read,
-			      },
-		       },
+		.fn = {
+			.reg_write = &spidev_reg_write,
+			.reg_read = &spidev_reg_read,
+			.fifo_write = &spidev_fifo_write,
+			.fifo_read = &spidev_fifo_read,
+		},
+	},
 };
-
-static int spidev_transceive(struct rfid_reader_handle *rh,
-			       enum rfid_frametype frametype,
-			       const unsigned char *tx_data,
-			       unsigned int tx_len, unsigned char *rx_data,
-			       unsigned int *rx_len, u_int64_t timeout,
-			       unsigned int flags)
-{
-	return rh->ah->asic->priv.rc632.fn.transceive(rh->ah, frametype,
-						      tx_data, tx_len, rx_data,
-						      rx_len, timeout, flags);
-}
-
-static int spidev_transceive_sf(struct rfid_reader_handle *rh,
-				  unsigned char cmd,
-				  struct iso14443a_atqa *atqa)
-{
-	return rh->ah->asic->priv.rc632.fn.iso14443a.transceive_sf(rh->ah, cmd,
-								   atqa);
-}
-
-static int
-spidev_transceive_acf(struct rfid_reader_handle *rh,
-			struct iso14443a_anticol_cmd *cmd,
-			unsigned int *bit_of_col)
-{
-	return rh->ah->asic->priv.rc632.fn.iso14443a.transceive_acf(rh->ah,
-								    cmd,
-								    bit_of_col);
-}
-
-static int spidev_14443a_init(struct rfid_reader_handle *rh)
-{
-	int ret;
-	ret = rh->ah->asic->priv.rc632.fn.iso14443a.init(rh->ah);
-	return ret;
-}
-
-static int
-spidev_14443a_set_speed(struct rfid_reader_handle *rh,
-			  unsigned int tx, unsigned int speed)
-{
-	u_int8_t rate;
-
-	DEBUGP("setting rate: ");
-	switch (speed) {
-	    case RFID_14443A_SPEED_106K:
-		    rate = 0x00;
-		    DEBUGPC("106K\n");
-		    break;
-	    case RFID_14443A_SPEED_212K:
-		    rate = 0x01;
-		    DEBUGPC("212K\n");
-		    break;
-	    case RFID_14443A_SPEED_424K:
-		    rate = 0x02;
-		    DEBUGPC("424K\n");
-		    break;
-	    case RFID_14443A_SPEED_848K:
-		    rate = 0x03;
-		    DEBUGPC("848K\n");
-		    break;
-	    default:
-		    return -EINVAL;
-		    break;
-	}
-	return rh->ah->asic->priv.rc632.fn.iso14443a.set_speed(rh->ah,
-							       tx, rate);
-}
-
-static int spidev_14443b_init(struct rfid_reader_handle *rh)
-{
-	return rh->ah->asic->priv.rc632.fn.iso14443b.init(rh->ah);
-}
-
-static int spidev_15693_init(struct rfid_reader_handle *rh)
-{
-	return rh->ah->asic->priv.rc632.fn.iso15693.init(rh->ah);
-}
-
-static int spidev_15693_transceive_ac(struct rfid_reader_handle *rh,
-				      struct iso15693_anticol_cmd *acf,
-				      unsigned char uuid[ISO15693_UID_LEN],
-				      char *bit_of_col)
-{
-	return rh->ah->asic->priv.rc632.fn.iso15693.transceive_ac(
-					rh->ah, acf, uuid, bit_of_col);
-}
-
-static int
-spidev_mifare_setkey(struct rfid_reader_handle *rh, const u_int8_t * key)
-{
-	return rh->ah->asic->priv.rc632.fn.mifare_classic.setkey(rh->ah, key);
-}
-
-static int
-spidev_mifare_auth(struct rfid_reader_handle *rh, u_int8_t cmd,
-		     u_int32_t serno, u_int8_t block)
-{
-	return rh->ah->asic->priv.rc632.fn.mifare_classic.auth(rh->ah,
-							       cmd, serno,
-							       block);
-}
-static int
-spidev_rf_power(struct rfid_reader_handle *rh, int on)
-{
-	return rh->ah->asic->priv.rc632.fn.rf_power(rh->ah, on);
-}
 
 static struct rfid_reader_handle *spidev_open(void *data)
 {
@@ -377,32 +271,30 @@ struct rfid_reader rfid_reader_spidev = {
 	.id = RFID_READER_SPIDEV,
 	.open = &spidev_open,
 	.close = &spidev_close,
-	.rf_power = &spidev_rf_power,
-	.transceive = &spidev_transceive,
 	.l2_supported = (1 << RFID_LAYER2_ISO14443A) |
 			(1 << RFID_LAYER2_ISO14443B) |
 			(1 << RFID_LAYER2_ISO15693),
 	.proto_supported = (1 << RFID_PROTOCOL_TCL) |
 			   (1 << RFID_PROTOCOL_MIFARE_UL) |
 			   (1 << RFID_PROTOCOL_MIFARE_CLASSIC),
+	.getopt = &_rdr_rc632_getopt,
+	.setopt = &_rdr_rc632_setopt,
+	.init = &_rdr_rc632_l2_init,
+	.transceive = &_rdr_rc632_transceive,
 	.iso14443a = {
-		      .init = &spidev_14443a_init,
-		      .transceive_sf = &spidev_transceive_sf,
-		      .transceive_acf = &spidev_transceive_acf,
-		      .speed = RFID_14443A_SPEED_106K
-		      | RFID_14443A_SPEED_212K | RFID_14443A_SPEED_424K,
-		      .set_speed = &spidev_14443a_set_speed,
-	},
-	.iso14443b = {
-		      .init = &spidev_14443b_init,
+		.transceive_sf = &_rdr_rc632_transceive_sf,
+		.transceive_acf = &_rdr_rc632_transceive_acf,
+		.speed = RFID_14443A_SPEED_106K |
+			 RFID_14443A_SPEED_212K |
+			 RFID_14443A_SPEED_424K, 
+		.set_speed = &_rdr_rc632_14443a_set_speed,
 	},
 	.iso15693 = {
-		     .init = &spidev_15693_init,
-		     .transceive_ac = &spidev_15693_transceive_ac,
+		     .transceive_ac = &_rdr_rc632_iso15693_transceive_ac,
 	},
 	.mifare_classic = {
-		.setkey = &spidev_mifare_setkey,
-		.auth = &spidev_mifare_auth,
+		.setkey = &_rdr_rc632_mifare_setkey,
+		.auth = &_rdr_rc632_mifare_auth,
 	},
 };
 

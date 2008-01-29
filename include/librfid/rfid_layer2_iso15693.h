@@ -29,40 +29,16 @@
 
 /* protocol definitions */
 
-#if 0
-struct rfid_15693_handle;
-
-struct rfid_layer2_15693t {
-	unsigned char	*name;
-
-	struct {
-		int (*init)(struct iso15693_handle *handle);
-		int (*fini)(struct iso15693_handle *handle);
-
-#if 0
-		int (*transceive_sf)(struct iso14443a_handle *handle,
-				     unsigned char cmd,
-				     struct iso14443a_atqa *atqa);
-		int (*transceive_acf)(struct iso14443a_handle *handle,
-				      struct iso14443a_anticol_cmd *acf,
-				      unsigned int *bit_of_col);
-#endif
-		int (*transceive)(struct iso15693_handle *handle,
-				  const unsigned char *tx_buf,
-				  unsigned int tx_len,
-				  unsigned char *rx_buf,
-				  unsigned int *rx_len);
-	} fn;
-
-	union {
-	} priv;
-};
-#endif
-
 struct iso15693_handle {
 	unsigned int state;
-	unsigned int ask100:1,
-		     out256:1;
+	unsigned int vcd_ask100:1,
+		     vicc_two_subc:1,
+		     vicc_fast:1,
+		     single_slot:1,
+		     use_afi:1,
+		     vcd_out256:1;
+	u_int8_t afi;	/* appplication family identifier */
+	u_int8_t dsfid;	/* data storage format identifier */
 };
 
 enum rfid_15693_state {
@@ -76,6 +52,10 @@ enum rfid_15693_opt {
 	RFID_OPT_15693_VCD_CODING	= 0x00010002,
 	RFID_OPT_15693_VICC_SUBC	= 0x00010003,
 	RFID_OPT_15693_VICC_SPEED	= 0x00010004,
+	RFID_OPT_15693_VCD_SLOTS	= 0x00010005,
+	RFID_OPT_15693_USE_AFI		= 0x00010006,
+	RFID_OPT_15693_AFI		= 0x00010007,
+	RFID_OPT_15693_DSFID		= 0x00010008,
 };
 
 enum rfid_15693_opt_mod_depth {
@@ -195,13 +175,39 @@ enum iso15693_commands {
 };
 
 struct iso15693_anticol_cmd {
-	/* iso15693-3 table5 flags*/
-	unsigned char flags;	// SLOTS16 | SLOT1, AFI_PRESENT, OPTION_FLAG
-	unsigned char afi;		// AFI 0 for any
+	struct iso15693_request req;
 	unsigned char mask_len;
 	unsigned char mask_bits[ISO15693_UID_LEN];
 	unsigned char current_slot;
 } __attribute__((packed));
+
+struct iso15693_anticol_cmd_afi {
+	struct iso15693_request req;
+	unsigned char afi;
+	unsigned char mask_len;
+	unsigned char mask_bits[ISO15693_UID_LEN];
+} __attribute__((packed));
+
+/* Figure 11, Chapter 9.2.1 */
+struct iso15693_anticol_resp {
+	struct iso15693_response resp;
+	u_int8_t dsfid;
+	u_int8_t uuid[ISO15693_UID_LEN];
+} __attribute__((packed));
+
+
+#define ISO15693_T_SLOW	0
+#define ISO15693_T_FAST	1
+enum iso15693_t {
+	ISO15693_T1,
+	ISO15693_T2,
+	ISO15693_T3,
+	ISO15693_T4,
+	ISO15693_T4_WRITE,
+};
+
+/* in microseconds as per Chapter 8.4 table 8 */
+extern const unsigned int iso15693_timing[2][5];
 
 #include <librfid/rfid_layer2.h>
 extern const struct rfid_layer2 rfid_layer2_iso15693;

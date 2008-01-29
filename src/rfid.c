@@ -59,9 +59,8 @@ int rfid_setopt(struct rfid_handle *rh, unsigned int level,
 		const void *opt, unsigned int *optlen)
 {
 	switch (level) {
-	case RFID_LEVEL_ASIC:
 	case RFID_LEVEL_READER:
-		return -EINVAL;
+		return rfid_reader_setopt(optname, opt, optlen);
 		break;
 	case RFID_LEVEL_LAYER2:
 		return rfid_layer2_setopt(optname, opt, optlen);
@@ -69,6 +68,7 @@ int rfid_setopt(struct rfid_handle *rh, unsigned int level,
 	case RFID_LEVEL_LAYER3:
 		return rfid_layer3_setopt(optname, opt, optlen);
 		break;
+	case RFID_LEVEL_ASIC:
 	default:
 		return -EINVAL;
 		break;
@@ -82,9 +82,8 @@ int rfid_getopt(struct rfid_handle *rh, unsigned int level,
 		void *opt, unsigned int *optlen)
 {
 	switch (level) {
-	case RFID_LEVEL_ASIC:
 	case RFID_LEVEL_READER:
-		return -EINVAL;
+		return rfid_reader_getopt(optname, opt, optlen);
 		break;
 	case RFID_LEVEL_LAYER2:
 		return rfid_layer2_getopt(optname, opt, optlen);
@@ -92,6 +91,7 @@ int rfid_getopt(struct rfid_handle *rh, unsigned int level,
 	case RFID_LEVEL_LAYER3:
 		return rfid_layer3_getopt(optname, opt, optlen);
 		break;
+	case RFID_LEVEL_ASIC:
 	default:
 		return -EINVAL;
 		break;
