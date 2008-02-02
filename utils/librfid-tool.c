@@ -42,6 +42,7 @@
 #include <librfid/rfid_protocol_mifare_ul.h>
 #include <librfid/rfid_protocol_tagit.h>
 #include <librfid/rfid_protocol_icode.h>
+#include <librfid/rfid_protocol_tcl.h>
 
 #include "librfid-tool.h"
 
@@ -332,6 +333,8 @@ static int do_scan(int first)
 	int rc;
 	unsigned int size;
 	unsigned int size_len = sizeof(size);
+	char *data;
+	unsigned int data_len;
 
 	if (first) {
 		unsigned int opt;
@@ -363,6 +366,20 @@ static int do_scan(int first)
 		if (rfid_protocol_getopt(ph, RFID_OPT_PROTO_SIZE, 
 					 &size, &size_len) == 0)
 			printf("Size: %u bytes\n", size);
+		size_len = sizeof(size);
+		size = 0;
+		if (rfid_protocol_getopt(ph, RFID_OPT_P_TCL_ATS_LEN,
+					 &size, &size_len) == 0) {
+			data_len = size + 1;
+			data = malloc(data_len);
+			if (data) {
+				if (rfid_protocol_getopt(ph, RFID_OPT_P_TCL_ATS,
+							 data, &data_len) == 0) {
+					printf("Got ATS of %u bytes: %s\n", size,
+					       hexdump(data, data_len));
+				}
+			}
+		}
 	}
 
 	return rc;
