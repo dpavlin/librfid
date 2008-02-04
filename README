@@ -1,16 +1,15 @@
 librfid - low-level RFID access library
-(C) 2005-2007 by Harald Welte <laforge@gnumonks.org>
+(C) 2005-2008 by Harald Welte <laforge@gnumonks.org>
 ======================================================================
 
-This library intends to provide a reader- and (as much as possible)
+This library intends to provide a reader and (as much as possible)
 PICC / tag independent API for RFID applications.
 
 1. Supported Protocols:
 
-At this early stage of implementation, it offers only ISO 14443-2, ISO 14443-3
-A and B as well as ISO 14443-4 (T=CL) support.  Other protocols, both open
-(such as ISO 15693) and proprietary are to be added as soon as I find some
-more time.
+At this stage of implementation, it offers only ISO 14443-2, ISO 14443-3 A and
+B as well as ISO 14443-4 (T=CL) support.  ISO15693 is only partiall
+implemented. Other protocols are to be added as soon as I find some more time.
 
 2. Supported Readers:
 
@@ -51,7 +50,16 @@ applications) on the reader, without any requirement for a host PC!
 2.3 Philips Pegoda
 
 This reader is not yet supported.  Some initial experiments have shown that
-adding support for it is 
+adding support for it is feasible.
+
+2.4 spidev RC632
+
+This is not actually a specific reader, but a generic implementation of a 
+CL RC632 based redaer attached to a SPI bus supported by the standard Linux
+SPI kernel driver architecture and it's spidev userspace interface.
+
+If you want to build this reader driver, use the '--enable-spidev' option
+to the './configure' command.
 
 2.x Further Readers
 
@@ -72,9 +80,8 @@ backend, don't hesitate to contact me.
 In the default configuration, librfid only includes the driver for the OpenPCD
 dumbreader firmware.
 
-If you want support for Omnikey Cardman 5121/5321, you have to add
-'--enable-reader-cm5x21' to the './configure' command, _and_ choose the backend
-you want to use, either:
+If you want support for Omnikey Cardman 5121/5321, you have to choose the
+backend you want to use, either:
 
 3.1 (new) native CCID backend
 
@@ -92,10 +99,7 @@ change the group of the usb device to 'users'.
 3.2 (old) OpenCT backend
 
 This backend has the advantage that it will allow you to use the contact-based
-part and the contactless part of the CM5121 simultaneously.  However, it requires
-a patched version of OpenCT.
-
-A patch against openct-0.6.7 is available as openct-0.6.7-librfid.patch.
+part and the contactless part of the CM5121 simultaneously.  
 
 Please note that while librfid in this configuration _uses_ OpenCT as a
 lower-layer transport interface, it doesn't actually provide a virtual reader
