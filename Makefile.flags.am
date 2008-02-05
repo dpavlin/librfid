@@ -8,7 +8,7 @@ AM_LDFLAGS = -mno-cygwin
 AM_CFLAGS += -mno-cygwin
 else
 if HAVE_LIBUSB
-AM_LDFLAGS = -lusb
+LIBS += -lusb
 AM_CFLAGS += -DHAVE_LIBUSB
 endif
 endif
