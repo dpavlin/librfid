@@ -115,7 +115,9 @@ mfcl_getopt(struct rfid_protocol_handle *ph, int optname, void *optval,
 {
 	int ret = -EINVAL;
 	u_int8_t atqa[2];
+	u_int8_t sak;
 	unsigned int atqa_size = sizeof(atqa);
+	unsigned int sak_size = sizeof(sak);
 	unsigned int *size = optval;
 
 	switch (optname) {
@@ -126,10 +128,15 @@ mfcl_getopt(struct rfid_protocol_handle *ph, int optname, void *optval,
 		ret = 0;
 		rfid_layer2_getopt(ph->l2h, RFID_OPT_14443A_ATQA,
 				   atqa, &atqa_size);
-		/* FIXME: ATQA of mifare mini */
-		if (atqa[0] == 0x04 && atqa[1] == 0x00)
-			*size = 1024;
-		else if (atqa[0] == 0x02 && atqa[1] == 0x00)
+		rfid_layer2_getopt(ph->l2h, RFID_OPT_14443A_SAK,
+				   &sak, &sak_size);
+		if (atqa[0] == 0x04 && atqa[1] == 0x00) {
+			if (sak == 0x09) {
+				/* mifare mini */
+				*size = 320;
+			} else
+				*size = 1024;
+		} else if (atqa[0] == 0x02 && atqa[1] == 0x00)
 			*size = 4096;
 		else
 			ret = -EIO;
