@@ -250,6 +250,7 @@ cascade:
 
 	h->level = ISO14443A_LEVEL_NONE;
 	h->state = ISO14443A_STATE_SELECTED;
+	h->sak = sak[0];
 
 	if (sak[0] & 0x20) {
 		DEBUGP("we have a T=CL compliant PICC\n");
@@ -323,9 +324,14 @@ iso14443a_getopt(struct rfid_layer2_handle *handle, int optname,
 	int ret = -EINVAL;
 	struct iso14443a_handle *h = &handle->priv.iso14443a;
 	struct iso14443a_atqa *atqa = optval;
+	u_int8_t *opt_u8 = optval;
 	int *wupa = optval;
 
 	switch (optname) {
+	case RFID_OPT_14443A_SAK:
+		*opt_u8 = h->sak;
+		optlen = sizeof(*opt_u8);
+		break;
 	case RFID_OPT_14443A_ATQA:
 		*atqa = h->atqa;
 		ret = 0;

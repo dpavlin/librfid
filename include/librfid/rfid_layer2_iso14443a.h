@@ -6,6 +6,7 @@ enum rfid_14443a_opt {
 	RFID_OPT_14443A_SPEED_TX	= 0x00010002,
 	RFID_OPT_14443A_ATQA		= 0x00010003,
 	RFID_OPT_14443A_WUPA		= 0x00010004,
+	RFID_OPT_14443A_SAK		= 0x00010005,
 };
 
 enum rfid_14443_opt_speed {
@@ -67,6 +68,7 @@ struct iso14443a_handle {
 	unsigned int level;
 	unsigned int tcl_capable;
 	struct iso14443a_atqa atqa;
+	u_int8_t sak;
 };
 
 enum iso14443a_level {
