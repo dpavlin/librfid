@@ -554,7 +554,7 @@ rc632_receive(struct rfid_asic_handle *handle,
 		return ret;
 
 	if (rx_avail > *rx_len) {
-		//printf("rx_avail(%d) > rx_len(%d), JFYI\n", rx_avail, *rx_len);
+		//DEBUGP("rx_avail(%d) > rx_len(%d), JFYI\n", rx_avail, *rx_len);
 	} else if (*rx_len > rx_avail)
 		*rx_len = rx_avail;
 
@@ -1688,7 +1688,7 @@ rc632_iso15693_transceive_ac(struct rfid_asic_handle *handle,
 	if (acf->req.flags & RFID_15693_F_RATE_HIGH)
 		rate = ISO15693_T_FAST;
 
-	printf("acf = %s\n", rfid_hexdump(acf, acf_len));
+	DEBUGP("acf = %s\n", rfid_hexdump(acf, acf_len));
 
 	ret = rc632_transceive(handle, (u_int8_t *)acf, acf_len,
 			       (u_int8_t *) resp, rx_len, 
