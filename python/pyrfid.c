@@ -1,5 +1,5 @@
 /* Python bindings for librfid 
- *  (C) 2007 by Kushal Das <kushal@openpcd.org>
+ *  (C) 2007-2008 by Kushal Das <kushal@openpcd.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2 
@@ -30,28 +30,38 @@
 
 #include <librfid/rfid_protocol_mifare_classic.h>
 #include <librfid/rfid_protocol_mifare_ul.h>
-#include <common.h>
-
+/*#include <common.h>*/
+#include "openpcd.h"
 #include <Python.h>
 static PyObject *pyi_open(PyObject *self, PyObject *args);
 static PyObject *pyi_close(PyObject *self, PyObject *args);
-static PyObject *pyi_rfidscan(PyObject *self, PyObject *args);
-static PyObject *pyi_rfidlayeropt(PyObject *self, PyObject *args);
+static PyObject *pyi_select_card(PyObject *self, PyObject *args);
+static PyObject *pyi_deselect_card(PyObject *self, PyObject *args);
+static PyObject *pyi_get_card_id(PyObject *self, PyObject *args);
+static PyObject *pyi_openpcd_read(PyObject *self, PyObject *args);
+static PyObject *pyi_openpcd_write(PyObject *self, PyObject *args);
+static PyObject *pyi_set_key(PyObject *self, PyObject *args);
 
 static PyObject *pyi_Error;
-struct rfid_reader_handle *rh;
-struct rfid_layer2_handle *l2h;
-struct rfid_protocol_handle *ph;
+MIFARE_HANDLE handle;
 
 static PyMethodDef pyi_Methods[] = {
-    {"open", pyi_open, METH_VARARGS,
+    {"open_reader", pyi_open, METH_VARARGS,
         "This will initialise the RFID reader"},
-    {"close", pyi_close, METH_VARARGS,
+    {"close_reader", pyi_close, METH_VARARGS,
         "This will close the RFID reader"},
-    {"scan", pyi_rfidscan, METH_VARARGS,
-        "This will scan for any card"},
-    {"get_id", pyi_rfidlayeropt, METH_VARARGS,
-        "This will read the id of the card"},
+    {"select_card", pyi_select_card, METH_VARARGS,
+        "This will select any card"},
+    {"read",pyi_openpcd_read, METH_VARARGS,
+        "This will read the card with given page number"},
+    {"write",pyi_openpcd_write, METH_VARARGS,
+        "This will write the card with given page number"},
+    {"set_key",pyi_set_key, METH_VARARGS,
+        "This will set the key with given key"},
+    {"deselect_card", pyi_deselect_card, METH_VARARGS,
+        "This will deselect any card"},
+    {"get_card_id", pyi_get_card_id, METH_VARARGS,
+        "This will get the card id"},
     {NULL, NULL, 0, NULL}
 };
 
@@ -66,33 +76,53 @@ PyMODINIT_FUNC initpyrfid() {
 }
 
 static PyObject *pyi_open(PyObject *self, PyObject *args) {
-    rfid_init();
-    rh = rfid_reader_open(NULL, RFID_READER_OPENPCD);
-    if (!rh)
-	return Py_BuildValue("i", 1);
-    else
-	return Py_BuildValue("i", 0);
+        return Py_BuildValue("i",openpcd_open_reader(&handle));
 }
 
 static PyObject *pyi_close(PyObject *self, PyObject *args) {
-    rfid_reader_close(rh);
-//     Py_INCREF(Py_None);
-//     return Py_None;
-     return Py_BuildValue("i", 0);
+        return Py_BuildValue("i", openpcd_close_reader(handle));
 }
 
-static PyObject *pyi_rfidscan(PyObject *self, PyObject *args) {
-    int rc;
-	rc = rfid_scan(rh, &l2h, &ph);
-	return Py_BuildValue("i", rc);
+static PyObject *pyi_select_card(PyObject *self, PyObject *args) {
+        return Py_BuildValue("i", openpcd_select_card(handle));
 }
 
-static PyObject *pyi_rfidlayeropt(PyObject *self, PyObject *args) {
-                unsigned char uid_buf[16];
-		char card_id[16];
-		unsigned int uid_len = sizeof(uid_buf);
-		rfid_layer2_getopt(l2h, RFID_OPT_LAYER2_UID, &uid_buf,
-				   &uid_len);
-		strcpy(card_id,hexdump(uid_buf, uid_len));
-		return Py_BuildValue("s", card_id);
+static PyObject *pyi_deselect_card(PyObject *self, PyObject *args) {
+        return Py_BuildValue("i", openpcd_deselect_card(handle));
 }
+
+static PyObject *pyi_openpcd_read(PyObject *self, PyObject *args) {
+        int ok, page;
+        char s[16];
+        ok = PyArg_ParseTuple(args, "i", &page);
+        openpcd_read(handle, page, s, 16);
+        return Py_BuildValue("s", s);
+}
+
+
+static PyObject *pyi_openpcd_write(PyObject *self, PyObject *args) {
+        int ok, page, result;
+        char *s = "indianindianindi";
+        ok = PyArg_ParseTuple(args, "is", &page, &s);
+        result = openpcd_write(handle, page, s, 16);
+        return Py_BuildValue("i", result);
+}
+
+static PyObject *pyi_set_key(PyObject *self, PyObject *args) {
+        int ok, key, result;
+        char *s = "keykeykey";
+        ok = PyArg_ParseTuple(args, "is", &key, &s);
+        result = openpcd_set_key(handle, key, s);
+        return Py_BuildValue("i", result);
+}
+
+static PyObject *pyi_get_card_id(PyObject *self, PyObject *args) {
+	unsigned int uid;
+	int result;
+	result = openpcd_get_card_id(handle, &uid);
+        if (result == 0)
+		return Py_BuildValue("I", uid);
+	else
+		return Py_BuildValue("i", result);
+}
+
