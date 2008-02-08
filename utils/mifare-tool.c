@@ -60,7 +60,7 @@ static struct option mifare_opts[] = {
 	{ "loop-read", 1, 0, 'l' },
 	{ "write", 1 ,0, 'w' },
 	{ "help", 0, 0, 'h' },
-	{ "brute-force", 1, 0, 'c' },
+	{ "brute-force", 1, 0, 'b' },
 	{ 0, 0, 0, 0 }
 };
 
@@ -122,14 +122,14 @@ int main(int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long(argc, argv, "k:r:l:w:c:", mifare_opts,
+		c = getopt_long(argc, argv, "k:r:l:w:b:h", mifare_opts,
 				&option_index);
 		if (c == -1)
 			break;
 
 		switch (c) {
 			int i;
-		case 'c':
+		case 'b':
 			page = atoi(optarg);
 			printf("key: %s\n", hexdump(key, MIFARE_CL_KEY_LEN));
 			len = MIFARE_CL_PAGE_SIZE;
