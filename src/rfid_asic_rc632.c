@@ -1,6 +1,6 @@
 /* Generic Philips CL RC632 Routines
  *
- * (C) 2005-2006 Harald Welte <laforge@gnumonks.org>
+ * (C) 2005-2008 Harald Welte <laforge@gnumonks.org>
  *
  */
 
@@ -18,8 +18,6 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
-
-#define DEBUG_LIBRFID
 
 #include <unistd.h>
 #include <stdlib.h>
