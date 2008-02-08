@@ -421,7 +421,7 @@ iso15693_setopt(struct rfid_layer2_handle *handle, int optname,
 		if (val)
 			handle->priv.iso15693.use_afi = 1;
 		else
-			handle->priv.iso15693.use_afi = 1;
+			handle->priv.iso15693.use_afi = 0;
 		break;
 	case RFID_OPT_15693_AFI:
 		if (val > 0xff)
