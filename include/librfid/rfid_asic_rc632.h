@@ -94,6 +94,7 @@ struct rfid_asic_rc632_impl {
 
 extern struct rfid_asic_handle * rc632_open(struct rfid_asic_transport_handle *th);
 extern void rc632_close(struct rfid_asic_handle *h);
+extern int rc632_register_dump(struct rfid_asic_handle *handle, u_int8_t *buf);
 
 
 /* register decoding inlines... */
