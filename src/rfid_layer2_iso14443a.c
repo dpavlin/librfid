@@ -334,7 +334,7 @@ iso14443a_getopt(struct rfid_layer2_handle *handle, int optname,
 		break;
 	case RFID_OPT_14443A_ATQA:
 		*atqa = h->atqa;
-		*optlen = sizeof(*atqa)
+		*optlen = sizeof(*atqa);
 		ret = 0;
 		break;
 	case RFID_OPT_14443A_WUPA:
