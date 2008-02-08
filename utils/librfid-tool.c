@@ -466,7 +466,7 @@ static void do_enum(int layer2)
 		if (l2h) {
 			uid_len = sizeof(uid_buf);
 			rfid_layer2_getopt(l2h, RFID_OPT_LAYER2_UID, &uid_buf, &uid_len);
-			printf("Layer 2 success (%s)[%d]: %s\n", rfid_layer2_name(l2h), uid_len, hexdump(uid_buf, uid_len));
+			printf("Layer 2 success (%s)[%d]: '%s'\n", rfid_layer2_name(l2h), uid_len, hexdump(uid_buf, uid_len));
 		}
 
        	/*
@@ -570,10 +570,10 @@ static void help(void)
 {
 	printf( " -s	--scan		scan until first RFID tag is found\n"
 		" -S	--scan-loop	endless scanning loop\n" 
-		" -p	--protocol	{tcl,mifare-ultralight,mifare-classic,tagit}\n"
-		" -l	--layer2	{iso14443a,iso14443b,iso15693}\n"
+		" -p	--protocol	{tcl,mifare-ultralight,mifare-classic,tagit,icode}\n"
+		" -l	--layer2	{iso14443a,iso14443b,iso15693,icode1}\n"
 		" -d	--dump		dump rc632 registers\n"
-		" -e	--enum		enumerate all tag's in field (iso14443a)\n"
+		" -e	--enum		enumerate all tag's in field \n"
 		" -h	--help\n");
 }
 
@@ -606,19 +606,23 @@ int main(int argc, char **argv)
 		case 'e':
 			if (reader_init() < 0)
 				exit(1);
-			layer2 = RFID_LAYER2_ISO14443A;
+			if (layer2==0)
+				layer2 = RFID_LAYER2_ISO14443A;
 			do_enum(layer2);
+			rfid_reader_close(rh);
 			exit(0);
 			break;
 		case 'd':
 			if (reader_init() < 0)
 				exit(1);
 			do_regdump();
+			rfid_reader_close(rh);
 			break;
 		case 's':
 			if (reader_init() < 0)
 				exit(1);
 			do_scan(0);
+			rfid_reader_close(rh);
 			exit(0);
 			break;
 		case 'S':
