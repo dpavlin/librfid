@@ -60,6 +60,33 @@ const unsigned int iso15693_timing[2][5] = {
 	},
 };
 
+unsigned char
+iso15693_get_response_error_name(u_int8_t error){
+	switch (error){
+		case RFID_15693_ERR_NOTSUPP:
+			return "ERR_NOTSUPP";
+		case RFID_15693_ERR_INVALID: /* command not recognized */
+			return "ERR_INVALID";
+		case RFID_15693_ERR_UNKNOWN: /* unknown error */
+			return "ERR_UNKNOWN";
+		case RFID_15693_ERR_BLOCK_NA: /* block not available */
+			return "ERR_BLOCK_N";
+		case RFID_15693_ERR_BLOCK_LOCKED:
+			return "ERR_BLOCK_LOCKE";
+		case RFID_15693_ERR_BLOCK_LOCKED_CH:
+			return "ERR_BLOCK_LOCKED_CH";
+		case RFID_15693_ERR_BLOCK_NOTPROG:
+			return "ERR_BLOCK_NOTPROG";
+		case RFID_15693_ERR_BLOCK_NOTLOCK:
+			return "ERR_BLOCK_NOTLOCK";
+		case 0xA0: /* until 0xDF*/
+			return "Custom Command error Code";
+		case 0xE0:
+		default:
+			return "Undef.";
+	}
+}
+
 static int iso15693_transceive(struct rfid_layer2_handle *handle,
 			       enum rfid_frametype frametype,
 			       const unsigned char *tx_buf, unsigned int tx_len,
@@ -235,6 +262,8 @@ iso15693_anticol(struct rfid_layer2_handle *handle)
 		} else if (uuid_list_valid[i] == MY_UUID) {
 			DEBUGP("slot[%d]: VALID uuid: %s\n", i,
 				rfid_hexdump(uuid_list[i], ISO15693_UID_LEN));
+			memcpy(handle->uid, uuid_list[i], ISO15693_UID_LEN);
+			handle->uid_len = ISO15693_UID_LEN;
 			num_valid++;
 		} else if (uuid_list_valid[i] < 0) {
 			DEBUGP("slot[%d]: collision(%d %d,%d) uuid: %s\n",
@@ -275,9 +304,50 @@ iso15693_select(struct rfid_layer2_handle *handle)
 	DEBUGP("tx_len=%u", tx_len); DEBUGPC(" rx_len=%u\n",rx_len);
 	ret = iso15693_transceive(handle, RFID_15693_FRAME, (u_int8_t*)&tx_req,
 				  tx_len, (u_int8_t*)&rx_buf, &rx_len, 50,0);
-	DEBUGP("ret: %d, error_flag: %d error: %d\n", ret,
-		rx_buf.head.flags&RFID_15693_RF_ERROR, 0);
+	DEBUGP("ret: %d, error_flag: %d -> error: %02x\n", ret,
+		rx_buf.head.flags&RFID_15693_RF_ERROR, rx_buf.error);
 	return -1;
+}
+
+static int
+iso15693_stay_quiet(struct rfid_layer2_handle *l2h)
+{
+	struct iso15693_request_adressed tx_req;
+	int ret;
+	unsigned int rx_len, tx_len;
+
+	struct {
+		struct iso15693_response head;
+		u_int8_t error;
+		unsigned char crc[2];
+	} rx_buf;
+	rx_len = sizeof(rx_buf);
+
+	tx_req.head.command = ISO15693_CMD_STAY_QUIET;
+
+	tx_req.head.flags = RFID_15693_F4_ADDRESS;
+	if (l2h->priv.iso15693.vicc_fast)
+		tx_req.head.flags |= RFID_15693_F_RATE_HIGH;
+	if (l2h->priv.iso15693.vicc_two_subc)
+		tx_req.head.flags |= RFID_15693_F_SUBC_TWO;
+	memcpy(&tx_req.uid, l2h->uid, ISO15693_UID_LEN);
+	tx_len = sizeof(tx_req);
+
+	DEBUGP("tx_len=%u", tx_len); DEBUGPC(" rx_len=%u\n",rx_len);
+
+	ret = iso15693_transceive(l2h, RFID_15693_FRAME, (u_int8_t*)&tx_req,
+				  tx_len, (u_int8_t*)&rx_buf, &rx_len, 10,0);
+
+	l2h->priv.iso15693.state = RFID_15693_STATE_QUIET;
+
+	DEBUGP("ret: %d%s, error_flag: %d", ret,(ret==-ETIMEDOUT)?"(TIMEOUT)":"",
+			rx_buf.head.flags&RFID_15693_RF_ERROR);
+	if (rx_buf.head.flags&RFID_15693_RF_ERROR)
+		DEBUGPC(" -> error: %02x\n", rx_buf.error);
+	else
+		DEBUGPC("\n");
+
+	return 0;
 }
 
 static int
@@ -483,7 +553,7 @@ const struct rfid_layer2 rfid_layer2_iso15693 = {
 		.open 		= &iso15693_anticol,
 		//.open		= &iso15693_select,
 		//.transceive 	= &iso15693_transceive,
-		//.close 		= &iso14443a_hlta,
+		.close 		= &iso15693_stay_quiet,
 		.fini 		= &iso15693_fini,
 		.setopt		= &iso15693_setopt,
 		.getopt		= &iso15693_getopt,
