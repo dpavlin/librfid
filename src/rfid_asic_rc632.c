@@ -578,16 +578,69 @@ rc632_receive(struct rfid_asic_handle *handle,
 	/* FIXME: discard additional bytes in FIFO */
 }
 
+#define MAX_WRITE_LEN	16	/* see Sec. 18.6.1.2 of RC632 Spec Rev. 3.2. */
+
 static int
-rc632_read_eeprom(struct rfid_asic_handle *handle)
+rc632_write_eeprom(struct rfid_asic_handle *handle, u_int16_t addr, 
+		   u_int8_t *data, u_int8_t len)
 {
-	u_int8_t recvbuf[60];
-	u_int8_t sndbuf[3];
+	u_int8_t sndbuf[MAX_WRITE_LEN + 2];
+	u_int8_t reg;
 	int ret;
 
-	sndbuf[0] = 0x00;
-	sndbuf[1] = 0x00;
-	sndbuf[2] = 0x3c;
+	if (len > MAX_WRITE_LEN)
+		return -EINVAL;
+	if (addr < 0x10)
+		return -EPERM;
+	if (addr > 0x1ff)
+		return -EINVAL;
+
+	sndbuf[0] = addr & 0x00ff;	/* LSB */
+	sndbuf[1] = addr >> 8;		/* MSB */
+	memcpy(&sndbuf[2], data, len);
+
+	ret = rc632_fifo_write(handle, len + 2, sndbuf, 0x03);
+	if (ret < 0)
+		return ret;
+
+	ret = rc632_reg_write(handle, RC632_REG_COMMAND, RC632_CMD_WRITE_E2);
+	if (ret < 0)
+		return ret;
+	
+	ret = rc632_reg_read(handle, RC632_REG_ERROR_FLAG, &reg);
+	if (ret < 0)
+		return ret;
+
+	if (reg & RC632_ERR_FLAG_ACCESS_ERR)
+		return -EPERM;
+
+	while (1) {
+		u_int8_t reg;
+		ret = rc632_reg_read(handle, RC632_REG_SECONDARY_STATUS, &reg);
+		if (ret < 0)
+			return ret;
+
+		if (reg & RC632_SEC_ST_E2_READY) {
+			/* the E2Write command must be terminated, See sec. 18.6.1.3 */
+			ret = rc632_reg_write(handle, RC632_REG_COMMAND, RC632_CMD_IDLE);
+			break;
+		}
+	}
+	
+	return ret;
+}
+
+static int
+rc632_read_eeprom(struct rfid_asic_handle *handle, u_int16_t addr,
+		  u_int8_t *buf, u_int8_t len)
+{
+	u_int8_t sndbuf[3];
+	u_int8_t reg;
+	int ret;
+
+	sndbuf[0] = addr & 0xff;
+	sndbuf[1] = addr >> 8;
+	sndbuf[2] = len;
 
 	ret = rc632_fifo_write(handle, 3, sndbuf, 0x03);
 	if (ret < 0)
@@ -597,14 +650,16 @@ rc632_read_eeprom(struct rfid_asic_handle *handle)
 	if (ret < 0)
 		return ret;
 
-	usleep(20000);
-
-	ret = rc632_fifo_read(handle, sizeof(recvbuf), recvbuf);
+	ret = rc632_reg_read(handle, RC632_REG_ERROR_FLAG, &reg);
 	if (ret < 0)
 		return ret;
 
-	/* FIXME: do something with eeprom contents */
-	return ret;
+	if (reg & RC632_ERR_FLAG_ACCESS_ERR)
+		return -EPERM;
+
+	usleep(20000);
+
+	return rc632_fifo_read(handle, len, buf);
 }
 
 static int
