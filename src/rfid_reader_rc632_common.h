@@ -20,6 +20,7 @@ int _rdr_rc632_14443a_set_speed(struct rfid_reader_handle *rh, unsigned int tx,
 				unsigned int speed);
 int _rdr_rc632_l2_init(struct rfid_reader_handle *rh, enum rfid_layer2_id l2);
 int _rdr_rc632_mifare_setkey(struct rfid_reader_handle *rh, const u_int8_t *key);
+int _rdr_rc632_mifare_setkey_ee(struct rfid_reader_handle *rh, const unsigned int addr);
 int _rdr_rc632_mifare_auth(struct rfid_reader_handle *rh, u_int8_t cmd, 
 			   u_int32_t serno, u_int8_t block);
 int _rdr_rc632_getopt(struct rfid_reader_handle *rh, int optname,

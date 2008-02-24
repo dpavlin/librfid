@@ -275,6 +275,7 @@ const struct rfid_reader rfid_reader_cm5121 = {
 	},
 	.mifare_classic = {
 		.setkey = &_rdr_rc632_mifare_setkey,
+		.setkey_ee = &_rdr_rc632_mifare_setkey_ee,
 		.auth = &_rdr_rc632_mifare_auth,
 	},
 };

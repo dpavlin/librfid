@@ -1925,6 +1925,52 @@ rc632_mifare_set_key(struct rfid_asic_handle *h, const u_int8_t *key)
 }
 
 static int
+rc632_mifare_set_key_ee(struct rfid_asic_handle *h, unsigned int addr)
+{
+	int ret;
+	u_int8_t cmd_addr[2];
+	u_int8_t reg;
+
+	if (addr > 0xffff - RFID_MIFARE_KEY_CODED_LEN)
+		return -EINVAL;
+
+	cmd_addr[0] = addr & 0xff;		/* LSB */
+	cmd_addr[1] = (addr >> 8) & 0xff;	/* MSB */
+
+	/* Terminate probably running command */
+	ret = rc632_reg_write(h, RC632_REG_COMMAND, RC632_CMD_IDLE);	
+	if (ret < 0)
+		return ret;
+
+	/* Write the key address to the FIFO */
+	ret = rc632_fifo_write(h, 2, cmd_addr, 0x03);
+	if (ret < 0)
+		return ret;
+
+	ret = rc632_reg_write(h, RC632_REG_COMMAND, RC632_CMD_LOAD_KEY_E2);
+	if (ret < 0)
+		return ret;
+
+	ret = rc632_timer_set(h, RC632_TMO_AUTH1);
+	if (ret < 0)
+		return ret;
+
+	//ret = rc632_wait_idle(h, RC632_TMO_AUTH1);
+	ret = rc632_wait_idle_timer(h);
+	if (ret < 0)
+		return ret;
+
+	ret = rc632_reg_read(h, RC632_REG_ERROR_FLAG, &reg);
+	if (ret < 0)
+		return ret;
+
+	if (reg & RC632_ERR_FLAG_KEY_ERR)
+		return -EINVAL;
+
+	return 0;
+}
+
+static int
 rc632_mifare_auth(struct rfid_asic_handle *h, u_int8_t cmd, u_int32_t serno,
 		  u_int8_t block)
 {
@@ -2092,6 +2138,7 @@ const struct rfid_asic rc632 = {
 			},
 			.mifare_classic = {
 				.setkey = &rc632_mifare_set_key,
+				.setkey_ee = &rc632_mifare_set_key_ee,
 				.auth = &rc632_mifare_auth,
 			},
 		},

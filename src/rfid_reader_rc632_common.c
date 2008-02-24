@@ -117,6 +117,12 @@ _rdr_rc632_mifare_setkey(struct rfid_reader_handle *rh, const u_int8_t *key)
 }
 
 int
+_rdr_rc632_mifare_setkey_ee(struct rfid_reader_handle *rh, unsigned int addr)
+{
+	return rh->ah->asic->priv.rc632.fn.mifare_classic.setkey_ee(rh->ah, addr);
+}
+
+int
 _rdr_rc632_mifare_auth(struct rfid_reader_handle *rh, u_int8_t cmd, 
 		   u_int32_t serno, u_int8_t block)
 {
