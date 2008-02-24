@@ -60,7 +60,7 @@ const unsigned int iso15693_timing[2][5] = {
 	},
 };
 
-unsigned char
+char *
 iso15693_get_response_error_name(u_int8_t error){
 	switch (error){
 		case RFID_15693_ERR_NOTSUPP:
@@ -167,7 +167,9 @@ iso15693_build_acf(u_int8_t *target, u_int8_t flags, u_int8_t afi,
 		   u_int8_t mask_len, u_int8_t *mask)
 {
 	struct iso15693_request *req = (struct iso15693_request *) target;
-	int i = 0, j;
+	int i = 0, j, mask_bytes;
+	u_int8_t byte=0;
+	void* mask_p;
 
 	req->flags = flags;
 	req->command = ISO15693_CMD_INVENTORY;
@@ -175,16 +177,24 @@ iso15693_build_acf(u_int8_t *target, u_int8_t flags, u_int8_t afi,
 		req->data[i++] = afi;
 	req->data[i++] = mask_len;
 
-	for (j = 0; j < mask_len; j++)
+	mask_bytes = mask_len/8 + (mask_len%8)?1:0;
+	mask_p=&req->data[i];
+
+	for (j = 0; j < mask_bytes; j++)
 		req->data[i++] = mask[j];
-	
+
+	byte = 0xFF >> (8-mask_len%8);
+	req->data[i-1]&=byte;
+
+	DEBUGP("mask_len: %d mask_bytes: %d i: %d return: %d mask:%s\n",
+		mask_len,mask_bytes,i,i + sizeof(*req),rfid_hexdump(mask_p,mask_bytes));
 	return i + sizeof(*req);
 }
 
 static int
 iso15693_anticol(struct rfid_layer2_handle *handle)
 {
-	int i, ret;
+	int i, ret, mask_len;
 	int tx_len, rx_len;
 	int num_valid = 0;
 	union {
@@ -227,35 +237,82 @@ iso15693_anticol(struct rfid_layer2_handle *handle)
 	}
 	if (handle->priv.iso15693.use_afi)
 		flags |= RFID_15693_F5_AFI_PRES;
-
+#if 1
 	tx_len = iso15693_build_acf((u_int8_t *)&acf, flags,
 				    handle->priv.iso15693.afi, 0, NULL);
-
+#else
+	/*FIXME: testcode*/
+	u_int8_t uid[8]={0x1f, 0x1e, 0x95, 0x01, 0x00, 0x01, 0x04, 0xe0};
+	//u_int8_t uid[8]={0xe3, 0xe8, 0xf1, 0x01, 0x00, 0x00, 0x07, 0xe0};
+	tx_len = iso15693_build_acf((u_int8_t *)&acf, flags,
+				    handle->priv.iso15693.afi, 2, uid);
+#endif
+start_of_ac_loop:
 	for (i = 0; i < num_slots; i++) {
 		rx_len = sizeof(resp);
+		memset(&resp, 0, rx_len);
 		ret = iso15693_transceive_acf(handle, (u_int8_t *) &acf, tx_len, &resp, &rx_len, &boc);
+
 		if (ret == -ETIMEDOUT) {
-			DEBUGP("no answer from vicc in slot %d\n", i);
+			//DEBUGP("no answer from vicc in slot %d\n", i);
+			DEBUGP("slot[%d]: timeout\n",i);
 			uuid_list_valid[i] = MY_NONE;
 		} else if (ret < 0) {
-			DEBUGP("ERROR ret: %d, slot %d\n", ret, i);
+			DEBUGP("slot[%d]: ERROR ret: %d\n", i, ret);
 			uuid_list_valid[i] = MY_NONE;
 		} else {
-
+			if (ret)
+				DEBUGP("iso15693_transceive_acf() ret: %d\n",ret);
 			if (boc) {
-				DEBUGP("Collision during anticol. slot %d bit %d\n",
-					i, boc);
-				uuid_list_valid[i] = -boc;
+				DEBUGP("slot[%d]: Collision! bit:%d byte:%d,%d (UID bit:%d byte:%d,%d)\n",
+					i, boc,boc/8,boc%8,
+					boc-16,(boc-16)/8,(boc-16)%8);
+				DEBUGP("Slot[%d]: ret: %d DSFID: %02x UUID: %s\n", i, ret,
+					resp.dsfid, rfid_hexdump(resp.uuid, ISO15693_UID_LEN));
+
+				uuid_list_valid[i]=-boc;
 				memcpy(uuid_list[i], resp.uuid, ISO15693_UID_LEN);
 			} else {
-				DEBUGP("Slot %d ret: %d DSFID: %02x UUID: %s\n", i, ret,
+				DEBUGP("Slot[%d]: ret: %d DSFID: %02x UUID: %s\n", i, ret,
 					resp.dsfid, rfid_hexdump(resp.uuid, ISO15693_UID_LEN));
 				uuid_list_valid[i] = MY_UUID;
 				memcpy(&uuid_list[i][0], resp.uuid, ISO15693_UID_LEN);
+
+				memcpy(handle->uid,resp.uuid, ISO15693_UID_LEN);
+				/* FIXME: move to init_iso15693 */
+				handle->uid_len = ISO15693_UID_LEN;
+				return 1;
 			}
 		}
 	}
 
+
+	for (i = 0; i < num_slots; i++) {
+		if (uuid_list_valid[i] < 0) {
+			boc=uuid_list_valid[i]*-1;
+			if (boc>16){
+				boc=boc-16;
+			}
+			else
+				DEBUGP("slot[%d]:boc is smaller than 2 bytes (collision before uid)!!!!\n",i);
+
+			if (boc<65){
+				tx_len = iso15693_build_acf((u_int8_t *)&acf, flags,
+				    handle->priv.iso15693.afi, boc+1,  resp.uuid);
+				boc=0;
+				// FIXME: dont use goto
+				goto start_of_ac_loop;
+			}else{
+				DEBUGP("slot[%d]:boc is bigger than 64 (uid size)(collision after uid)\n",i);
+				memcpy(handle->uid,uuid_list[i],ISO15693_UID_LEN);
+
+				/* FIXME: move to init_iso15693 */
+				handle->uid_len = ISO15693_UID_LEN;
+				return 1;
+			}
+		}
+	}
+#if 0
 	for (i = 0; i < num_slots; i++) {
 		if (uuid_list_valid[i] == MY_NONE) {
 			DEBUGP("slot[%d]: timeout\n",i);
@@ -263,18 +320,30 @@ iso15693_anticol(struct rfid_layer2_handle *handle)
 			DEBUGP("slot[%d]: VALID uuid: %s\n", i,
 				rfid_hexdump(uuid_list[i], ISO15693_UID_LEN));
 			memcpy(handle->uid, uuid_list[i], ISO15693_UID_LEN);
-			/* FIXME: move to init */
+			/* FIXME: move to init_iso15693 */
 			handle->uid_len = ISO15693_UID_LEN;
 			num_valid++;
 		} else if (uuid_list_valid[i] < 0) {
-			DEBUGP("slot[%d]: collision(%d %d,%d) uuid: %s\n",
-				i,uuid_list_valid[i]*-1,
-				(uuid_list_valid[i]*-1)/8,
-				(uuid_list_valid[i]*-1)%8,
-			rfid_hexdump(uuid_list[i], ISO15693_UID_LEN));
+ 				if (boc>16){
+ 					boc=boc-16;
+ 				}
+ 				else
+ 					DEBUGP("boc is smaller than 2 bytes (collision before uid)!!!!\n");
+
+ 				uuid_list_valid[i] = -boc;
+ 				if (boc<65){
+ 					tx_len = iso15693_build_acf((u_int8_t *)&acf, flags,
+ 					    handle->priv.iso15693.afi, boc+1,  resp.uuid);
+ 					boc=0;
+ 					// FIXME: dont use goto
+ 					goto start_of_ac_loop;
+ 				}else{
+ 					DEBUGP("boc is bigger than 64 (uid size)\n");
+ 					uuid_list_valid[i] = MY_UUID;
+ 				}
 		}
 	}
-
+#endif
 	if (num_valid == 0)
 		return -1;
 
@@ -346,7 +415,7 @@ iso15693_stay_quiet(struct rfid_layer2_handle *l2h)
 	DEBUGP("tx_len=%u", tx_len); DEBUGPC(" rx_len=%u\n",rx_len);
 
 	ret = iso15693_transceive(l2h, RFID_15693_FRAME, (u_int8_t*)&tx_req,
-				  tx_len, (u_int8_t*)&rx_buf, &rx_len, 10,0);
+				  tx_len, (u_int8_t*)&rx_buf, &rx_len, 30,0);
 
 	l2h->priv.iso15693.state = RFID_15693_STATE_QUIET;
 
