@@ -65,6 +65,8 @@ struct rfid_asic_rc632 {
 		struct {
 			int (*setkey)(struct rfid_asic_handle *h,
 				      const unsigned char *key);
+			int (*setkey_ee)(struct rfid_asic_handle *h,
+				      const unsigned int addr);
 			int (*auth)(struct rfid_asic_handle *h, u_int8_t cmd, 
 				    u_int32_t serno, u_int8_t block);
 		} mifare_classic;

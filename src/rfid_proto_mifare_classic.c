@@ -187,6 +187,14 @@ int mfcl_set_key(struct rfid_protocol_handle *ph, unsigned char *key)
 	return ph->l2h->rh->reader->mifare_classic.setkey(ph->l2h->rh, key);
 }
 
+int mfcl_set_key_ee(struct rfid_protocol_handle *ph, unsigned int addr)
+{
+	if (!ph->l2h->rh->reader->mifare_classic.setkey_ee)
+		return -ENODEV;
+
+	return ph->l2h->rh->reader->mifare_classic.setkey_ee(ph->l2h->rh, addr);
+}
+
 int mfcl_auth(struct rfid_protocol_handle *ph, u_int8_t cmd, u_int8_t block)
 {
 	u_int32_t serno = *((u_int32_t *)ph->l2h->uid);
