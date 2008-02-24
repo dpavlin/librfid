@@ -456,6 +456,7 @@ static void do_enum(int layer2)
 
 	if (rh->reader->l2_supported & (1 << layer2)) {
 		l2h = rfid_layer2_init(rh, layer2);
+		printf("Layer2 init ok\n");
 		rc = rfid_layer2_open(l2h);
 	} else {
 		printf("error during layer2_open\n");
@@ -488,6 +489,29 @@ static void do_enum(int layer2)
 	}
 }
 
+static void do_enum_loop(int layer2, unsigned int delay)
+{
+	while (1) {
+		do_enum(layer2);
+		{
+			unsigned int opt;
+			unsigned int optlen = sizeof(opt);
+
+			/* turn off RF */
+			opt = 1;
+			rfid_reader_setopt(rh, RFID_OPT_RDR_RF_KILL, &opt, optlen);
+
+			usleep(10 * 1000);
+
+			/* turn on RF */
+			opt = 0;
+			rfid_reader_setopt(rh, RFID_OPT_RDR_RF_KILL, &opt, optlen);
+		}
+		usleep(delay * 1000);
+		printf("--- next run ---\n");
+	}
+}
+
 #define OPTION_OFFSET 256
 
 static struct option original_opts[] = {
@@ -498,6 +522,7 @@ static struct option original_opts[] = {
 	{ "scan-loop", 0, 0, 'S' },
 	{ "dump", 0, 0, 'd' },
 	{ "enum", 0, 0, 'e' },
+	{ "enum-loop", 1, 0, 'E' },
 	{0, 0, 0, 0}
 };
 
@@ -574,6 +599,7 @@ static void help(void)
 		" -l	--layer2	{iso14443a,iso14443b,iso15693,icode1}\n"
 		" -d	--dump		dump rc632 registers\n"
 		" -e	--enum		enumerate all tag's in field \n"
+		" -E	--enum-loop	<delay> (ms) enumerate endless\n"
 		" -h	--help\n");
 }
 
@@ -598,15 +624,27 @@ int main(int argc, char **argv)
 
 	while (1) {
 		int c, option_index = 0;
-		c = getopt_long(argc, argv, "hp:l:sSde", opts, &option_index);
+		c = getopt_long(argc, argv, "hp:l:sSdeE:", opts, &option_index);
 		if (c == -1)
 			break;
 
 		switch (c) {
+		case 'E':
+			i = strtol(optarg, NULL, 10);
+
+			if (reader_init() < 0)
+				exit(1);
+			if (layer2<0)
+				layer2 = RFID_LAYER2_ISO14443A;
+
+			do_enum_loop(layer2, i>1? i : 500);
+			rfid_reader_close(rh);
+			exit(0);
+			break;
 		case 'e':
 			if (reader_init() < 0)
 				exit(1);
-			if (layer2==0)
+			if (layer2 < 0)
 				layer2 = RFID_LAYER2_ISO14443A;
 			do_enum(layer2);
 			rfid_reader_close(rh);
@@ -647,10 +685,14 @@ int main(int argc, char **argv)
 				exit(2);
 			}
 			break;
+		default:
+			printf("unknown cmd: %c\n",c);
 		case 'h':
 			help();
 			exit(0);
 			break;
+		case '?':
+			exit(0);
 		}
 	}
 
