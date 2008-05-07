@@ -301,25 +301,6 @@ EXPORT int EXPORT_CONVENTION openpcd_write(MIFARE_HANDLE handle,int page,const v
     return (res<0 && res!=-101) ? PCDERROR_WRITE_FAILED : len;
 }
 
-EXPORT int EXPORT_CONVENTION openpcd_get_api_version(MIFARE_HANDLE handle, unsigned int *version)
-{
-    unsigned char b;
-    struct openpcd_state *state;
-
-    if( !handle || !version )
-	return PCDERROR_INVALID_PARAMETER;
-    state=(struct openpcd_state*)handle;
-    
-    b=0;
-	
-    if(state->rh->reader->get_api_version(state->rh,&b)<0)
-	return PCDERROR_READER_VERSION;
-    else
-    {
-	*version=b;
-	return PCDERROR_NONE;
-    }
-}
 
 EXPORT int EXPORT_CONVENTION openpcd_reset_reader(MIFARE_HANDLE handle)
 {
@@ -332,34 +313,6 @@ EXPORT int EXPORT_CONVENTION openpcd_reset_reader(MIFARE_HANDLE handle)
     return (state->rh->reader->reset(state->rh)<0) ? PCDERROR_WRITE_FAILED : PCDERROR_NONE;
 }
 
-EXPORT int EXPORT_CONVENTION openpcd_get_environment(
-    MIFARE_HANDLE handle,
-    unsigned char count,
-    unsigned char* data
-    )
-{
-    struct openpcd_state *state;
-
-    if( !handle )
-	return PCDERROR_INVALID_PARAMETER;
-    state=(struct openpcd_state*)handle;
-	
-    return (state->rh->reader->get_environment(state->rh,count,data)<0) ? PCDERROR_READ_FAILED : PCDERROR_NONE;
-}
-
-EXPORT int EXPORT_CONVENTION openpcd_set_environment(
-    MIFARE_HANDLE handle,
-    unsigned char count,
-    const unsigned char* data)
-{
-    struct openpcd_state *state;
-
-    if( !handle )
-	return PCDERROR_INVALID_PARAMETER;
-    state=(struct openpcd_state*)handle;
-	
-    return (state->rh->reader->set_environment(state->rh,count,data)<0) ? PCDERROR_WRITE_FAILED : PCDERROR_NONE;
-}
 
 EXPORT char* EXPORT_CONVENTION openpcd_get_error_text(int error)
 {
