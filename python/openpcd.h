@@ -128,39 +128,12 @@ EXPORT char* EXPORT_CONVENTION openpcd_get_error_text(int error);
  */
 EXPORT int EXPORT_CONVENTION openpcd_get_card_id(MIFARE_HANDLE handle,unsigned int *uid);
 
-/*  openpcd_get_api_version:
-
-    Get the USB api version of the reader
- */
-EXPORT int EXPORT_CONVENTION openpcd_get_api_version(MIFARE_HANDLE handle,unsigned int *version);
 
 /*  openpcd_reset_reader:
 
     Reset the attached reader
  */
 EXPORT int EXPORT_CONVENTION openpcd_reset_reader(MIFARE_HANDLE handle);
-
-/*  openpcd_get_environment
-
-    Store the given data to the nonvolatile reader flash
-    Returns read data count at index or error code
- */
-EXPORT int EXPORT_CONVENTION openpcd_get_environment(
-    MIFARE_HANDLE handle,
-    unsigned char count,
-    unsigned char* data    
-);
-    
-/*  openpcd_set_environment
-
-    Read data from nonvolatile reader flash
-    Returns written data count at index or error code
- */
-EXPORT int EXPORT_CONVENTION openpcd_set_environment(
-    MIFARE_HANDLE handle,
-    unsigned char count,
-    const unsigned char* data    
-);
 
 #ifdef  __cplusplus
 }
