@@ -454,10 +454,6 @@ rc632_transceive(struct rfid_asic_handle *handle,
 	{ u_int8_t tmp;
 	rc632_reg_read(handle, RC632_REG_PRIMARY_STATUS, &tmp);
 	DEBUGP_STATUS_FLAG(tmp);
-	rc632_reg_read(handle, RC632_REG_PRIMARY_STATUS, &tmp);
-	DEBUGP_STATUS_FLAG(tmp);
-	rc632_reg_read(handle, RC632_REG_PRIMARY_STATUS, &tmp);
-	DEBUGP_STATUS_FLAG(tmp);
 	rc632_reg_read(handle, RC632_REG_ERROR_FLAG, &tmp);
 	DEBUGP_ERROR_FLAG(tmp);
 	}
