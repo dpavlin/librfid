@@ -521,7 +521,7 @@ rc632_transceive(struct rfid_asic_handle *handle,
 		rc632_reg_read(handle, RC632_REG_CHANNEL_REDUNDANCY, &tmp);
 
 		//return 0;
-		return -1;
+		return -EIO;
 	}
 
 	return rc632_fifo_read(handle, *rx_len, rx_buf);
@@ -1769,7 +1769,7 @@ rc632_iso15693_transceive_ac(struct rfid_asic_handle *handle,
 	ret = rc632_transceive(handle, (u_int8_t *)acf, acf_len,
 			       (u_int8_t *) resp, rx_len, 
 			       iso15693_timing[rate][ISO15693_T1], 0);
-	if (ret == -ETIMEDOUT)
+	if (ret == -ETIMEDOUT || ret == -EIO)
 		return ret;
 
 	/* determine whether there was a collission */
@@ -1787,6 +1787,8 @@ rc632_iso15693_transceive_ac(struct rfid_asic_handle *handle,
 		*bit_of_col = boc;
 	} else {
 		*bit_of_col = 0;
+		if (error_flag & RC632_ERR_FLAG_CRC_ERR)
+			return -EIO;
 	}
 
 	return 0;
