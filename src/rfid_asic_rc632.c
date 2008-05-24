@@ -447,10 +447,9 @@ rc632_transceive(struct rfid_asic_handle *handle,
 		cur_tx_len = tx_len;
 
 
-	ret = rc632_reg_write(handle, RC632_REG_COMMAND, 0x00);
+	ret = rc632_reg_write(handle, RC632_REG_COMMAND, RC632_CMD_IDLE);
 	/* clear all interrupts */
 	ret = rc632_reg_write(handle, RC632_REG_INTERRUPT_RQ, 0x7f);
-	ret = rc632_reg_write(handle, RC632_REG_ERROR_FLAG, 0xff);
 
 	{ u_int8_t tmp;
 	rc632_reg_read(handle, RC632_REG_PRIMARY_STATUS, &tmp);
