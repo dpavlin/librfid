@@ -240,7 +240,7 @@ rc632_timer_set(struct rfid_asic_handle *handle,
 		u_int64_t timeout)
 {
 	int ret;
-	u_int8_t prescaler, divisor;
+	u_int8_t prescaler, divisor, irq;
 
 	timeout *= TIMER_RELAX_FACTOR;
 
@@ -255,7 +255,10 @@ rc632_timer_set(struct rfid_asic_handle *handle,
 			      RC632_TMR_START_TX_END|RC632_TMR_STOP_RX_BEGIN);
 
 	/* clear timer irq bit */
-	ret = rc632_set_bits(handle, RC632_REG_INTERRUPT_RQ, RC632_IRQ_TIMER);
+	ret = rc632_clear_irqs(handle, RC632_IRQ_TIMER);
+
+	/* enable timer IRQ */
+	ret |= rc632_reg_write(handle, RC632_REG_INTERRUPT_EN, RC632_IRQ_SET | RC632_IRQ_TIMER);
 
 	ret |= rc632_reg_write(handle, RC632_REG_TIMER_RELOAD, divisor);
 
@@ -268,6 +271,18 @@ static int rc632_wait_idle_timer(struct rfid_asic_handle *handle)
 	int ret;
 	u_int8_t stat, irq, cmd;
 
+	ret = rc632_reg_read(handle, RC632_REG_INTERRUPT_EN, &irq);
+	if (ret < 0)
+		return ret;
+	DEBUGP_INTERRUPT_FLAG("irq_en",irq);
+
+	ret = rc632_reg_write(handle, RC632_REG_INTERRUPT_EN, RC632_IRQ_SET
+				| RC632_IRQ_TIMER
+				| RC632_IRQ_IDLE
+				| RC632_IRQ_RX );
+	if (ret < 0)
+		return ret;
+
 	while (1) {
 		rc632_reg_read(handle, RC632_REG_PRIMARY_STATUS, &stat);
 		DEBUGP_STATUS_FLAG(stat);
@@ -278,17 +293,20 @@ static int rc632_wait_idle_timer(struct rfid_asic_handle *handle)
 			if (err & (RC632_ERR_FLAG_COL_ERR |
 				   RC632_ERR_FLAG_PARITY_ERR |
 				   RC632_ERR_FLAG_FRAMING_ERR |
-				   RC632_ERR_FLAG_CRC_ERR))
+				/* FIXME: why get we CRC errors in CL2 anticol at iso14443a operation with mifare UL? */
+				/*   RC632_ERR_FLAG_CRC_ERR | */
+				   0))
 				return -EIO;
 		}
 		if (stat & RC632_STAT_IRQ) {
 			ret = rc632_reg_read(handle, RC632_REG_INTERRUPT_RQ, &irq);
 			if (ret < 0)
 				return ret;
-			DEBUGP_INTERRUPT_FLAG(irq);
+			DEBUGP_INTERRUPT_FLAG("irq_rq",irq);
 
 			if (irq & RC632_IRQ_TIMER && !(irq & RC632_IRQ_RX)) {
 				DEBUGP("timer expired before RX!!\n");
+				rc632_clear_irqs(handle, RC632_IRQ_TIMER);
 				return -ETIMEDOUT;
 			}
 		}
@@ -297,8 +315,10 @@ static int rc632_wait_idle_timer(struct rfid_asic_handle *handle)
 		if (ret < 0)
 			return ret;
 
-		if (cmd == 0)
+		if (cmd == 0) {
+			rc632_clear_irqs(handle, RC632_IRQ_RX);
 			return 0;
+		}
 
 		/* poll every millisecond */
 		usleep(1000);
@@ -333,7 +353,7 @@ rc632_wait_idle(struct rfid_asic_handle *handle, u_int64_t timeout)
 			/* check if IRQ has occurred (IRQ flag set)*/
 			if (foo & RC632_STAT_IRQ) { 
 				ret = rc632_reg_read(handle, RC632_REG_INTERRUPT_RQ, &foo);
-				DEBUGP_INTERRUPT_FLAG(foo);
+				DEBUGP_INTERRUPT_FLAG("irq_rq",foo);
 				/* clear all interrupts */
 				rc632_clear_irqs(handle, 0xff);
 			}
@@ -1578,6 +1598,12 @@ static struct register_file icode1_std_script[] = {
 	}, {
 		.reg	= RC632_REG_CRC_PRESET_MSB,
 		.val	= 0xff,
+	/* }, {
+		.reg	= RC632_REG_INTERRUPT_EN,
+		.val	= RC632_INT_IDLE |
+			  RC632_INT_TIMER |
+			  RC632_INT_RX |
+			  RC632_INT_TX, */
 	}
 };
 
@@ -1732,7 +1758,7 @@ rc632_iso15693_transceive_ac(struct rfid_asic_handle *handle,
 			     const struct iso15693_anticol_cmd *acf,
 			     unsigned int acf_len,
 			     struct iso15693_anticol_resp *resp,
-			     unsigned int *rx_len, char *bit_of_col)
+			     unsigned int *rx_len, unsigned char *bit_of_col)
 {
 	u_int8_t error_flag, boc;
 	//u_int8_t rx_len;
@@ -1757,12 +1783,15 @@ rc632_iso15693_transceive_ac(struct rfid_asic_handle *handle,
 		return ret;
 	DEBUGP_ERROR_FLAG(error_flag);
 
+	//FIXME: check for framing and crc errors...
 	if (error_flag & RC632_ERR_FLAG_COL_ERR) {
 		/* retrieve bit of collission */
 		ret = rc632_reg_read(handle, RC632_REG_COLL_POS, &boc);
 		if (ret < 0)
 			return ret;
 		*bit_of_col = boc;
+	} else {
+		*bit_of_col = 0;
 	}
 
 	return 0;

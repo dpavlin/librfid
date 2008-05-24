@@ -170,6 +170,7 @@ cascade:
 	iso14443a_code_nvb_bits(&acf.nvb, 16);
 
 	ret = iso14443a_transceive_acf(handle, &acf, &bit_of_col);
+	DEBUGP("tran_acf->%d boc: %d\n",ret,bit_of_col);
 	if (ret < 0)
 		return ret;
 	
@@ -198,6 +199,7 @@ cascade:
 		switch (acf.sel_code) {
 		case ISO14443A_AC_SEL_CODE_CL1:
 			/* cascading from CL1 to CL2 */
+			DEBUGP("cascading from CL1 to CL2\n");
 			if (acf.uid_bits[0] != 0x88) {
 				DEBUGP("Cascade bit set, but UID0 != 0x88\n");
 				return -1;
@@ -208,6 +210,7 @@ cascade:
 			break;
 		case ISO14443A_AC_SEL_CODE_CL2:
 			/* cascading from CL2 to CL3 */
+			DEBUGP("cascading from CL2 to CL3\n");
 			memcpy(&handle->uid[3], &acf.uid_bits[1], 3);
 			acf.sel_code = ISO14443A_AC_SEL_CODE_CL3;
 			h->level = ISO14443A_LEVEL_CL3;

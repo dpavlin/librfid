@@ -60,7 +60,7 @@ struct rfid_asic_rc632 {
 					     const struct iso15693_anticol_cmd *acf,
 					     unsigned int acf_len,
 					     struct iso15693_anticol_resp *resp,
-					     unsigned int *rx_len, char *bit_of_col);
+					     unsigned int *rx_len, unsigned char *bit_of_col);
 		} iso15693;
 		struct {
 			int (*setkey)(struct rfid_asic_handle *h,
@@ -143,8 +143,8 @@ extern int rc632_register_dump(struct rfid_asic_handle *handle, u_int8_t *buf);
 				DEBUGPC(", mTXsof"); \
             DEBUGPC("\n"); } while (0);
 
-#define DEBUGP_INTERRUPT_FLAG(foo) do {\
-                DEBUGP("interrupt_flag: 0x%0.2x",foo); \
+#define DEBUGP_INTERRUPT_FLAG(txt,foo) do {\
+                DEBUGP("%s: 0x%0.2x",txt,foo); \
                 if (foo & RC632_INT_HIALERT) \
                     DEBUGPC(", HiA"); \
                 if (foo & RC632_INT_LOALERT) \
