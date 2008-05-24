@@ -456,6 +456,11 @@ static void do_enum(int layer2)
 
 	if (rh->reader->l2_supported & (1 << layer2)) {
 		l2h = rfid_layer2_init(rh, layer2);
+		if (!l2h) {
+			printf("error during layer2(%s)_init\n",
+			       l2_names[layer2]);
+			return;
+		}
 		printf("Layer2 init ok\n");
 		rc = rfid_layer2_open(l2h);
 	} else {
