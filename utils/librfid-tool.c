@@ -3,7 +3,7 @@
  * (C) 2005-2008 by Harald Welte <laforge@gnumonks.org>
  *
  *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License version 2 
+ *  it under the terms of the GNU General Public License version 2
  *  as published by the Free Software Foundation
  *
  *  This program is distributed in the hope that it will be useful,
@@ -132,7 +132,7 @@ iso7816_read_binary(unsigned char *buf, unsigned int *len)
 	unsigned char cmd[] = { 0x00, 0xb0, 0x00, 0x00, 0x00 };
 	unsigned char resp[256];
 	unsigned int rlen = sizeof(resp);
-	
+
 	int rv;
 
 	rv = rfid_protocol_transceive(ph, cmd, sizeof(cmd), resp, &rlen, 0, 0);
@@ -241,7 +241,7 @@ mifare_classic_dump(struct rfid_protocol_handle *ph)
 	unsigned int size_len = sizeof(size);
 	int sector, num_sectors;
 
-	if (rfid_protocol_getopt(ph, RFID_OPT_PROTO_SIZE, 
+	if (rfid_protocol_getopt(ph, RFID_OPT_PROTO_SIZE,
 				 &size, &size_len) == 0) {
 		printf("Size: %u bytes\n", size);
 	} else {
@@ -280,10 +280,93 @@ mifare_classic_dump(struct rfid_protocol_handle *ph)
 		if (rc < 0) {
 			printf("mifare auth error\n");
 			exit(1);
-		} else 
+		} else
 			printf("mifare auth succeeded!\n");
 
 		mifare_classic_read_sector(ph, sector);
+	}
+}
+
+void
+iso15693_write(struct rfid_reader_handle *rh,int layer2,int sector,
+                            unsigned char *data, unsigned int len)
+{
+    int rc;
+	unsigned char uid_buf[16];
+	unsigned int uid_len = sizeof(uid_buf);
+
+	if (rh->reader->l2_supported & (1 << layer2)) {
+		l2h = rfid_layer2_init(rh, layer2);
+		if (!l2h) {
+			printf("error during layer2(%d)_init (0=14a,1=14b,3=15)\n",layer2);
+			return;
+		}
+		printf("Layer2 init ok\n");
+		rc = rfid_layer2_open(l2h);
+        if (rc>0){
+			rfid_layer2_getopt(l2h, RFID_OPT_LAYER2_UID, &uid_buf, &uid_len);
+			printf("Layer 2 success (%s)[%d]: '%s'\n", rfid_layer2_name(l2h), uid_len, hexdump(uid_buf, uid_len));
+            rc = iso15693_write_block(l2h,sector,data,len);
+            printf("write>>rc: %d\n",rc);
+
+        }else {
+			printf("error during layer2_open\n");
+			return ;
+		}
+		rfid_layer2_close(l2h);
+		rfid_layer2_fini(l2h);
+    }
+}
+
+void iso15693_dump(struct rfid_reader_handle *rh,int layer2,int sector){
+	unsigned int size;
+	unsigned int size_len = sizeof(size);
+    unsigned char buf[1024];
+    int rc,i;
+	unsigned char uid_buf[16], block_sec;
+	unsigned int uid_len = sizeof(uid_buf);
+
+
+	if (rh->reader->l2_supported & (1 << layer2)) {
+		l2h = rfid_layer2_init(rh, layer2);
+		if (!l2h) {
+			printf("error during layer2(%d)_init (0=14a,1=14b,3=15)\n",layer2);
+			return;
+		}
+		printf("Layer2 init ok\n");
+		rc = rfid_layer2_open(l2h);
+        if (rc>0){
+			rfid_layer2_getopt(l2h, RFID_OPT_LAYER2_UID, &uid_buf, &uid_len);
+			printf("Layer 2 success (%s)[%d]: '%s'\n", rfid_layer2_name(l2h), uid_len, hexdump(uid_buf, uid_len));
+
+			if (sector < 0){
+				if (sector<=-3)
+					iso15693_select(l2h);
+				for(i=0;i<=255;i++){
+					rc = iso15693_read_block(l2h,i,buf,sizeof(buf),&block_sec);
+					if (rc>=0)
+						printf("block[%3d:%02x]sec:0x%0x data(%d): %s\n",i,i,block_sec,rc,rfid_hexdump(buf,rc));
+					else{
+						printf("no data(read_block(%d)>> %d)\n",i,rc);
+						if ((sector == -1)||(sector == -3))
+							break;
+					}
+				}
+			}else{
+				if (sector>255)
+					sector=255;
+				rc = iso15693_read_block(l2h,sector,buf,sizeof(buf));
+				if (rc>=0)
+					printf("block[%d]data(%d): %s\n",i,rc,rfid_hexdump(buf,rc));
+				else
+					printf("no data(read_block(%d)>> %d)\n",i,rc);
+			}
+		} else {
+			printf("error during layer2_open\n");
+			return ;
+		}
+		rfid_layer2_close(l2h);
+		rfid_layer2_fini(l2h);
 	}
 }
 
@@ -363,7 +446,7 @@ static int do_scan(int first)
 	if (rc >= 3) {
 		printf("Protocol success (%s)\n", rfid_protocol_name(ph));
 
-		if (rfid_protocol_getopt(ph, RFID_OPT_PROTO_SIZE, 
+		if (rfid_protocol_getopt(ph, RFID_OPT_PROTO_SIZE,
 					 &size, &size_len) == 0)
 			printf("Size: %u bytes\n", size);
 		size_len = sizeof(size);
@@ -527,6 +610,8 @@ static struct option original_opts[] = {
 	{ "scan-loop", 0, 0, 'S' },
 	{ "dump", 0, 0, 'd' },
 	{ "enum", 0, 0, 'e' },
+	{ "read", 1, 0, 'r' },
+    { "write", 1, 0, 'w'},
 	{ "enum-loop", 1, 0, 'E' },
 	{0, 0, 0, 0}
 };
@@ -599,12 +684,14 @@ void register_module(struct rfidtool_module *me)
 static void help(void)
 {
 	printf( " -s	--scan		scan until first RFID tag is found\n"
-		" -S	--scan-loop	endless scanning loop\n" 
+		" -S	--scan-loop	endless scanning loop\n"
 		" -p	--protocol	{tcl,mifare-ultralight,mifare-classic,tagit,icode}\n"
 		" -l	--layer2	{iso14443a,iso14443b,iso15693,icode1}\n"
 		" -d	--dump		dump rc632 registers\n"
 		" -e	--enum		enumerate all tag's in field \n"
 		" -E	--enum-loop	<delay> (ms) enumerate endless\n"
+		" -r	--read		<secror> read iso15693 sector \n\t\t\t(-1:0-255 stop on error, -2: 0-255 no stop)\n"
+        " -w	--write		<sector> write to iso15693 sector data: 01:02:03:04\n"
 		" -h	--help\n");
 }
 
@@ -619,7 +706,7 @@ int main(int argc, char **argv)
 #else /*__MINGW32__*/
 	program_name = basename(argv[0]);
 #endif/*__MINGW32__*/
-	
+
 	printf("%s - (C) 2005-2008 by Harald Welte\n"
 	       "This program is Free Software and has "
 	       "ABSOLUTELY NO WARRANTY\n\n", program_name);
@@ -629,11 +716,31 @@ int main(int argc, char **argv)
 
 	while (1) {
 		int c, option_index = 0;
-		c = getopt_long(argc, argv, "hp:l:sSdeE:", opts, &option_index);
+		c = getopt_long(argc, argv, "hp:l:sSdeE:r:w:", opts, &option_index);
 		if (c == -1)
 			break;
 
 		switch (c) {
+        case 'w':
+            //hexread(key, optarg, strlen(optarg));
+            i = strtol(optarg, NULL, 10);
+			if (reader_init() < 0)
+				exit(1);
+            layer2 = RFID_LAYER2_ISO15693;
+            iso15693_write(rh,layer2,i,"\x1\x2\x3\x4",4);
+			rfid_reader_close(rh);
+			exit(0);
+            break;
+		case 'r':
+            i = strtol(optarg, NULL, 10);
+			if (reader_init() < 0)
+				exit(1);
+			//if (layer2 < 0)
+            layer2 = RFID_LAYER2_ISO15693;
+			iso15693_dump(rh,layer2,i);
+			rfid_reader_close(rh);
+			exit(0);
+			break;
 		case 'E':
 			i = strtol(optarg, NULL, 10);
 
@@ -677,7 +784,7 @@ int main(int argc, char **argv)
 		case 'p':
 			protocol = proto_by_name(optarg);
 			if (protocol < 0) {
-				fprintf(stderr, "unknown protocol `%s'\n", 
+				fprintf(stderr, "unknown protocol `%s'\n",
 					optarg);
 				exit(2);
 			}
@@ -715,7 +822,7 @@ int main(int argc, char **argv)
 		fprintf(stderr, "you have to specify --layer2\n");
 		exit(2);
 	}
-	
+
 	if (reader_init() < 0)
 		exit(1);
 
@@ -805,6 +912,6 @@ int main(int argc, char **argv)
 	}
 
 	rfid_reader_close(rh);
-	
+
 	exit(0);
 }

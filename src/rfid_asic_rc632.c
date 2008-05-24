@@ -288,7 +288,9 @@ static int rc632_wait_idle_timer(struct rfid_asic_handle *handle)
 		DEBUGP_STATUS_FLAG(stat);
 		if (stat & RC632_STAT_ERR) {
 			u_int8_t err;
-			rc632_reg_read(handle, RC632_REG_ERROR_FLAG, &err);
+			ret = rc632_reg_read(handle, RC632_REG_ERROR_FLAG, &err);
+			if (ret < 0)
+				return ret;
 			DEBUGP_ERROR_FLAG(err);
 			if (err & (RC632_ERR_FLAG_COL_ERR |
 				   RC632_ERR_FLAG_PARITY_ERR |
@@ -355,7 +357,9 @@ rc632_wait_idle(struct rfid_asic_handle *handle, u_int64_t timeout)
 				ret = rc632_reg_read(handle, RC632_REG_INTERRUPT_RQ, &foo);
 				DEBUGP_INTERRUPT_FLAG("irq_rq",foo);
 				/* clear all interrupts */
-				rc632_clear_irqs(handle, 0xff);
+				ret = rc632_clear_irqs(handle, 0xff);
+				if (ret < 0)
+					return ret;
 			}
 		}
 		if (cmd == 0) {

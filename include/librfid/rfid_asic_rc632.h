@@ -30,6 +30,7 @@ struct rfid_asic_handle;
 struct iso14443a_atqa;
 struct iso14443a_anticol_cmd;
 struct iso15693_anticol_cmd;
+struct iso15693_anticol_resp;
 
 struct rfid_asic_rc632 {
 	struct {

@@ -6,7 +6,7 @@
 
 /*
  *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License version 2 
+ *  it under the terms of the GNU General Public License version 2
  *  as published by the Free Software Foundation
  *
  *  This program is distributed in the hope that it will be useful,
@@ -18,6 +18,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+//#define DEBUG_LIBRFID
 
 #include <stdlib.h>
 #include <unistd.h>
@@ -29,15 +30,40 @@
 #include <librfid/rfid_reader.h>
 #include <librfid/rfid_layer2_iso15693.h>
 
-struct iso15693_request_read {
-	struct iso15693_request req;
+/*struct iso15693_request_read {
+	struct iso15693_request head;
 	u_int64_t uid;
 	u_int8_t blocknum;
-} __attribute__ ((packed));
+} __attribute__ ((packed));*/
 
 struct iso15693_request_adressed {
 	struct iso15693_request head;
 	u_int64_t uid;
+} __attribute__ ((packed));
+
+struct iso15693_request_block_addressed {
+	struct iso15693_request head;
+	u_int64_t uid;
+	u_int8_t blocknum;
+	u_int8_t data[0];
+} __attribute__ ((packed));
+
+struct iso15693_request_block_selected {
+	struct iso15693_request head;
+	u_int8_t blocknum;
+	u_int8_t data[0];
+} __attribute__ ((packed));
+
+struct iso15693_err_resp {
+	struct iso15693_response head;
+	u_int8_t error;
+	unsigned char crc[2];
+} __attribute__ ((packed));
+
+struct iso15693_response_sec {
+	struct iso15693_response head;
+	u_int8_t block_sec;
+	u_int8_t data[];
 } __attribute__ ((packed));
 
 #define ISO15693_BLOCK_SIZE_MAX	(256/8)
@@ -69,6 +95,8 @@ iso15693_get_response_error_name(u_int8_t error){
 			return "ERR_INVALID";
 		case RFID_15693_ERR_UNKNOWN: /* unknown error */
 			return "ERR_UNKNOWN";
+        case RFID_15693_ERR_NOTSUPP_OPTION:
+            return "ERR_NotSuppOpt";
 		case RFID_15693_ERR_BLOCK_NA: /* block not available */
 			return "ERR_BLOCK_N";
 		case RFID_15693_ERR_BLOCK_LOCKED:
@@ -111,48 +139,179 @@ iso15693_transceive_acf(struct rfid_layer2_handle *handle,
 	return rdr->iso15693.transceive_ac(handle->rh, acf, acf_len, resp, rx_len, bit_of_col);
 }
 
-#if 0
 
-static int
+int
 iso15693_read_block(struct rfid_layer2_handle *handle,
-		    u_int8_t blocknr, u_int32_t *data)
+		    u_int8_t blocknr, u_int32_t *data, unsigned int len, 
+		    unsigned char *block_sec_out)
 {
-	int rc;
-	struct iso15693_request_read req;
+	union {
+		struct iso15693_request_block_selected sel;
+		struct iso15693_request_block_addressed addr;
+	} tx_req;
+
+	int ret;
+	unsigned char *errstr;
+	unsigned int rx_len, tx_len,timeout;
 	u_int8_t resp[ISO15693_RESP_SIZE_MAX];
+	struct iso15693_err_resp *rx_err;
+	struct iso15693_response *rx_pkt;
+	struct iso15693_response_sec *rx_pkt_sec;
 
-	req.req.flags = 0;
-	req.command = ISO15693_CMD_READ_BLOCK_SINGLE;
-	memcpy(&req.uid, handle->..., ISO15693_UID_LEN);
-	req.blocknum = blocknr;
+	rx_pkt_sec = (struct iso15693_response *)&resp[0];
+	rx_pkt = (struct iso15693_response *)&resp[0];
+	rx_err = (struct iso15693_err_resp *)&resp[0];
 
-	/* FIXME: fill CRC if required */
+	memset(&tx_req,0,sizeof(tx_req));
 
-	rc = iso15693_transceive(... &req, ...,  );
+	rx_len = sizeof(resp);
 
-	if (rc < 0)
-		return rc;
+	tx_req.sel.head.command = ISO15693_CMD_READ_BLOCK_SINGLE;
 
-	memcpy(data, resp+1, rc-1); /* FIXME rc-3 in case of CRC */
+	if (handle->priv.iso15693.vicc_fast){
+		tx_req.sel.head.flags |= RFID_15693_F_RATE_HIGH;
+		timeout=iso15693_timing[ISO15693_T_FAST][ISO15693_T4];
+	}else
+		timeout=iso15693_timing[ISO15693_T_SLOW][ISO15693_T4];
 
-	return rc-1;
+	if (handle->priv.iso15693.vicc_two_subc)
+		tx_req.sel.head.flags |= RFID_15693_F_SUBC_TWO;
+
+	if (block_sec_out!=NULL)
+		tx_req.sel.head.flags |= RFID_15693_F4_CUSTOM;
+
+	if (handle->priv.iso15693.state==RFID_15693_STATE_SELECTED) {
+		tx_len = sizeof(struct iso15693_request_block_selected);
+		tx_req.sel.blocknum = blocknr;
+		tx_req.sel.head.flags |= RFID_15693_F4_SELECTED;
+	} else {
+		tx_len = sizeof(struct iso15693_request_block_addressed);
+		memcpy(&tx_req.addr.uid, handle->uid, ISO15693_UID_LEN);
+		tx_req.addr.head.flags |= RFID_15693_F4_ADDRESS;
+		tx_req.addr.blocknum = blocknr;
+	}
+
+	//DEBUGP("sizeof: addr: %d sel:%d\n",sizeof(struct iso15693_request_read_addressed),sizeof(struct iso15693_request_read_selected));
+	DEBUGP("tx_len=%u", tx_len); DEBUGPC(" rx_len=%u\n",rx_len);
+
+	ret = iso15693_transceive(handle, RFID_15693_FRAME, (u_int8_t*)&tx_req,
+				  tx_len, resp, &rx_len, timeout, 0);
+
+	if (ret==-ETIMEDOUT)
+		errstr="(TIMEOUT)";
+	else if (ret==-EIO)
+		errstr="(EIO)";
+	else
+		errstr="";
+	DEBUGP("length: %d rx_len: %d ret: %d%s\n",len,rx_len,ret,errstr);
+
+	if (ret < 0)
+		return ret;
+
+	if (rx_len > len+1)
+		return -1;
+	DEBUGP("error_flag: %d", rx_pkt->flags&RFID_15693_RF_ERROR);
+	if (rx_pkt->flags & RFID_15693_RF_ERROR) {
+		DEBUGPC(" -> error: %02x '%s'\n", rx_err->error,
+			iso15693_get_response_error_name(rx_err->error));
+		return -1;
+	} else if (block_sec_out != NULL) {
+		DEBUGPC(" block_sec_stat: 0x%02x\n",rx_pkt_sec->block_sec);
+		memcpy(data, rx_pkt_sec->data, rx_len-2);
+		return rx_len-2;
+	} else {
+		memcpy(data, rx_pkt->data, rx_len-1); /* FIXME rc-3 in case of CRC */
+		return rx_len-1;
+	}
 }
 
-static int
-iso15693_write_block()
+int
+iso15693_write_block(struct rfid_layer2_handle *handle,
+		     u_int8_t blocknr, u_int32_t *data, unsigned int len)
 {
-	struct iso16593_request_read *rreq;
-	u_int32_t buf[sizeof(req)+ISO15693_BLOCK_SIZE_MAX];
+    int ret;
+	unsigned char *errstr;
+	unsigned int rx_len, tx_len,timeout;
 
-	rreq = (struct iso15693_request_read *) req;
+	union{
+		struct iso15693_request_block_selected sel;
+		struct iso15693_request_block_addressed addr;
+        u_int32_t buf[sizeof(struct iso15693_request_block_addressed)+ISO15693_BLOCK_SIZE_MAX];
+	} tx_req;
 
-	rreq->req.flags = ;
-	rreq->req.command = ISO15693_CMD_WRITE_BLOCK_SINGLE;
-	memcpy(rreq->uid, handle->, ISO15693_UID_LEN);
-	rreq->blocknum = blocknr;
-	memcpy(rreq->);
+	u_int8_t resp[ISO15693_RESP_SIZE_MAX];
+	struct iso15693_response *rx_pkt;
+	struct iso15693_err_resp *rx_err;
+
+	rx_pkt = (struct iso15693_response *)&resp[0];
+	rx_err = (struct iso15693_err_resp *)&resp[0];
+	rx_len = sizeof(resp);
+
+	if (len > ISO15693_BLOCK_SIZE_MAX)
+		return -1;
+
+	//return -1;
+
+	memset(&tx_req,0,sizeof(tx_req));
+	tx_req.sel.head.command = ISO15693_CMD_WRITE_BLOCK_SINGLE;
+
+	if (handle->priv.iso15693.vicc_fast) {
+		tx_req.sel.head.flags |= RFID_15693_F_RATE_HIGH;
+		timeout = iso15693_timing[ISO15693_T_FAST][ISO15693_T4_WRITE];
+	} else
+		timeout = iso15693_timing[ISO15693_T_SLOW][ISO15693_T4_WRITE];
+
+	if (handle->priv.iso15693.vicc_two_subc)
+		tx_req.sel.head.flags |= RFID_15693_F_SUBC_TWO;
+
+	if (handle->priv.iso15693.state == RFID_15693_STATE_SELECTED) {
+		tx_len=sizeof(struct iso15693_request_block_selected)+len;
+		tx_req.sel.head.flags |= RFID_15693_F4_SELECTED;
+		tx_req.sel.blocknum = blocknr;
+		memcpy(&tx_req.sel.data,data,len);
+	} else {
+		memcpy(&tx_req.addr.uid, handle->uid, ISO15693_UID_LEN);
+		tx_len=sizeof(struct iso15693_request_block_addressed)+len;
+		tx_req.addr.head.flags |= RFID_15693_F4_ADDRESS;
+		tx_req.addr.blocknum = blocknr;
+		memcpy(&tx_req.addr.data,data,len);
+	}
+
+	//DEBUGP("sizeof: addr: %d sel:%d\n",sizeof(struct iso15693_request_read_addressed),sizeof(struct iso15693_request_read_selected));
+	DEBUGP("tx_len=%u", tx_len); DEBUGPC(" rx_len=%u\n",rx_len);
+
+	ret = iso15693_transceive(handle, RFID_15693_FRAME, (u_int8_t*)&tx_req,
+				  tx_len, resp, &rx_len, timeout, 0);
+
+	if (ret == -ETIMEDOUT)
+		errstr = "(TIMEOUT)";
+	else if (ret == -EIO)
+		errstr = "(EIO)";
+	else
+		errstr = "";
+	DEBUGP("length: %d rx_len: %d ret: %d%s\n",len,rx_len,ret,errstr);
+
+	if (ret < 0)
+		return ret;
+
+	if (rx_len > len+1)
+		return -1;
+	DEBUGP("error_flag: %d", rx_pkt->flags & RFID_15693_RF_ERROR);
+	if (rx_pkt->flags & RFID_15693_RF_ERROR) {
+		DEBUGPC(" -> error: %02x '%s'\n", rx_err->error,
+			iso15693_get_response_error_name(rx_err->error));
+		return -1;
+	} else {
+		//DEBUGPC(" block_sec_stat: 0x%02x\n",rx_pkt->data[0]);
+		//memcpy(data, rx_pkt->data, rx_len-1); /* FIXME rc-3 in case of CRC */
+		//return rx_len-1;
+        return 0;
+	}
 
 }
+
+
+#if 0
 
 static int
 iso15693_lock_block()
@@ -178,13 +337,13 @@ iso15693_build_acf(u_int8_t *target, u_int8_t flags, u_int8_t afi,
 	req->data[i++] = mask_len;
 
 	mask_bytes = mask_len/8 + (mask_len%8)?1:0;
-	mask_p=&req->data[i];
+	mask_p = &req->data[i];
 
 	for (j = 0; j < mask_bytes; j++)
 		req->data[i++] = mask[j];
 
 	byte = 0xFF >> (8-mask_len%8);
-	req->data[i-1]&=byte;
+	req->data[i-1] &= byte;
 
 	DEBUGP("mask_len: %d mask_bytes: %d i: %d return: %d mask:%s\n",
 		mask_len,mask_bytes,i,i + sizeof(*req),rfid_hexdump(mask_p,mask_bytes));
@@ -203,9 +362,9 @@ iso15693_anticol(struct rfid_layer2_handle *handle)
 	} acf;
 
 	struct iso15693_anticol_resp resp;
-		
+
 	u_int8_t boc;
-#define MAX_SLOTS 16	
+#define MAX_SLOTS 16
 	int num_slots = MAX_SLOTS;
 
 	u_int8_t uuid_list[MAX_SLOTS][ISO15693_UID_LEN];
@@ -350,12 +509,12 @@ start_of_ac_loop:
 	return num_valid;
 }
 
-static int
+int
 iso15693_select(struct rfid_layer2_handle *l2h)
 {
 	struct iso15693_request_adressed tx_req;
 	int ret;
-	unsigned int rx_len, tx_len;
+	unsigned int rx_len, tx_len, timeout;
 
 	struct {
 		struct iso15693_response head;
@@ -364,27 +523,39 @@ iso15693_select(struct rfid_layer2_handle *l2h)
 	} rx_buf;
 	rx_len = sizeof(rx_buf);
 
+	if (l2h->priv.iso15693.vicc_fast) {
+		tx_req.head.flags |= RFID_15693_F_RATE_HIGH;
+		timeout = iso15693_timing[ISO15693_T_FAST][ISO15693_T4];
+	} else
+		timeout = iso15693_timing[ISO15693_T_SLOW][ISO15693_T4];
+
 	tx_req.head.command = ISO15693_CMD_SELECT;
 	tx_req.head.flags = RFID_15693_F4_ADDRESS;
+
 	if (l2h->priv.iso15693.vicc_fast)
 		tx_req.head.flags |= RFID_15693_F_RATE_HIGH;
 	if (l2h->priv.iso15693.vicc_two_subc)
 		tx_req.head.flags |= RFID_15693_F_SUBC_TWO;
+
 	memcpy(&tx_req.uid, l2h->uid, ISO15693_UID_LEN);
 	tx_len = sizeof(tx_req);
 
-	DEBUGP("tx_len=%u", tx_len); DEBUGPC(" rx_len=%u\n",rx_len);
+	DEBUGP("tx_len=%u, rx_len=%u\n", tx_len,rx_len);
 
-	DEBUGP("ret: %d%s, error_flag: %d", ret,(ret==-ETIMEDOUT)?"(TIMEOUT)":"",
-			rx_buf.head.flags&RFID_15693_RF_ERROR);
-	if (rx_buf.head.flags&RFID_15693_RF_ERROR){
+	ret = iso15693_transceive(l2h, RFID_15693_FRAME, (u_int8_t*)&tx_req,
+				  tx_len, (u_int8_t*)&rx_buf, &rx_len,timeout ,0);
+
+	DEBUGP("ret: %d%s, rx_len: %d, error_flag: %d", ret,
+		(ret==-ETIMEDOUT)?"(TIMEOUT)":"", rx_len,
+		rx_buf.head.flags&RFID_15693_RF_ERROR);
+	if (rx_buf.head.flags & RFID_15693_RF_ERROR) {
 		DEBUGPC(" -> error: %02x '%s'\n", rx_buf.error,
 			iso15693_get_response_error_name(rx_buf.error));
+		return -1;
+	} else {
+		DEBUGPC(" SELECTED\n");
 		l2h->priv.iso15693.state = RFID_15693_STATE_SELECTED;
 		return 0;
-	}else{
-		DEBUGPC("\n");
-		return -1;
 	}
 }
 
@@ -438,7 +609,7 @@ iso15693_getopt(struct rfid_layer2_handle *handle,
 
 	if (!optlen || !optval || *optlen < sizeof(unsigned int))
 		return -EINVAL;
-	
+
 	*optlen = sizeof(unsigned int);
 
 	switch (optname) {
@@ -495,7 +666,7 @@ iso15693_setopt(struct rfid_layer2_handle *handle, int optname,
 	        const void *optval, unsigned int optlen)
 {
 	unsigned int val;
-	
+
 	if (optlen < sizeof(u_int8_t) || !optval)
 		return -EINVAL;
 

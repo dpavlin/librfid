@@ -128,6 +128,7 @@ enum iso15693_response_flags {
 enum iso15693_response_errors {
 	RFID_15693_ERR_NOTSUPP	= 0x01,
 	RFID_15693_ERR_INVALID	= 0x02, /* command not recognized */
+    RFID_15693_ERR_NOTSUPP_OPTION = 0x03, /* option not supported*/
 	RFID_15693_ERR_UNKNOWN	= 0x0f, /* unknown error */
 	RFID_15693_ERR_BLOCK_NA	= 0x10, /* block not available */
 	RFID_15693_ERR_BLOCK_LOCKED = 0x11,
