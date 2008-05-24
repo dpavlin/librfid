@@ -158,7 +158,7 @@ iso15693_read_block(struct rfid_layer2_handle *handle,
 	struct iso15693_response *rx_pkt;
 	struct iso15693_response_sec *rx_pkt_sec;
 
-	rx_pkt_sec = (struct iso15693_response *)&resp[0];
+	rx_pkt_sec = (struct iso15693_response_sec *)&resp[0];
 	rx_pkt = (struct iso15693_response *)&resp[0];
 	rx_err = (struct iso15693_err_resp *)&resp[0];
 
@@ -410,7 +410,9 @@ start_of_ac_loop:
 	for (i = 0; i < num_slots; i++) {
 		rx_len = sizeof(resp);
 		memset(&resp, 0, rx_len);
-		ret = iso15693_transceive_acf(handle, (u_int8_t *) &acf, tx_len, &resp, &rx_len, &boc);
+		ret = iso15693_transceive_acf(handle, 
+					      (struct iso15693_anticol_cmd *) &acf,
+					      tx_len, &resp, &rx_len, &boc);
 
 		if (ret == -ETIMEDOUT) {
 			//DEBUGP("no answer from vicc in slot %d\n", i);
