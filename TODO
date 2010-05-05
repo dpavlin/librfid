@@ -22,7 +22,7 @@ iso14443b:
 - test anticollission (need multiple tags)
 
 iso15693:
-- implement anticollision
+[none]
 
 mifare_clasic:
 [none]
