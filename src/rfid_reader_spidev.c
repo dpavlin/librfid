@@ -1,7 +1,8 @@
 /* Direct spi for RC632 transport layer
  * (based on openpcd reader)
  *
- * (C) 2007 by Frederic RODO <f.rodo@til-technologies.fr>
+ * Written and (C) 2007 by Frederic RODO <f.rodo@til-technologies.fr>,
+ * Copyright transferred to Harald Welte <laforge@gnumonks.org> in 2010
  *
  * This reader use the Linux's spidev interface, so it need a least
  * kernel 2.6.22
