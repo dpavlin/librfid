@@ -1,7 +1,9 @@
 /* ISO 15693 anticollision implementation
  *
- * (C) 2005-2008 by Harald Welte <laforge@gnumonks.org>
- * (C) 2007 by Bjoern Riemer <bjoern.riemer@web.de>
+ * (C) 2005-2010 by Harald Welte <laforge@gnumonks.org>
+ *
+ * Contributions 2007 by Bjoern Riemer <bjoern.riemer@web.de>,
+ * Copyright transferred to Harald Welte in 2010.
  */
 
 /*
