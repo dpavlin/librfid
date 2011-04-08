@@ -1201,19 +1201,19 @@ static struct rx_config rx_configs[] = {
 };
 
 static struct tx_config tx_configs[] = {
-	{
+	[RFID_14443A_SPEED_106K] = {
 		.rate 		= RC632_CDRCTRL_RATE_106K,
 		.mod_width	= 0x13,
 	},
-	{
+	[RFID_14443A_SPEED_212K] = {
 		.rate		= RC632_CDRCTRL_RATE_212K,
 		.mod_width	= 0x07,
 	},
-	{
+	[RFID_14443A_SPEED_424K] = {
 		.rate		= RC632_CDRCTRL_RATE_424K,
 		.mod_width	= 0x03,
 	},
-	{
+	[RFID_14443A_SPEED_848K] = {
 		.rate		= RC632_CDRCTRL_RATE_848K,
 		.mod_width	= 0x01,
 	},
