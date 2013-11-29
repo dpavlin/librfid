@@ -1,8 +1,8 @@
 dnl Process this file with autoconf to create configure.
 
-AC_INIT
+AC_INIT([librfid], [0.2.0])
 AC_CANONICAL_SYSTEM
-AM_INIT_AUTOMAKE(librfid, 0.2.0)
+AM_INIT_AUTOMAKE
 
 AC_PROG_CC
 AM_PROG_CC_C_O
