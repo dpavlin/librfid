@@ -506,7 +506,7 @@ parse_ccid_descriptor (ccid_driver_t handle,
       DEBUGOUT ("this drivers requires that the reader supports T=1, "
                 "TPDU or APDU level exchange and auto configuration - "
                 "this is not available\n");
-      return -1; // XXX dpavlin - fixme for 5312 v2?
+//      return -1; // XXX dpavlin - fix for 5312 v2
     }
 
 
