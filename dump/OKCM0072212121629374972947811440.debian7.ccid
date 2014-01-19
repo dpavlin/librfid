@@ -1,0 +1,33 @@
+ccid-driver: using CCID reader 0 (ID=076B:5321:X:0)
+ccid-driver: idVendor: 076B  idProduct: 5321  bcdDevice: 0520
+ccid-driver: ChipCard Interface Descriptor:
+ccid-driver:   bLength                54
+ccid-driver:   bDescriptorType        33
+ccid-driver:   bcdCCID              1.00
+ccid-driver:   nMaxSlotIndex           0
+ccid-driver:   bVoltageSupport         7  ?
+ccid-driver:   dwProtocols             3  T=0 T=1
+ccid-driver:   dwDefaultClock       4800
+ccid-driver:   dwMaxiumumClock      8000
+ccid-driver:   bNumClockSupported      4
+ccid-driver:   dwDataRate          10752 bps
+ccid-driver:   dwMaxDataRate      412903 bps
+ccid-driver:   bNumDataRatesSupp.    106
+ccid-driver:   dwMaxIFSD             254
+ccid-driver:   dwSyncProtocols  00000007  2-wire 3-wire I2C
+ccid-driver:   dwMechanical     00000000 
+ccid-driver:   dwFeatures       000103B0
+ccid-driver:     Auto clock change
+ccid-driver:     Auto baud rate change
+ccid-driver:     Auto PPS made by CCID
+ccid-driver:     CCID can set ICC in clock stop mode
+ccid-driver:     NAD value other than 0x00 accepted
+ccid-driver:     TPDU level exchange
+ccid-driver:   dwMaxCCIDMsgLen       271
+ccid-driver:   bClassGetResponse    echo
+ccid-driver:   bClassEnvelope       echo
+ccid-driver:   wlcdLayout           none
+ccid-driver:   bPINSupport             0 
+ccid-driver:   bMaxCCIDBusySlots       1
+ccid-driver: this drivers requires that the reader supports T=1, TPDU or APDU level exchange and auto configuration - this is not available
+ccid-driver: usb_claim_interface failed: -1
