@@ -5,12 +5,15 @@
 #
 
 ACTION!="add", GOTO="librfid_rules_end"
-SUBSYSTEM!="usb_device", GOTO="librfid_rules_end"
+SUBSYSTEM!="usb", GOTO="librfid_rules_end"
 
 # Omnikey 5121
-SYSFS{idVendor}=="076b", SYSFS{idProduct}=="5121", MODE="664", GROUP="plugdev"
+ATTRS{idVendor}=="076b", ATTRS{idProduct}=="5121", MODE="664", GROUP="plugdev"
+
+# Omnikey 5321
+ATTRS{idVendor}=="076b", ATTRS{idProduct}=="5321", MODE="664", GROUP="plugdev"
 
 # OpenPCD
-SYSFS{idVendor}=="16c0", SYSFS{idProduct}=="076b", MODE="664", GROUP="plugdev"
+ATTRS{idVendor}=="16c0", ATTRS{idProduct}=="076b", MODE="664", GROUP="plugdev"
 
 LABEL="librfid_rules_end"
