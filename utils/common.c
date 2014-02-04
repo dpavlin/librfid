@@ -43,6 +43,8 @@ static char parse_hexdigit(const char hexdigit)
 		return hexdigit - '0';
 	if (hexdigit <= 'f' && hexdigit >= 'a')
 		return 10 + (hexdigit - 'a');
+	if (hexdigit <= 'F' && hexdigit >= 'A')
+		return 10 + (hexdigit - 'A');
 
 	return 0;
 }
