@@ -49,14 +49,16 @@ static void help(void)
 	printf( " -h	--help		Print this help message\n"
 		" -r	--read		Read a mifare sector\n"
 		" -l	--loop-read	Loop reading a mifare sector\n"
+		" -s	--smartx	Read sectors 0-3 (with -k key) and 4-7 with this key\n"
 		" -w	--write		Write a mifare sector\n"
 		" -k	--key		Specify mifare access key (in hex tuples)\n"
-		" -b    --brute-force n	Brute Force read sector n\n");
+		" -b	--brute-force n	Brute Force read sector n\n");
 }
 
 static struct option mifare_opts[] = {
 	{ "key", 1, 0, 'k' },
 	{ "read", 1, 0, 'r' },
+	{ "smartx", 1, 0, 's' },
 	{ "loop-read", 1, 0, 'l' },
 	{ "write", 1 ,0, 'w' },
 	{ "help", 0, 0, 'h' },
@@ -99,6 +101,7 @@ int main(int argc, char **argv)
 	int len, rc, c, option_index = 0;
 	unsigned int page,uid,uid_len;
 	char key[MIFARE_CL_KEY_LEN];
+	char key2[MIFARE_CL_KEY_LEN];
 	char buf[MIFARE_CL_PAGE_SIZE];
 
 #ifdef  __MINGW32__
@@ -122,7 +125,7 @@ int main(int argc, char **argv)
 	}
 
 	while (1) {
-		c = getopt_long(argc, argv, "k:r:l:w:b:h", mifare_opts,
+		c = getopt_long(argc, argv, "k:r:s:l:w:b:h", mifare_opts,
 				&option_index);
 		if (c == -1)
 			break;
@@ -185,6 +188,32 @@ int main(int argc, char **argv)
 				mfcl_compile_access(recreated, &s);
 				printf("recreated; %s\n", hexdump(recreated,4));
 #endif
+			}
+			break;
+		case 's':
+			hexread(key2, optarg, strlen(optarg));
+			printf("key2: %s\n", hexdump(key2, MIFARE_CL_KEY_LEN));
+			len = MIFARE_CL_PAGE_SIZE;
+			mifare_l3();
+			for(page = 0; page < 8; page++) {
+				if (mifare_cl_auth( page < 4 ? key : key2, page) < 0)
+					exit(1);
+
+				if ( page == 0 ) {
+					uid_len=sizeof(uid);
+					uid=0;
+					if(rfid_layer2_getopt(l2h,RFID_OPT_LAYER2_UID,&uid,&uid_len)>=0)
+						printf("UID=%08X (len=%u)\n",uid,uid_len);
+				}
+
+				len=MIFARE_CL_PAGE_SIZE;
+				rc = rfid_protocol_read(ph, page, buf, &len);
+				if (rc < 0) {
+					printf("\n");
+					fprintf(stderr, "error during read\n");
+					break;
+				}
+				printf("page=%d len=%u data=%s\n", page, len, hexdump(buf, len));
 			}
 			break;
 		case 'l':
