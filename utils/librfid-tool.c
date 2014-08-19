@@ -345,7 +345,7 @@ void iso15693_dump(struct rfid_reader_handle *rh,int layer2,int sector){
 				for(i=0;i<=255;i++){
 					rc = iso15693_read_block(l2h,i,buf,sizeof(buf),&block_sec);
 					if (rc>=0)
-						printf("block[%3d:%02x]sec:0x%0x data(%d): %s\n",i,i,block_sec,rc,rfid_hexdump(buf,rc));
+						printf("block[%3d:%02x]sec:0x%0x data(%d): %s\n",i,i,block_sec,rc,hexdump(buf,rc));
 					else{
 						printf("no data(read_block(%d)>> %d)\n",i,rc);
 						if ((sector == -1)||(sector == -3))
@@ -357,7 +357,7 @@ void iso15693_dump(struct rfid_reader_handle *rh,int layer2,int sector){
 					sector=255;
 				rc = iso15693_read_block(l2h,sector,buf,sizeof(buf));
 				if (rc>=0)
-					printf("block[%d]data(%d): %s\n",i,rc,rfid_hexdump(buf,rc));
+					printf("block[%d]data(%d): %s\n",i,rc,hexdump(buf,rc));
 				else
 					printf("no data(read_block(%d)>> %d)\n",i,rc);
 			}
