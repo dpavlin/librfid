@@ -75,12 +75,12 @@ struct rfid_protocol_handle *ph;
 int reader_init(void) 
 {
 	printf("opening reader handle OpenPCD, CM5x21\n");
-	rh = rfid_reader_open(NULL, RFID_READER_OPENPCD);
+	rh = rfid_reader_open(NULL, RFID_READER_CM5121);
 	if (!rh) {
-		fprintf(stderr, "No OpenPCD found\n");
-		rh = rfid_reader_open(NULL, RFID_READER_CM5121);
+		fprintf(stderr, "No Omnikey Cardman 5x21 found\n");
+		rh = rfid_reader_open(NULL, RFID_READER_OPENPCD);
 		if (!rh) {
-			fprintf(stderr, "No Omnikey Cardman 5x21 found\n");
+			fprintf(stderr, "No OpenPCD found\n");
 			return -1;
 		}
 	}
