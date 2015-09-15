@@ -81,7 +81,11 @@ int reader_init(void)
 		rh = rfid_reader_open(NULL, RFID_READER_CM5121);
 		if (!rh) {
 			fprintf(stderr, "No Omnikey Cardman 5x21 found\n");
-			return -1;
+			rh = rfid_reader_open("/dev/spidev1.0", RFID_READER_SPIDEV);
+			if(!rh) {
+				fprintf(stderr, "Failed to open spidev1.0\n");
+				return -1;
+			}
 		}
 	}
 	return 0;

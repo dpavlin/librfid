@@ -753,6 +753,11 @@ rc632_init(struct rfid_asic_handle *ah)
 {
 	int ret;
 
+	/* disable register paging */
+	ret = rc632_reg_write(ah, 0x00, 0x00);
+	if (ret < 0)
+		return ret;
+
 	/* switch off rf (make sure PICCs are reset at init time) */
 	ret = rc632_power(ah, 0);
 	if (ret < 0)
@@ -762,11 +767,6 @@ rc632_init(struct rfid_asic_handle *ah)
 
 	/* switch on rf */
 	ret = rc632_power(ah, 1);
-	if (ret < 0)
-		return ret;
-
-	/* disable register paging */
-	ret = rc632_reg_write(ah, 0x00, 0x00);
 	if (ret < 0)
 		return ret;
 

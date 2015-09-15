@@ -3,4 +3,6 @@
 
 extern struct rfid_reader rfid_reader_spidev;
 
+#define SPIDEV_HALFDUPLEX
+
 #endif
