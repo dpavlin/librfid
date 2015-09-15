@@ -690,7 +690,7 @@ static void help(void)
 		" -d	--dump		dump rc632 registers\n"
 		" -e	--enum		enumerate all tag's in field \n"
 		" -E	--enum-loop	<delay> (ms) enumerate endless\n"
-		" -r	--read		<secror> read iso15693 sector \n\t\t\t(-1:0-255 stop on error, -2: 0-255 no stop)\n"
+		" -r	--read		<sector> read iso15693 sector \n\t\t\t(-1:0-255 stop on error, -2: 0-255 no stop)\n"
         " -w	--write		<sector> write to iso15693 sector data: 01:02:03:04\n"
 		" -h	--help\n");
 }

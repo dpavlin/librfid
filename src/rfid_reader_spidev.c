@@ -46,7 +46,7 @@
 #include "rc632.h"
 static int spidev_fd;
 
-struct spi_ioc_transfer xfer[1];
+struct spi_ioc_transfer xfer[2];
 
 /* 256bytes max FSD/FSC, plus 1 bytes header, plus 10 bytes reserve */
 #define SENDBUF_LEN     (256+1+10)
@@ -63,15 +63,43 @@ static int spidev_read(unsigned char reg, unsigned char len,
 		return -EINVAL;
 
 	snd_buf[0] = (reg<<1) | 0x80;
+	// If SPI is half-duplex, we need to send READ command for each byte
+#ifndef SPIDEV_HALFDUPLEX
 	if (len > 1)
 		memset(&snd_buf[1], reg<<1 , len-1);
 	snd_buf[len] = 0;
+#endif
 
 	/* prepare spi buffer */
+#ifdef SPIDEV_HALFDUPLEX
+	xfer[0].tx_buf = (__u64) snd_buf;
+	xfer[0].rx_buf = 0;
+	xfer[0].len = 1;
+	
+	xfer[1].tx_buf = 0;
+	xfer[1].rx_buf = (__u64) rcv_buf;
+	xfer[1].len = 1;
+#else
 	xfer[0].tx_buf = (__u64) snd_buf;
 	xfer[0].rx_buf = (__u64) rcv_buf;
 	xfer[0].len = len + 1;
+#endif
 
+#ifdef SPIDEV_HALFDUPLEX
+	// read byte by byte in cycle
+	for(int i = 0; i < len; ++i)
+	{
+		ret = ioctl(spidev_fd, SPI_IOC_MESSAGE(2), xfer);
+		if (ret < 0) {
+			DEBUGPC("ERROR sending command\n");
+			return ret;
+		} else if (ret != 2) {
+			DEBUGPC("ERROR sending command bad length\n");
+			return -EINVAL;
+		}
+		buf[i] = rcv_buf[0];
+	}
+#else
 	ret = ioctl(spidev_fd, SPI_IOC_MESSAGE(1), xfer);
 	if (ret < 0) {
 		DEBUGPC("ERROR sending command\n");
@@ -82,6 +110,7 @@ static int spidev_read(unsigned char reg, unsigned char len,
 	}
 
 	memcpy(buf, &rcv_buf[1], len);
+#endif
 
 	return len;
 }
