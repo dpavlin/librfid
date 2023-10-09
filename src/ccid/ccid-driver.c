@@ -232,7 +232,7 @@ struct ccid_driver_s
 
 
 static int initialized_usb; /* Tracks whether USB has been initialized. */
-static int debug_level;     /* Flag to control the debug output. 
+static int debug_level = 0; /* XXX Flag to control the debug output. 
                                0 = No debugging
                                1 = USB I/O info
                                2 = T=1 protocol tracing
@@ -503,6 +503,10 @@ parse_ccid_descriptor (ccid_driver_t handle,
 
   if (!have_t1 || !(have_tpdu  || handle->apdu_level) || !have_auto_conf)
     {
+	DEBUGOUT_CONT_1( "have_t1=%d\n", have_t1);
+	DEBUGOUT_CONT_1( "have_tpdu=%d\n", have_tpdu);
+	DEBUGOUT_CONT_1( "handle->apdu_level=%d\n", handle->apdu_level);
+	DEBUGOUT_CONT_1( "have_auto_conf=%d\n", have_auto_conf);
       DEBUGOUT ("this drivers requires that the reader supports T=1, "
                 "TPDU or APDU level exchange and auto configuration - "
                 "this is not available\n");
@@ -940,10 +944,13 @@ ccid_open_reader (ccid_driver_t *handle, const char *readerid)
 
   *handle = NULL;
 
+  DEBUGOUT_1 ("readerid=%s\n", readerid);
+
   if (!initialized_usb)
     {
       usb_init ();
       initialized_usb = 1;
+      DEBUGOUT ("initialized_usb\n");
     }
 
   /* See whether we want to use the reader ID string or a reader

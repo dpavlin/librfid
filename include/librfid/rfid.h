@@ -22,6 +22,8 @@ typedef unsigned long long u_int64_t;
 
 #include <librfid/rfid_system.h>
 
+#define DEBUG_LIBRFID		// XXX debug
+
 #ifdef DEBUG_LIBRFID
 
 #ifdef LIBRFID_FIRMWARE

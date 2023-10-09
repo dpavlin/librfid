@@ -78,11 +78,14 @@ int reader_init(void)
 	rh = rfid_reader_open(NULL, RFID_READER_CM5121);
 	if (!rh) {
 		fprintf(stderr, "No Omnikey Cardman 5x21 found\n");
+		return -1;
+/*
 		rh = rfid_reader_open(NULL, RFID_READER_OPENPCD);
 		if (!rh) {
 			fprintf(stderr, "No OpenPCD found\n");
 			return -1;
 		}
+*/
 	}
 	return 0;
 }
@@ -113,7 +116,7 @@ int l3_init(int protocol)
 	printf("running layer3 (ats)\n");
 	ph = rfid_protocol_init(l2h, protocol);
 	if (!ph) {
-		fprintf(stderr, "error during protocol_init\n");
+		fprintf(stderr, "error during protocol_init %d\n", protocol);
 		return -1;
 	}
 	if (rfid_protocol_open(ph) < 0) {
