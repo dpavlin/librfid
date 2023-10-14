@@ -87,11 +87,15 @@ static int mifare_cl_auth(unsigned char *key, int page)
 
 static void mifare_l3(void)
 {
+
+	int retry;
+
 	while (l2_init(RFID_LAYER2_ISO14443A) < 0) ;
 
 	printf("ISO14443-3A anticollision succeeded\n");
 
-	while (l3_init(RFID_PROTOCOL_MIFARE_CLASSIC) < 0) ;
+	retry = 0;
+	while (l3_init(RFID_PROTOCOL_MIFARE_CLASSIC) < 0 && retry++ < 10) ;
 
 	printf("Mifare card available\n");
 }
