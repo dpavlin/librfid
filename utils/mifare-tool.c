@@ -85,9 +85,8 @@ static int mifare_cl_auth(unsigned char *key, int page)
 	return 0;
 }
 
-static void mifare_l3(void)
+static int mifare_l3(void)
 {
-
 	int retry;
 
 	while (l2_init(RFID_LAYER2_ISO14443A) < 0) ;
@@ -97,7 +96,13 @@ static void mifare_l3(void)
 	retry = 0;
 	while (l3_init(RFID_PROTOCOL_MIFARE_CLASSIC) < 0 && retry++ < 10) ;
 
-	printf("Mifare card available\n");
+	if ( retry < 10 ) {
+		printf("Mifare card available\n");
+		return 1;
+	} else {
+		printf("ERROR l3_init\n");
+		return 0;
+	}
 }
 
 int main(int argc, char **argv)
@@ -157,7 +162,8 @@ int main(int argc, char **argv)
 			printf("read(key='%s',page=%u):",
 				hexdump(key, MIFARE_CL_KEY_LEN), page);
 			len = MIFARE_CL_PAGE_SIZE;
-			mifare_l3();
+			if (! mifare_l3())
+				exit(1);
 			if (mifare_cl_auth(key, page) < 0)
 				exit(1);
 
@@ -198,7 +204,8 @@ int main(int argc, char **argv)
 			hexread(key2, optarg, strlen(optarg));
 			printf("key2: %s\n", hexdump(key2, MIFARE_CL_KEY_LEN));
 			len = MIFARE_CL_PAGE_SIZE;
-			mifare_l3();
+			if (! mifare_l3())
+				exit(1);
 			for(page = 0; page < 8; page++) {
 				if (mifare_cl_auth( page < 4 ? key : key2, page) < 0)
 					exit(1);
